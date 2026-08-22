@@ -76,10 +76,20 @@ export default function Footer() {
           </div>
         </div>
       </div>
-      <div className="max-w-container-max mx-auto px-gutter mt-16 pt-8 border-t border-border-subtle text-center">
-        <p className="text-body-md text-text-secondary text-sm">
+      <div className="max-w-container-max mx-auto px-gutter mt-16 pt-8 border-t border-border-subtle flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+        <p className="text-body-md text-text-secondary text-xs">
           © {new Date().getFullYear()} Sunnah Grandeur. All rights reserved.
         </p>
+        <a 
+          href="https://sunnah-grandeur-admin.web.app" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-[11px] text-text-secondary/40 hover:text-primary-container transition-colors font-mono uppercase tracking-widest flex items-center gap-1"
+          title="Internal Staff & Admin Management Portal"
+        >
+          <span className="material-symbols-outlined text-[13px]">lock</span>
+          Staff Portal
+        </a>
       </div>
     </footer>
   );
