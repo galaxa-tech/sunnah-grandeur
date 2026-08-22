@@ -9,7 +9,7 @@
     "test:admin": "node e2e.test.js --target=admin",
     "test:mobile": "node e2e.test.js --target=mobile"
   },
-  "dependencies": {
-    "playwright": "^1.40.0"
+  "devDependencies": {
+    "playwright": "^1.62.1"
   }
 }

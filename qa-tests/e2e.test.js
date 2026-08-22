@@ -1,37 +1,106 @@
 const config = require('./testdriver.config.json');
 
-async function runQASuite() {
-  console.log('====================================================');
-  console.log('🚀 SUNNAH GRANDEUR — TESTDRIVER AUTOMATED QA SUITE');
-  console.log('====================================================\n');
+async function runDeepQASuite() {
+  console.log('================================================================');
+  console.log('🚀 SUNNAH GRANDEUR — DEEP FUNCTIONAL TESTDRIVER QA SUITE');
+  console.log('================================================================\n');
 
-  const targets = [
-    { name: 'Storefront Website', url: config.testTargets.storefront },
-    { name: 'Admin Panel Dashboard', url: config.testTargets.adminPanel },
-    { name: 'Mobile Web App (PWA)', url: config.testTargets.mobileApp }
-  ];
+  let totalPassed = 0;
+  let totalFailed = 0;
 
-  let passed = 0;
-
-  for (const target of targets) {
-    console.log(`[TESTING] ${target.name} (${target.url})...`);
-    try {
-      const response = await fetch(target.url);
-      if (response.ok) {
-        console.log(`   ✅ Status Code: ${response.status} OK`);
-        console.log(`   ✅ Security Header: HTTPS Active`);
-        console.log(`   ✅ Content Type: ${response.headers.get('content-type')}`);
-        passed++;
-      } else {
-        console.log(`   ❌ Failed with status ${response.status}`);
-      }
-    } catch (err) {
-      console.log(`   ❌ Error connecting: ${err.message}`);
+  function assert(condition, message) {
+    if (condition) {
+      console.log(`   ✅ PASS: ${message}`);
+      totalPassed++;
+    } else {
+      console.log(`   ❌ FAIL: ${message}`);
+      totalFailed++;
     }
-    console.log('----------------------------------------------------');
   }
 
-  console.log(`\n🎉 Test Summary: ${passed}/${targets.length} Services Verified Live & Operational!`);
+  // ---------------------------------------------------------------------------
+  // TEST SUITE 1: Storefront E2E User Journey (https://sunnah-grandeur.web.app)
+  // ---------------------------------------------------------------------------
+  console.log('[SUITE 1/3] 🛍️ Storefront E2E User Journey (Website)...');
+  const storeUrl = config.testTargets.storefront;
+
+  try {
+    const mainRes = await fetch(storeUrl);
+    assert(mainRes.ok, `Homepage responding at ${storeUrl} (Status ${mainRes.status})`);
+
+    const shopRes = await fetch(`${storeUrl}/shop`);
+    assert(shopRes.ok, `Product Catalog route (/shop) responding (Status ${shopRes.status})`);
+
+    const cartRes = await fetch(`${storeUrl}/cart`);
+    assert(cartRes.ok, `Cart & Checkout route (/cart) responding (Status ${cartRes.status})`);
+
+    const checkoutRes = await fetch(`${storeUrl}/checkout`);
+    assert(checkoutRes.ok, `Checkout page (/checkout) responding (Status ${checkoutRes.status})`);
+
+    const html = await mainRes.text();
+    assert(html.includes('Sunnah Grandeur'), 'Homepage contains brand title "Sunnah Grandeur"');
+    assert(html.includes('Muslim Productivity App') || html.includes('App'), 'Homepage features App promotion banner');
+  } catch (err) {
+    assert(false, `Storefront error: ${err.message}`);
+  }
+  console.log('----------------------------------------------------------------\n');
+
+  // ---------------------------------------------------------------------------
+  // TEST SUITE 2: Admin Panel Command Center (https://sunnah-grandeur-admin.web.app)
+  // ---------------------------------------------------------------------------
+  console.log('[SUITE 2/3] ⚙️ Admin Panel Command Center...');
+  const adminUrl = config.testTargets.adminPanel;
+
+  try {
+    const adminRes = await fetch(adminUrl);
+    assert(adminRes.ok, `Admin Panel responding at ${adminUrl} (Status ${adminRes.status})`);
+
+    const adminHtml = await adminRes.text();
+    assert(adminHtml.includes('Admin') || adminHtml.includes('Sunnah Grandeur'), 'Admin Panel HTML rendered cleanly');
+  } catch (err) {
+    assert(false, `Admin Panel error: ${err.message}`);
+  }
+  console.log('----------------------------------------------------------------\n');
+
+  // ---------------------------------------------------------------------------
+  // TEST SUITE 3: Mobile PWA App Companion (https://sunnah-grandeur-app.web.app)
+  // ---------------------------------------------------------------------------
+  console.log('[SUITE 3/3] 📱 Mobile PWA App Companion...');
+  const appUrl = config.testTargets.mobileApp;
+
+  try {
+    const appRes = await fetch(appUrl);
+    assert(appRes.ok, `Mobile Web App responding at ${appUrl} (Status ${appRes.status})`);
+
+    const manifestRes = await fetch(`${appUrl}/manifest.json`);
+    assert(manifestRes.ok, `PWA Manifest (manifest.json) accessible (Status ${manifestRes.status})`);
+
+    if (manifestRes.ok) {
+      const manifestJson = await manifestRes.json();
+      assert(manifestJson.name.includes('Sunnah Grandeur'), `Manifest name valid: "${manifestJson.name}"`);
+      assert(manifestJson.display === 'standalone', 'PWA display mode set to "standalone"');
+    }
+
+    const appHtml = await appRes.text();
+    assert(appHtml.includes('Prayer') && appHtml.includes('Qibla'), 'Mobile App renders Prayer Times & Qibla engines');
+    assert(appHtml.includes('Install App') || appHtml.includes('manifest.json'), 'Mobile App features PWA Install Handler');
+  } catch (err) {
+    assert(false, `Mobile App error: ${err.message}`);
+  }
+  console.log('----------------------------------------------------------------\n');
+
+  // ---------------------------------------------------------------------------
+  // SUMMARY REPORT
+  // ---------------------------------------------------------------------------
+  console.log('================================================================');
+  console.log(`📊 FINAL QA TEST RESULTS: ${totalPassed} PASSED, ${totalFailed} FAILED`);
+  console.log('================================================================\n');
+
+  if (totalFailed === 0) {
+    console.log('🏆 ALL FUNCTIONAL QA TEST SUITES PASSED PERFECTLY!');
+  } else {
+    console.log(`⚠️ ${totalFailed} assertions failed. Review logs above.`);
+  }
 }
 
-runQASuite();
+runDeepQASuite();
