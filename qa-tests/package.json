@@ -5,6 +5,7 @@
   "main": "e2e.test.js",
   "scripts": {
     "test": "node e2e.test.js",
+    "sim": "node visual_simulation.js",
     "test:storefront": "node e2e.test.js --target=web",
     "test:admin": "node e2e.test.js --target=admin",
     "test:mobile": "node e2e.test.js --target=mobile"
