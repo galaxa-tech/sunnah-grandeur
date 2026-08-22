@@ -1,0 +1,15 @@
+{
+  "name": "sunnah-grandeur-qa-testdriver",
+  "version": "1.0.0",
+  "description": "Automated TestDriver & Playwright E2E QA Test Suite for Sunnah Grandeur",
+  "main": "e2e.test.js",
+  "scripts": {
+    "test": "node e2e.test.js",
+    "test:storefront": "node e2e.test.js --target=web",
+    "test:admin": "node e2e.test.js --target=admin",
+    "test:mobile": "node e2e.test.js --target=mobile"
+  },
+  "dependencies": {
+    "playwright": "^1.40.0"
+  }
+}
