@@ -233,6 +233,51 @@ export default function CheckoutPage() {
                 </div>
               </label>
             </div>
+
+            {paymentMethod === 'card' && (
+              <div className="mt-4 p-4 bg-dark-900 border border-primary-container/30 rounded-lg space-y-3 animate-in fade-in">
+                <div className="flex items-center justify-between text-xs text-primary-container font-semibold border-b border-border-subtle pb-2">
+                  <span className="flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">lock</span> 256-Bit SSL Encrypted Payment
+                  </span>
+                  <span className="text-[10px] text-text-secondary">Visa • Mastercard • Amex</span>
+                </div>
+                <div className="space-y-2 text-xs">
+                  <div>
+                    <label className="text-text-secondary uppercase font-bold text-[10px] block mb-1">Card Number *</label>
+                    <input
+                      type="text"
+                      required={paymentMethod === 'card'}
+                      placeholder="4532 •••• •••• 8892"
+                      maxLength={19}
+                      className="w-full bg-[#141414] border border-border-subtle rounded px-3 py-2 text-text-primary focus:border-primary-container focus:outline-none font-mono"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-text-secondary uppercase font-bold text-[10px] block mb-1">Expiry Date *</label>
+                      <input
+                        type="text"
+                        required={paymentMethod === 'card'}
+                        placeholder="MM / YY"
+                        maxLength={5}
+                        className="w-full bg-[#141414] border border-border-subtle rounded px-3 py-2 text-text-primary focus:border-primary-container focus:outline-none font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-text-secondary uppercase font-bold text-[10px] block mb-1">CVC / CVV *</label>
+                      <input
+                        type="password"
+                        required={paymentMethod === 'card'}
+                        placeholder="•••"
+                        maxLength={4}
+                        className="w-full bg-[#141414] border border-border-subtle rounded px-3 py-2 text-text-primary focus:border-primary-container focus:outline-none font-mono"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

@@ -18,8 +18,12 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Sunnah Grandeur Admin",
-  description: "Admin Panel for Sunnah Grandeur Luxury E-commerce",
+  title: "Sunnah Grandeur — Admin Panel",
+  description: "Official Administrator Command Center for Sunnah Grandeur.",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({

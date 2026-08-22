@@ -23,7 +23,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="min-h-screen flex flex-col">
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        />
+      </head>
+      <body className="min-h-screen flex flex-col bg-bg-primary text-text-primary antialiased">
         <AuthProvider>
           <ThemeInitializer />
           <Navbar />
@@ -37,4 +43,3 @@ export default function RootLayout({
     </html>
   );
 }
-

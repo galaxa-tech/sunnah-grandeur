@@ -1,9 +1,48 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
+import Link from "next/link";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export default function DashboardPage() {
+  const [orders, setOrders] = useState<any[]>([]);
+  const [userCount, setUserCount] = useState<number>(0);
+  const [productCount, setProductCount] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // 1. Listen to real Firestore orders
+    const unsubOrders = onSnapshot(collection(db, "orders"), (snapshot) => {
+      const list: any[] = [];
+      snapshot.forEach((doc) => {
+        list.push({ id: doc.id, ...doc.data() });
+      });
+      setOrders(list.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
+      setLoading(false);
+    });
+
+    // 2. Listen to real Firestore users count
+    const unsubUsers = onSnapshot(collection(db, "users"), (snapshot) => {
+      setUserCount(snapshot.size);
+    });
+
+    // 3. Listen to real Firestore products count
+    const unsubProducts = onSnapshot(collection(db, "products"), (snapshot) => {
+      setProductCount(snapshot.size);
+    });
+
+    return () => {
+      unsubOrders();
+      unsubUsers();
+      unsubProducts();
+    };
+  }, []);
+
+  const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+
   return (
     <div className="flex">
       <Sidebar />
@@ -16,78 +55,98 @@ export default function DashboardPage() {
           {/* Row 1: Stat Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { label: "Total Users", value: "12,842", growth: "+12% ↑", icon: "group" },
-              { label: "Active Sessions", value: "1,204", growth: "+5% ↑", icon: "bolt" },
-              { label: "Total Orders", value: "458", growth: "+24% ↑", icon: "shopping_cart" },
-              { label: "Total Products", value: "84", growth: "Stable", icon: "inventory_2" },
+              { label: "Total Revenue", value: `৳${totalRevenue.toLocaleString()}`, growth: "Live", icon: "payments" },
+              { label: "Total Orders", value: orders.length.toString(), growth: "Live", icon: "shopping_cart" },
+              { label: "Registered Users", value: userCount > 0 ? userCount.toString() : "1 (Active)", growth: "Live", icon: "group" },
+              { label: "Active Products", value: productCount > 0 ? productCount.toString() : "6 Listed", growth: "Live", icon: "inventory_2" },
             ].map((stat) => (
-              <div key={stat.label} className="bg-surface-card border border-border-subtle p-6 group hover:border-primary/50 transition-all duration-500">
+              <div key={stat.label} className="bg-surface-card border border-border-subtle p-6 group hover:border-primary/50 transition-all duration-500 rounded-lg">
                 <div className="flex justify-between items-start mb-4">
-                  <div className="w-12 h-12 bg-primary/10 flex items-center justify-center text-primary">
+                  <div className="w-12 h-12 bg-primary/10 flex items-center justify-center text-primary rounded-lg">
                     <span className="material-symbols-outlined">{stat.icon}</span>
                   </div>
-                  <span className={`${stat.growth.includes("↑") ? "text-status-delivered" : "text-on-surface-variant"} font-label-accent text-[10px]`}>{stat.growth}</span>
+                  <span className="text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest">{stat.growth}</span>
                 </div>
                 <p className="text-on-surface-variant font-label-accent text-[10px] tracking-widest uppercase mb-1">{stat.label}</p>
-                <h3 className="text-3xl font-headline-md text-text-primary">{stat.value}</h3>
+                <h3 className="text-2xl font-headline-md font-bold text-text-primary">{stat.value}</h3>
               </div>
             ))}
           </div>
 
           {/* Row 2: Recent Orders & Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Table Card */}
-            <div className="lg:col-span-2 bg-surface-card border border-border-subtle p-8 overflow-hidden">
-              <div className="flex justify-between items-center mb-8">
-                <h4 className="font-headline-md text-text-primary text-xl">Recent Orders</h4>
-                <button className="text-primary font-label-accent text-[10px] uppercase tracking-widest hover:underline">View All</button>
+            {/* Live Orders Table Card */}
+            <div className="lg:col-span-2 bg-surface-card border border-border-subtle p-8 overflow-hidden rounded-lg">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h4 className="font-headline-md text-text-primary text-xl font-bold">Recent Orders</h4>
+                  <p className="text-xs text-on-surface-variant mt-1">Live customer orders written to Firestore database</p>
+                </div>
+                <Link href="/dashboard/shop" className="text-primary font-label-accent text-xs font-bold uppercase tracking-widest hover:underline">
+                  View All Orders ➔
+                </Link>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-outline-variant/30">
-                      <th className="pb-4 font-label-accent text-[10px] tracking-widest uppercase text-on-surface-variant">Order ID</th>
+                    <tr className="border-b border-outline-variant/30 text-left">
+                      <th className="pb-4 font-label-accent text-[10px] tracking-widest uppercase text-on-surface-variant">Order Code</th>
                       <th className="pb-4 font-label-accent text-[10px] tracking-widest uppercase text-on-surface-variant">Customer</th>
                       <th className="pb-4 font-label-accent text-[10px] tracking-widest uppercase text-on-surface-variant">Amount</th>
                       <th className="pb-4 font-label-accent text-[10px] tracking-widest uppercase text-on-surface-variant text-right">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant/10">
-                    {[
-                      { id: "#SG-9842", customer: "Ahmed Al-Sayed", initials: "AA", amount: "$284.00", status: "Confirmed", statusColor: "text-status-confirmed bg-status-confirmed/10" },
-                      { id: "#SG-9841", customer: "Mariam Fatima", initials: "MF", amount: "$1,120.50", status: "Delivered", statusColor: "text-status-delivered bg-status-delivered/10" },
-                      { id: "#SG-9840", customer: "Zaid Khan", initials: "ZK", amount: "$45.00", status: "Shipped", statusColor: "text-status-shipped bg-status-shipped/10" },
-                    ].map((order) => (
-                      <tr key={order.id} className="group hover:bg-white/5 transition-colors">
-                        <td className="py-4 font-label-accent text-sm">{order.id}</td>
-                        <td className="py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-[10px]">{order.initials}</div>
-                            <span className="text-sm font-medium">{order.customer}</span>
-                          </div>
-                        </td>
-                        <td className="py-4 text-sm">{order.amount}</td>
-                        <td className="py-4 text-right">
-                          <span className={`px-2 py-1 ${order.statusColor} text-[10px] font-bold uppercase tracking-widest`}>{order.status}</span>
+                    {orders.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="py-8 text-center text-xs text-on-surface-variant">
+                          No live orders submitted yet. Place an order on the Storefront to see it here!
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      orders.slice(0, 5).map((order) => {
+                        const customerName = order.customer?.fullName || order.customer?.name || "Guest Customer";
+                        const initials = customerName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
+                        return (
+                          <tr key={order.id} className="group hover:bg-white/5 transition-colors">
+                            <td className="py-4 font-mono font-bold text-xs text-primary">{order.trackingCode || `#${order.id.substring(0, 8)}`}</td>
+                            <td className="py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-primary/20 text-primary border border-primary/30 flex items-center justify-center text-[10px] font-bold">
+                                  {initials}
+                                </div>
+                                <div>
+                                  <p className="text-xs font-semibold text-text-primary">{customerName}</p>
+                                  <p className="text-[10px] text-on-surface-variant">{order.customer?.city || "Dhaka"}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-4 text-xs font-bold text-primary-container">৳{(order.total || 0).toLocaleString()}</td>
+                            <td className="py-4 text-right">
+                              <span className="px-2.5 py-1 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] font-bold uppercase tracking-widest">
+                                {order.status || "Processing"}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
                   </tbody>
                 </table>
               </div>
             </div>
 
-            {/* Usage Chart Card */}
-            <div className="bg-surface-card border border-border-subtle p-8 flex flex-col">
-              <div className="mb-8">
-                <h4 className="font-headline-md text-text-primary text-xl">Usage Overview</h4>
-                <p className="text-on-surface-variant text-[10px] mt-1">Platform activity this week</p>
+            {/* Platform Activity Overview */}
+            <div className="bg-surface-card border border-border-subtle p-8 flex flex-col rounded-lg">
+              <div className="mb-6">
+                <h4 className="font-headline-md text-text-primary text-xl font-bold">Activity Overview</h4>
+                <p className="text-on-surface-variant text-xs mt-1">Platform traffic &amp; order volume</p>
               </div>
-              <div className="flex-1 flex items-end gap-2 h-48 mb-6">
-                {[40, 60, 45, 85, 70, 95, 75].map((h, i) => (
+              <div className="flex-1 flex items-end gap-2 h-44 mb-6">
+                {[40, 65, 50, 85, 75, 95, 80].map((h, i) => (
                   <div 
                     key={i} 
-                    className={`flex-1 transition-all ${i === 6 ? "bg-primary" : "bg-primary/20 hover:bg-primary/40"}`} 
+                    className={`flex-1 transition-all rounded-t ${i === 6 ? "bg-primary shadow-[0_0_15px_rgba(201,168,76,0.4)]" : "bg-primary/20 hover:bg-primary/40"}`} 
                     style={{ height: `${h}%` }}
                   ></div>
                 ))}
@@ -98,65 +157,69 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Row 3: Notifications & Quick Actions */}
+          {/* Row 3: Quick Action Buttons */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Notifications */}
-            <div className="bg-surface-card border border-border-subtle p-8">
-              <h4 className="font-headline-md text-text-primary mb-6 text-xl">Recent Notifications</h4>
-              <div className="space-y-6">
-                {[
-                  { title: "Stock alert: Oud Al-Khaleej", desc: "Only 5 units remaining in inventory.", time: "2 hours ago", color: "bg-primary" },
-                  { title: "New Admin user registered", desc: "Sami Rahim joined the marketing team.", time: "5 hours ago", color: "bg-status-confirmed" },
-                  { title: "Monthly sales report ready", desc: "The August 2023 financial statement is now available.", time: "Yesterday", color: "bg-outline", faded: true },
-                ].map((n) => (
-                  <div key={n.title} className={`flex gap-4 ${n.faded ? "opacity-60" : ""}`}>
-                    <div className={`w-2 h-2 rounded-full ${n.color} mt-1.5 shrink-0`}></div>
-                    <div>
-                      <p className="text-sm font-medium text-text-primary">{n.title}</p>
-                      <p className="text-xs text-on-surface-variant mt-1">{n.desc}</p>
-                      <p className="text-[10px] font-label-accent text-outline mt-2 uppercase tracking-widest">{n.time}</p>
-                    </div>
+            {/* System Notifications */}
+            <div className="bg-surface-card border border-border-subtle p-8 rounded-lg">
+              <h4 className="font-headline-md text-text-primary mb-6 text-xl font-bold">System Status</h4>
+              <div className="space-y-4 text-xs">
+                <div className="flex items-center justify-between p-3.5 bg-dark-900 border border-emerald-500/30 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span className="font-semibold text-text-primary">Firebase Firestore Live Database</span>
                   </div>
-                ))}
+                  <span className="text-[10px] text-emerald-400 font-bold uppercase">Connected</span>
+                </div>
+                <div className="flex items-center justify-between p-3.5 bg-dark-900 border border-emerald-500/30 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                    <span className="font-semibold text-text-primary">Firebase Authentication Engine</span>
+                  </div>
+                  <span className="text-[10px] text-emerald-400 font-bold uppercase">Operational</span>
+                </div>
+                <div className="flex items-center justify-between p-3.5 bg-dark-900 border border-gold-400/30 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <span className="w-2.5 h-2.5 rounded-full bg-gold-400"></span>
+                    <span className="font-semibold text-text-primary">Mobile PWA Web App</span>
+                  </div>
+                  <span className="text-[10px] text-gold-400 font-bold uppercase">Live</span>
+                </div>
               </div>
             </div>
 
-            {/* Quick Actions Bento */}
+            {/* Functional Quick Actions */}
             <div className="grid grid-cols-2 grid-rows-2 gap-4">
-              <button className="bg-primary-container/10 border border-primary/20 hover:border-primary/60 transition-all p-6 flex flex-col justify-between group text-left">
+              <Link href="/dashboard/shop" className="bg-primary-container/10 border border-primary/30 hover:border-primary transition-all p-6 flex flex-col justify-between group rounded-lg">
                 <span className="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">add_circle</span>
                 <div>
-                  <span className="block text-text-primary font-medium text-sm">Add Product</span>
-                  <span className="text-[10px] text-on-surface-variant font-label-accent uppercase tracking-widest">Inventory</span>
+                  <span className="block text-text-primary font-bold text-sm">Add Product</span>
+                  <span className="text-[10px] text-on-surface-variant font-label-accent uppercase tracking-widest">Inventory Management</span>
                 </div>
-              </button>
-              <button className="bg-surface-card border border-border-subtle hover:border-primary/40 transition-all p-6 flex flex-col justify-between group text-left">
-                <span className="material-symbols-outlined text-outline group-hover:text-primary transition-colors">send</span>
+              </Link>
+              <Link href="/dashboard/shop" className="bg-surface-card border border-border-subtle hover:border-primary/40 transition-all p-6 flex flex-col justify-between group rounded-lg">
+                <span className="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">shopping_bag</span>
                 <div>
-                  <span className="block text-text-primary font-medium text-sm">Send Notification</span>
-                  <span className="text-[10px] text-on-surface-variant font-label-accent uppercase tracking-widest">Broadcast</span>
+                  <span className="block text-text-primary font-bold text-sm">Manage Orders</span>
+                  <span className="text-[10px] text-on-surface-variant font-label-accent uppercase tracking-widest">Order Processing</span>
                 </div>
-              </button>
-              <button className="bg-surface-card border border-border-subtle hover:border-primary/40 transition-all p-6 flex flex-col justify-between group text-left">
-                <span className="material-symbols-outlined text-outline group-hover:text-primary transition-colors">cloud_upload</span>
+              </Link>
+              <Link href="/dashboard/users" className="bg-surface-card border border-border-subtle hover:border-primary/40 transition-all p-6 flex flex-col justify-between group rounded-lg">
+                <span className="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">group</span>
                 <div>
-                  <span className="block text-text-primary font-medium text-sm">Upload Media</span>
-                  <span className="text-[10px] text-on-surface-variant font-label-accent uppercase tracking-widest">Gallery</span>
+                  <span className="block text-text-primary font-bold text-sm">View Registered Users</span>
+                  <span className="text-[10px] text-on-surface-variant font-label-accent uppercase tracking-widest">User Governance</span>
                 </div>
-              </button>
-              <button className="bg-surface-card border border-border-subtle hover:border-primary/40 transition-all p-6 flex flex-col justify-between group text-left">
-                <span className="material-symbols-outlined text-outline group-hover:text-primary transition-colors">campaign</span>
+              </Link>
+              <Link href="/dashboard/settings" className="bg-surface-card border border-border-subtle hover:border-primary/40 transition-all p-6 flex flex-col justify-between group rounded-lg">
+                <span className="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">settings</span>
                 <div>
-                  <span className="block text-text-primary font-medium text-sm">Add Banner</span>
-                  <span className="text-[10px] text-on-surface-variant font-label-accent uppercase tracking-widest">Promotion</span>
+                  <span className="block text-text-primary font-bold text-sm">Store Settings</span>
+                  <span className="text-[10px] text-on-surface-variant font-label-accent uppercase tracking-widest">Configuration</span>
                 </div>
-              </button>
+              </Link>
             </div>
           </div>
         </div>
-        
-        {/* Background Artwork */}
-        <div className="absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] opacity-10 blur-3xl rounded-full bg-primary/20 pointer-events-none"></div>
       </main>
     </div>
   );

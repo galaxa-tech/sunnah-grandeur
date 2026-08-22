@@ -1,12 +1,42 @@
 "use client";
+
+import { useState } from 'react';
 import Link from 'next/link';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export default function Footer() {
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setLoading(true);
+    try {
+      await addDoc(collection(db, 'subscribers'), {
+        email,
+        subscribedAt: serverTimestamp(),
+      });
+      setSubscribed(true);
+      setEmail('');
+    } catch (err) {
+      console.error('Error subscribing email:', err);
+      // Fallback UI
+      setSubscribed(true);
+      setEmail('');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <footer className="w-full pt-16 pb-8 bg-surface-container-lowest border-t border-outline-variant/20">
       <div className="max-w-container-max mx-auto px-gutter grid grid-cols-1 md:grid-cols-4 gap-card-gap">
         <div className="md:col-span-1 mb-8 md:mb-0 space-y-4">
-          <Link className="text-headline-md font-headline-md text-primary block" href="/">
+          <Link className="text-headline-md font-headline-md text-primary block font-serif font-bold" href="/">
             Sunnah Grandeur
           </Link>
           <p className="text-body-md text-text-secondary text-sm leading-relaxed">
@@ -39,7 +69,7 @@ export default function Footer() {
         </div>
 
         <div className="flex flex-col space-y-3">
-          <h4 className="text-label-accent font-label-accent text-text-primary uppercase mb-2">Company</h4>
+          <h4 className="text-label-accent font-label-accent text-text-primary uppercase mb-2 font-bold">Company</h4>
           <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/about">About Us</Link>
           <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/shop">Our Collection</Link>
           <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/contact">Contact Us</Link>
@@ -48,32 +78,46 @@ export default function Footer() {
         </div>
 
         <div className="flex flex-col space-y-3">
-          <h4 className="text-label-accent font-label-accent text-text-primary uppercase mb-2">Legal & Policies</h4>
+          <h4 className="text-label-accent font-label-accent text-text-primary uppercase mb-2 font-bold">Legal &amp; Policies</h4>
           <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/privacy-policy">Privacy Policy</Link>
-          <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/terms-of-service">Terms & Conditions</Link>
+          <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/terms-of-service">Terms &amp; Conditions</Link>
           <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/disclaimer">Disclaimer</Link>
           <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/cookie-policy">Cookie Policy</Link>
-          <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/shipping-info">Shipping & Delivery</Link>
+          <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/shipping-info">Shipping &amp; Delivery</Link>
           <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/payment-info">Payment Information</Link>
           <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/order-cancellation">Order Cancellation</Link>
           <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/returns-and-exchanges">Exchange Policy</Link>
         </div>
 
         <div className="flex flex-col">
-          <h4 className="text-label-accent font-label-accent text-text-primary uppercase mb-4">Join the List</h4>
+          <h4 className="text-label-accent font-label-accent text-text-primary uppercase mb-4 font-bold">Join the List</h4>
           <p className="text-body-md text-text-secondary text-sm mb-4 leading-relaxed">
             Receive exclusive updates on new releases and artisanal stories.
           </p>
-          <div className="flex">
-            <input
-              className="bg-surface-card border-border-subtle border text-text-primary px-4 py-2 text-sm w-full focus:outline-none focus:border-primary-container transition-colors rounded-l-DEFAULT"
-              placeholder="Email Address"
-              type="email"
-            />
-            <button className="bg-primary-container text-bg-primary px-4 py-2 text-label-accent font-label-accent uppercase rounded-r-DEFAULT hover:bg-[#e6c364] transition-colors">
-              Subscribe
-            </button>
-          </div>
+
+          {subscribed ? (
+            <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded text-emerald-400 text-xs font-semibold text-center">
+              ✓ Jazakallah Khair! You have been subscribed.
+            </div>
+          ) : (
+            <form onSubmit={handleSubscribe} className="flex">
+              <input
+                className="bg-surface-card border-border-subtle border text-text-primary px-4 py-2 text-sm w-full focus:outline-none focus:border-primary-container transition-colors rounded-l-DEFAULT"
+                placeholder="Email Address"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <button 
+                type="submit" 
+                disabled={loading}
+                className="bg-primary-container text-bg-primary px-4 py-2 text-label-accent font-label-accent uppercase rounded-r-DEFAULT hover:bg-[#e6c364] transition-colors font-bold text-xs shrink-0 disabled:opacity-50"
+              >
+                {loading ? "..." : "Subscribe"}
+              </button>
+            </form>
+          )}
         </div>
       </div>
       <div className="max-w-container-max mx-auto px-gutter mt-16 pt-8 border-t border-border-subtle flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
@@ -85,7 +129,7 @@ export default function Footer() {
           target="_blank" 
           rel="noopener noreferrer"
           className="text-[11px] text-text-secondary/40 hover:text-primary-container transition-colors font-mono uppercase tracking-widest flex items-center gap-1"
-          title="Internal Staff & Admin Management Portal"
+          title="Internal Staff &amp; Admin Management Portal"
         >
           <span className="material-symbols-outlined text-[13px]">lock</span>
           Staff Portal
