@@ -1,0 +1,6 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// ApiKeys.xcconfig.template — copy this to ApiKeys.xcconfig and fill in keys.
+// ApiKeys.xcconfig is gitignored. This template IS committed.
+// ─────────────────────────────────────────────────────────────────────────────
+
+MAPS_IOS_KEY = YOUR_GOOGLE_MAPS_IOS_API_KEY_HERE

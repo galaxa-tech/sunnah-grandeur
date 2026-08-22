@@ -1,0 +1,122 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.role == "admin";
+    }
+
+    function notTouchingProtectedUserFields() {
+      let protected = ["role", "uid", "createdAt"];
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(protected);
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if false;
+      allow update: if isOwner(userId) && notTouchingProtectedUserFields();
+      allow delete: if false;
+
+      match /tasbih_sessions/{sessionId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    match /products/{productId} {
+      allow read: if resource.data.isActive == true || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /media/{mediaId} {
+      allow read: if resource.data.isActive == true || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /orders/{orderId} {
+      allow read: if isSignedIn()
+        && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create, update, delete: if false;
+    }
+
+    match /carts/{cartId} {
+      allow read, write: if isOwner(cartId) || isAdmin();
+
+      match /items/{itemId} {
+        allow read, write: if isOwner(cartId) || isAdmin();
+      }
+    }
+
+    match /favorites/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+
+      match /items/{itemId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    match /banners/{bannerId} {
+      allow read: if resource.data.isActive == true || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /categories/{categoryId} {
+      allow read: if resource.data.isActive == true || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn()
+        && (
+          isAdmin()
+          || resource.data.userId == request.auth.uid
+          || resource.data.audience == "all"
+        );
+      allow write: if isAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /hadith/{hadithId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /hadith_posts/{postId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /masjids/{masjidId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /config/{configId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ── Stripe webhook idempotency log ──────────────────────────────────
+    // Written by Cloud Functions (stripe webhook handler) only.
+    // Admin can read for debugging; nobody writes from the client.
+    match /webhookEvents/{eventId} {
+      allow read: if isAdmin();
+      allow write: if false;   // Cloud Functions bypass rules via Admin SDK
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

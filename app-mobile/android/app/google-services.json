@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "6748865044",
+    "project_id": "sunnah-grandeur",
+    "storage_bucket": "sunnah-grandeur.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:6748865044:android:21622fa6b98dcd59cd1d01",
+        "android_client_info": {
+          "package_name": "com.sunnahgrandeur.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "6748865044-5b0sbthk9abobn9t4not9e02sv91g209.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDOW-85wwjLEp13fHLBSM1-MmZk_Sw9wuU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "6748865044-5b0sbthk9abobn9t4not9e02sv91g209.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "6748865044-i5lbfm7rf493b19u2f3b3k5n7f6mi6pp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.sunnahgrandeur.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

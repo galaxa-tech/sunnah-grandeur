@@ -1,0 +1,4 @@
+#include "Generated.xcconfig"
+// ApiKeys.xcconfig is gitignored — copy ApiKeys.xcconfig.template and fill in.
+// Use #include? so builds don't fail on CI when the file isn't present.
+#include? "ApiKeys.xcconfig"

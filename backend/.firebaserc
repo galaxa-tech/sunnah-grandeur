@@ -1,0 +1,21 @@
+{
+  "projects": {
+    "default": "sunnah-grandeur"
+  },
+  "targets": {
+    "sunnah-grandeur": {
+      "hosting": {
+        "web": [
+          "sunnah-grandeur"
+        ],
+        "admin": [
+          "sunnah-grandeur-admin"
+        ],
+        "app": [
+          "sunnah-grandeur-app"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

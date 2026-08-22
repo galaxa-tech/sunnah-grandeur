@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+@theme {
+  /* Colors */
+  --color-status-delivered: #22C55E;
+  --color-surface-container-highest: #38342d;
+  --color-secondary-fixed: #f5e1ae;
+  --color-outline: #99907e;
+  --color-surface-container: #221f19;
+  --color-surface-bright: #3d3931;
+  --color-text-secondary: #A0A0A0;
+  --color-background: #16130d;
+  --color-primary: #e6c364;
+  --color-bg-primary: #0A0A0A;
+  --color-outline-variant: #4d4637;
+  --color-on-secondary-fixed-variant: #524620;
+  --color-on-primary-fixed-variant: #584400;
+  --color-tertiary-container: #9ba8eb;
+  --color-tertiary: #b9c4ff;
+  --color-surface-card: #141414;
+  --color-secondary-fixed-dim: #d8c594;
+  --color-status-confirmed: #3B82F6;
+  --color-error: #ffb4ab;
+  --color-on-secondary-container: #c5b484;
+  --color-on-tertiary-fixed: #041451;
+  --color-tertiary-fixed-dim: #b9c3ff;
+  --color-surface-dim: #16130d;
+  --color-text-primary: #FFFFFF;
+  --color-status-pending: #A0A0A0;
+  --color-on-background: #e9e1d7;
+  --color-primary-fixed: #ffe08f;
+  --color-on-error: #690005;
+  --color-tertiary-fixed: #dde1ff;
+  --color-on-primary: #3d2e00;
+  --color-on-secondary: #3a2f0b;
+  --color-on-primary-container: #503d00;
+  --color-border-subtle: #1F1F1F;
+  --color-on-surface-variant: #d0c5b2;
+  --color-on-secondary-fixed: #231b00;
+  --color-inverse-on-surface: #343029;
+  --color-primary-fixed-dim: #e6c364;
+  --color-on-tertiary-container: #2e3b77;
+  --color-on-error-container: #ffdad6;
+  --color-inverse-surface: #e9e1d7;
+  --color-on-tertiary: #1e2b66;
+  --color-surface-container-low: #1e1b15;
+  --color-error-container: #93000a;
+  --color-on-surface: #e9e1d7;
+  --color-surface-tint: #e6c364;
+  --color-surface-container-lowest: #100e08;
+  --color-surface-variant: #38342d;
+  --color-secondary-container: #524620;
+  --color-secondary: #d8c594;
+  --color-primary-container: #c9a84c;
+  --color-surface-container-high: #2d2a23;
+  --color-inverse-primary: #755b00;
+  --color-surface: #16130d;
+  --color-status-shipped: #EAB308;
+  --color-on-tertiary-fixed-variant: #35437e;
+  --color-on-primary-fixed: #241a00;
+  --color-status-cancelled: #EF4444;
+
+  /* Fonts */
+  --font-headline-xl: var(--font-noto-serif);
+  --font-headline-md: var(--font-noto-serif);
+  --font-body-md: var(--font-manrope);
+  --font-body-lg: var(--font-manrope);
+  --font-headline-lg: var(--font-noto-serif);
+  --font-label-accent: var(--font-space-grotesk);
+
+  /* Radius */
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.5rem;
+  --radius-full: 9999px;
+
+  /* Spacing */
+  --spacing-section-padding: 80px;
+  --spacing-card-gap: 20px;
+  --spacing-gutter: 24px;
+  --spacing-container-max: 1280px;
+}
+
+@layer base {
+  body {
+    @apply bg-bg-primary text-text-primary font-body-md;
+  }
+}
+
+@layer components {
+  .material-symbols-outlined {
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+  }
+
+  .textured-bg {
+    @apply relative bg-[#0A0A0A];
+    background-image: radial-gradient(circle at 50% 50%, rgba(201, 168, 76, 0.03) 0%, transparent 70%);
+  }
+
+  .textured-bg::before {
+    content: "";
+    @apply absolute inset-0 opacity-10 pointer-events-none;
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuBCckqeWT1-faN5Q5ZFHNjEPQYVkgo5_WSV20ep1GT9k6H-iuwRI7Lq1cQJOKd0UEQr0kAew9v9wULCGeGUnkIUx8YiHgTp9SAn7uNPRF5qeHrN9JVmzyHpIBlaCmyPAKMYqDDv2u1fw1m8swS_KVmNIqip5l_8l9bysRg36wHCKPh5cCfqFfajRQHENAz28ltm2Xd4PAj9N2cbLmV9tV9rEQEtgZHrcEf2aa70GQogwbr3ctfqJmlEaJ5EREKb2Kj-y_w-r4p4R8Ji);
+  }
+
+  .pattern-overlay {
+    @apply absolute inset-0 opacity-[0.04] pointer-events-none;
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuAead_fiYB35Ypmrm_bnE9tbuArjSLPauQvYgJsPZ6CrTUQvX1Ela4dyMyigFtjin8jpqzyzHMkchiTnmyjxtV6Q2SSmq-qe5ybu8O3pfQfd6M1ShcCQdE8emZPVNnngYE7XyJKvyk7LDYOSdTOaCUJ9B7alOh659-v_At3jmxCAXgjuHQ46wrKPVlJUzLR5QC9tL7oA-HX-BUKyjr9Lc1dC668aoaN_2sLsbNMyRYl2pgvpQmiMrnX4gGqCWjKPMei6YQ4t9Csncnn);
+  }
+
+  .islamic-pattern {
+    background-image: radial-gradient(#e6c364 0.5px, transparent 0.5px);
+    background-size: 24px 24px;
+    opacity: 0.05;
+  }
+}

@@ -1,0 +1,111 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    // Role is carried in the Firebase Auth ID token custom claim.
+    // Custom claims are set server-side only (Admin SDK) and cannot be forged.
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.role == "admin";
+    }
+
+    // Prevents a user from updating protected fields via client SDK.
+    function notTouchingProtectedFields() {
+      let protected = ["role", "uid", "createdAt"];
+      return !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(protected);
+    }
+
+    // ── /users/{uid} ──────────────────────────────────────────────────────────
+    match /users/{uid} {
+      // Owner reads own profile; admin reads any profile.
+      allow read: if isOwner(uid) || isAdmin();
+
+      // Creation is Cloud Function only — createUserMetadata sets role:'user'.
+      allow create: if false;
+
+      // Owner can update their own profile but cannot touch protected fields.
+      // This prevents client-side role escalation entirely.
+      allow update: if isOwner(uid) && notTouchingProtectedFields();
+
+      // Deletion is Cloud Function only — deleteAccount cascades Auth + Firestore.
+      allow delete: if false;
+
+      // Tasbih sessions are private to the owner.
+      match /tasbih_sessions/{sessionId} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // ── /products/{productId} ─────────────────────────────────────────────────
+    match /products/{productId} {
+      // Public read for active products. Admins see all.
+      allow read: if resource.data.isActive == true || isAdmin();
+
+      // All mutations go through Cloud Functions (createProduct / updateProduct).
+      allow write: if isAdmin();
+    }
+
+    // ── /orders/{orderId} ────────────────────────────────────────────────────
+    match /orders/{orderId} {
+      // Owner reads own orders; admin reads any order.
+      allow read: if isAuthenticated() &&
+                     (resource.data.userId == request.auth.uid || isAdmin());
+
+      // No direct client writes — createOrder function owns all order writes.
+      allow create, update, delete: if false;
+    }
+
+    // ── /media/{mediaId} ─────────────────────────────────────────────────────
+    match /media/{mediaId} {
+      allow read:  if resource.data.isActive == true || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // ── /hadiths/{hadithId} ───────────────────────────────────────────────────
+    match /hadiths/{hadithId} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // ── /settings/{docId} ────────────────────────────────────────────────────
+    match /settings/{docId} {
+      allow read:  if true;         // app_config is intentionally public
+      allow write: if isAdmin();
+    }
+
+    // ── /masjids/{masjidId} ──────────────────────────────────────────────────
+    match /masjids/{masjidId} {
+      allow read:  if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // ── /config/{docId} ──────────────────────────────────────────────────────
+    // Internal config (youtube_sources, etc.). Never exposed to clients.
+    match /config/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ── /contactMessages/{docId} ──────────────────────────────────────────────
+    // Anyone (including guests) can submit. Only admins can read.
+    match /contactMessages/{docId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ── Catch-all deny ────────────────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

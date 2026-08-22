@@ -1,0 +1,16 @@
+# Firebase
+.firebase/
+firebase-debug.log
+# Node
+functions/node_modules/
+node_modules/
+# Environment — NEVER commit
+functions/.env
+.env
+*.env.local
+# OS
+.DS_Store
+Thumbs.db
+# Logs
+*.log
+npm-debug.log*
