@@ -104,11 +104,11 @@ export default function ShopPage() {
       snapshot.forEach((doc) => {
         list.push({ id: doc.id, ...doc.data() } as Product);
       });
-      setDbProducts(list.length > 0 ? list : products);
+      setDbProducts(list);
       setLoading(false);
     }, (error) => {
       console.error('Error listening to Firestore products:', error);
-      setDbProducts(products);
+      setDbProducts([]);
       setLoading(false);
     });
     return () => unsubscribe();
