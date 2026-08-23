@@ -21,8 +21,8 @@ export const metadata: Metadata = {
   title: "Sunnah Grandeur — Admin Panel",
   description: "Official Administrator Command Center for Sunnah Grandeur.",
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
+    icon: "/favicon.ico?v=3",
+    shortcut: "/favicon.ico?v=3",
   },
 };
 

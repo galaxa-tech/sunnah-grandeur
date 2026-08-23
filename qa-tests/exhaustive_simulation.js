@@ -91,7 +91,14 @@ async function runExhaustiveSimulation() {
     console.log('\n[ACT 2/3] 📱 User launching Mobile Productivity App (https://sunnah-grandeur-app.web.app)...');
     await page.setViewportSize({ width: 390, height: 844 }); // iPhone 14 Pro
     await page.goto('https://sunnah-grandeur-app.web.app', { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(3500);
+    await page.waitForTimeout(3000);
+
+    console.log('   ➔ User clicking "Browse App as Guest ➔" on mobile login screen...');
+    const guestBtn = await page.$('button:has-text("Browse App as Guest")');
+    if (guestBtn) {
+      await guestBtn.click();
+      await page.waitForTimeout(1500);
+    }
 
     console.log('   ➔ User changing city to 🇸🇦 Makkah & checking updated prayer times...');
     const citySelect = await page.$('#citySelect');
