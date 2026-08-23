@@ -282,6 +282,24 @@ export default function ShopManagementPage() {
                   <h3 className="font-headline-md text-headline-md text-on-background text-xl">Product Catalog</h3>
                   <div className="flex gap-4">
                     <button 
+                      onClick={async () => {
+                        if (!window.confirm("Are you sure you want to PURGE ALL DUMMY PRODUCTS from Firestore?")) return;
+                        try {
+                          const snap = await getDocs(collection(db, "products"));
+                          for (const d of snap.docs) {
+                            await deleteDoc(doc(db, "products", d.id));
+                          }
+                          alert("All dummy products purged successfully!");
+                        } catch (err: any) {
+                          alert("Error purging catalog: " + err.message);
+                        }
+                      }}
+                      className="flex items-center gap-2 border border-red-500/40 bg-red-500/10 text-red-400 px-4 py-2 rounded font-label-accent text-[10px] hover:bg-red-500/20 transition-all"
+                    >
+                      <span className="material-symbols-outlined text-sm">delete_forever</span>
+                      PURGE DUMMY DATA
+                    </button>
+                    <button 
                       onClick={handleSeedDatabase}
                       disabled={seeding}
                       className="flex items-center gap-2 border border-primary/40 bg-primary/10 text-primary px-4 py-2 rounded font-label-accent text-[10px] hover:bg-primary/20 transition-all disabled:opacity-50"
