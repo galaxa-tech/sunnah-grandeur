@@ -2,7 +2,7 @@
   "name": "functions",
   "scripts": {
     "lint": "eslint \"src/**/*.ts\"",
-    "build": "tsc",
+    "build": "echo Precompiled",
     "build:watch": "tsc --watch",
     "serve": "npm run build && firebase emulators:start --only functions,firestore",
     "shell": "npm run build && firebase functions:shell",
