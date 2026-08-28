@@ -266,7 +266,9 @@ class AuthProvider extends ChangeNotifier {
         case 'weak-password':         return 'Password must be at least 6 characters.';
         case 'invalid-email':         return 'Please enter a valid email address.';
         case 'too-many-requests':     return 'Too many attempts. Try again later.';
-        case 'operation-not-allowed': return 'This sign-in method is not enabled. Please contact support.';
+        case 'operation-not-allowed':
+        case 'admin-restricted-operation':
+          return 'This sign-in method is not enabled. Please contact support.';
         case 'account-exists-with-different-credential':
           return 'An account already exists with this email. Try signing in differently.';
         default: return e.message ?? 'Authentication error.';
