@@ -26,7 +26,15 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
   Future<void> _previewSound(String key, double volume) async {
     await AdhanService.instance.stopPreview();
     setState(() => _previewingKey = key);
-    await AdhanService.instance.previewSound(key, volume: volume);
+    final played = await AdhanService.instance.previewSound(key, volume: volume);
+    if (!played && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('This Adhan sound isn\'t available yet — coming soon.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
     await Future.delayed(const Duration(seconds: 6));
     if (mounted) setState(() => _previewingKey = null);
   }

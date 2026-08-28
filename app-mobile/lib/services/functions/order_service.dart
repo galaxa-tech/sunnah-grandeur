@@ -12,10 +12,12 @@ class OrderService {
   static Future<OrderResult> createOrder({
     required List<OrderItemInput> items,
     required ShippingInput shipping,
+    String paymentMethod = 'card', // 'cod' | 'card'
   }) async {
     final data = await FunctionsClient.call('createOrder', {
-      'items':    items.map((i) => i.toMap()).toList(),
-      'shipping': shipping.toMap(),
+      'items':         items.map((i) => i.toMap()).toList(),
+      'shipping':      shipping.toMap(),
+      'paymentMethod': paymentMethod,
     });
     return OrderResult.fromMap(data);
   }
@@ -49,6 +51,8 @@ class OrderItemInput {
 
 class ShippingInput {
   final String name;
+  final String phone;
+  final String email;
   final String line1;
   final String city;
   final String state;
@@ -58,6 +62,8 @@ class ShippingInput {
 
   const ShippingInput({
     required this.name,
+    this.phone = '',
+    this.email = '',
     required this.line1,
     required this.city,
     this.state = '',
@@ -68,6 +74,8 @@ class ShippingInput {
 
   Map<String, dynamic> toMap() => {
     'name':       name,
+    'phone':      phone,
+    'email':      email,
     'line1':      line1,
     'city':       city,
     'state':      state,

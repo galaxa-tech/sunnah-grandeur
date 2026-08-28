@@ -83,7 +83,7 @@ export default function UserManagementPage() {
                   {displayUsers.map((user) => {
                     const name = user.name || user.email?.split('@')[0] || "User";
                     const initial = name.charAt(0).toUpperCase();
-                    const isAdmin = user.role === "admin" || user.role === "SuperAdmin" || user.role === "Administrator";
+                    const isAdmin = user.role === "admin" || user.role === "superAdmin" || user.role === "SuperAdmin" || user.role === "Administrator";
 
                     return (
                       <tr 

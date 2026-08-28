@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../config/api_config.dart';
 import '../../models/masjid_result.dart';
 import '../../providers/masjid_provider.dart';
 import '../../theme/app_colors.dart';
@@ -226,6 +227,49 @@ class _MasjidFinderScreenState extends State<MasjidFinderScreen>
   Widget build(BuildContext context) {
     final c      = AppColors.of(context);
     final isDark = c.isDark;
+
+    if (!ApiConfig.isPlacesConfigured) {
+      return Scaffold(
+        backgroundColor: c.bg,
+        body: SafeArea(
+          child: Column(children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 10, 18, 4),
+              child: Row(children: [
+                _MapBtn(
+                  icon: Icons.arrow_back_ios_new_rounded,
+                  c: c,
+                  onTap: () => Navigator.pop(context),
+                ),
+                const SizedBox(width: 10),
+                Text('Masjid Finder', style: GoogleFonts.manrope(
+                    fontSize: 16, fontWeight: FontWeight.w700, color: c.t1)),
+              ]),
+            ),
+            Expanded(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.mosque_outlined, color: c.gold, size: 56),
+                    const SizedBox(height: 20),
+                    Text('Masjid Finder — Coming Soon',
+                        style: GoogleFonts.manrope(fontSize: 18,
+                            fontWeight: FontWeight.w700, color: c.t1)),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Nearby mosque search is being set up and will be available shortly.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.manrope(fontSize: 13, color: c.t3),
+                    ),
+                  ]),
+                ),
+              ),
+            ),
+          ]),
+        ),
+      );
+    }
 
     return Consumer<MasjidProvider>(
       builder: (context, mp, _) {

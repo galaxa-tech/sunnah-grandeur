@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import { collection, getDocs, doc, addDoc, updateDoc, deleteDoc, serverTimestamp, onSnapshot, query, orderBy } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { httpsCallable } from "firebase/functions";
+import { db, functions } from "@/lib/firebase";
 
 interface Product {
   id: string;
@@ -79,10 +80,14 @@ export default function ShopManagementPage() {
 
   const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
-      await updateDoc(doc(db, "orders", orderId), { status: newStatus });
+      // Firestore rules block direct client writes to /orders — this must go
+      // through the admin-only updateOrderStatus Cloud Function.
+      const updateOrderStatus = httpsCallable(functions, "updateOrderStatus");
+      await updateOrderStatus({ orderId, status: newStatus });
       setOrdersList(ordersList.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
     } catch (e) {
       console.error("Error updating order status:", e);
+      alert("Failed to update order status. Check console for details.");
     }
   };
 

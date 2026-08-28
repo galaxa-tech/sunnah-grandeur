@@ -37,6 +37,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _formKey    = GlobalKey<FormState>();
   bool _isProcessing = false;
 
+  // Card payments need flutter_stripe, which is a no-op on web — default to
+  // the payment method that actually works everywhere.
+  String _paymentMethod = 'cod'; // 'cod' | 'card'
+
   // ── Contact ────────────────────────────────────────────────────────────────
   final _nameCtrl    = TextEditingController();
   final _emailCtrl   = TextEditingController();
@@ -93,7 +97,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Future<void> _handleCompleteOrder() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (kIsWeb) {
+    if (_paymentMethod == 'card' && kIsWeb) {
       _showSnack('Card payments are only available on the mobile app.');
       return;
     }
@@ -105,6 +109,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       // ── Step 1: Build shipping input ──────────────────────────────────────
       final shipping = ShippingInput(
         name:       _nameCtrl.text.trim(),
+        phone:      _phoneCtrl.text.trim(),
+        email:      _emailCtrl.text.trim(),
         line1:      _addressCtrl.text.trim(),
         city:       _cityCtrl.text.trim(),
         state:      _stateCtrl.text.trim(),
@@ -114,9 +120,27 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       );
 
       // ── Step 2: Create order server-side (does NOT clear cart) ────────────
-      final orderResult = await cart.createOrderOnly(shipping);
+      final orderResult = await cart.createOrderOnly(shipping, paymentMethod: _paymentMethod);
       if (orderResult == null) {
         throw Exception('Could not create order. Please check your connection and try again.');
+      }
+
+      if (_paymentMethod == 'cod') {
+        // Cash on Delivery — order is already confirmed server-side, no
+        // payment step needed. Clear the cart and navigate immediately.
+        await cart.clearCart();
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OrderConfirmedScreen(
+              orderId:      orderResult.orderId,
+              totalDollars: orderResult.totalDollars,
+              createdAt:    DateTime.now().toUtc(),
+            ),
+          ),
+        );
+        return;
       }
 
       // ── Step 3: Fetch Stripe clientSecret from server ─────────────────────
@@ -458,41 +482,32 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // ── Payment note ──────────────────────────────────────────────────────────
+  // ── Payment method selector ────────────────────────────────────────────────
   Widget _buildPaymentNote() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _surf,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _bd),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40, height: 40,
-            decoration: BoxDecoration(
-              color: _gold.withOpacity(0.10),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(Icons.credit_card_rounded, color: _gold, size: 20),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Secure Payment via Stripe',
-                  style: GoogleFonts.manrope(
-                    fontSize: 13, fontWeight: FontWeight.w600, color: _t1)),
-                const SizedBox(height: 2),
-                Text('Your card details are encrypted and never stored on our servers.',
-                  style: GoogleFonts.manrope(fontSize: 11, color: _t2)),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader('Payment Method'),
+        const SizedBox(height: 16),
+        _PaymentMethodOption(
+          icon: Icons.local_shipping_outlined,
+          title: 'Cash on Delivery',
+          subtitle: 'Pay in cash when your order arrives.',
+          selected: _paymentMethod == 'cod',
+          onTap: () => setState(() => _paymentMethod = 'cod'),
+        ),
+        const SizedBox(height: 10),
+        _PaymentMethodOption(
+          icon: Icons.credit_card_rounded,
+          title: 'Card via Stripe',
+          subtitle: kIsWeb
+              ? 'Card payments are only available on the mobile app.'
+              : 'Your card details are encrypted and never stored on our servers.',
+          selected: _paymentMethod == 'card',
+          disabled: kIsWeb,
+          onTap: kIsWeb ? null : () => setState(() => _paymentMethod = 'card'),
+        ),
+      ],
     );
   }
 
@@ -716,7 +731,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('COMPLETE ORDER',
+                  Text(_paymentMethod == 'cod' ? 'PLACE ORDER — PAY ON DELIVERY' : 'COMPLETE ORDER',
                     style: GoogleFonts.manrope(
                       fontSize: 12, fontWeight: FontWeight.bold,
                       color: _bg, letterSpacing: 1.5)),
@@ -892,6 +907,76 @@ class _CountryDropdown extends StatelessWidget {
             child: Text(c.$2,
               style: GoogleFonts.manrope(fontSize: 13, color: _t1)),
           )).toList(),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _PaymentMethodOption — selectable payment method row
+// ─────────────────────────────────────────────────────────────────────────────
+class _PaymentMethodOption extends StatelessWidget {
+  const _PaymentMethodOption({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.selected,
+    required this.onTap,
+    this.disabled = false,
+  });
+
+  final IconData    icon;
+  final String       title;
+  final String       subtitle;
+  final bool         selected;
+  final bool         disabled;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Opacity(
+        opacity: disabled ? 0.45 : 1.0,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: _surf,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: selected ? _gold : _bd, width: selected ? 1.5 : 1),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40, height: 40,
+                decoration: BoxDecoration(
+                  color: _gold.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: _gold, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                      style: GoogleFonts.manrope(
+                        fontSize: 13, fontWeight: FontWeight.w600, color: _t1)),
+                    const SizedBox(height: 2),
+                    Text(subtitle,
+                      style: GoogleFonts.manrope(fontSize: 11, color: _t2)),
+                  ],
+                ),
+              ),
+              Icon(
+                selected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
+                color: selected ? _gold : _t2,
+                size: 20,
+              ),
+            ],
+          ),
         ),
       ),
     );

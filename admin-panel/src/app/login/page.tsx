@@ -31,8 +31,8 @@ export default function LoginPage() {
                            userEmail === "talharrc@gmail.com" || 
                            userEmail === "rihadhamid20@gmail.com";
 
-      if (tokenResult.claims.role === "admin" || isAdminEmail) {
-        if (typeof window !== 'undefined') localStorage.setItem("demoAdmin", "true");
+      const role = tokenResult.claims.role;
+      if (role === "admin" || role === "superAdmin" || isAdminEmail) {
         router.push("/dashboard");
       } else {
         await signOut(auth);

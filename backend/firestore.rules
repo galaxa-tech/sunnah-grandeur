@@ -16,7 +16,8 @@ service cloud.firestore {
     // Role is carried in the Firebase Auth ID token custom claim.
     // Custom claims are set server-side only (Admin SDK) and cannot be forged.
     function isAdmin() {
-      return isAuthenticated() && request.auth.token.role == "admin";
+      return isAuthenticated() &&
+             (request.auth.token.role == "admin" || request.auth.token.role == "superAdmin");
     }
 
     // Prevents a user from updating protected fields via client SDK.
@@ -64,6 +65,46 @@ service cloud.firestore {
 
       // No direct client writes — createOrder function owns all order writes.
       allow create, update, delete: if false;
+    }
+
+    // ── /categories/{categoryId} ─────────────────────────────────────────────
+    match /categories/{categoryId} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // ── /banners/{bannerId} ───────────────────────────────────────────────────
+    match /banners/{bannerId} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // ── /carts/{uid}/items/{itemId} ───────────────────────────────────────────
+    // Client-managed shopping cart. Private to its owner.
+    match /carts/{uid} {
+      allow read, write: if isOwner(uid);
+      match /items/{itemId} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // ── /favorites/{uid}/items/{itemId} ───────────────────────────────────────
+    match /favorites/{uid} {
+      allow read, write: if isOwner(uid);
+      match /items/{itemId} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // ── /hadith/{hadithId}, /hadith_posts/{postId} ────────────────────────────
+    // Rotating daily-hadith pool + legacy fallback feed. Public read.
+    match /hadith/{hadithId} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+    match /hadith_posts/{postId} {
+      allow read:  if true;
+      allow write: if isAdmin();
     }
 
     // ── /media/{mediaId} ─────────────────────────────────────────────────────

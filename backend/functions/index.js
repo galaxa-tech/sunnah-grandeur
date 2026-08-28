@@ -10,7 +10,7 @@
  *    createUserMetadata    updateUserProfile     deleteAccount
  *    getProducts           getProductById
  *    createProduct         updateProduct         (admin only)
- *    createOrder           getOrdersByUser
+ *    createOrder           getOrdersByUser       updateOrderStatus (admin only)
  *    createPaymentIntent   verifyPayment
  *    getMedia              triggerSync            (admin only)
  *    getHadiths
@@ -44,10 +44,11 @@ exports.createProduct  = createProduct;
 exports.updateProduct  = updateProduct;
 
 // ── Orders ────────────────────────────────────────────────────────────────────
-const { createOrder, getOrdersByUser } =
+const { createOrder, getOrdersByUser, updateOrderStatus } =
   require("./src/domains/orders");
-exports.createOrder     = createOrder;
-exports.getOrdersByUser = getOrdersByUser;
+exports.createOrder       = createOrder;
+exports.getOrdersByUser   = getOrdersByUser;
+exports.updateOrderStatus = updateOrderStatus;
 
 // ── Payments ──────────────────────────────────────────────────────────────────
 const { createPaymentIntent, verifyPayment } =

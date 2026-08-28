@@ -7,9 +7,11 @@ class DawahProvider extends ChangeNotifier {
 
   HadithModel? _dailyHadith;
   bool _isLoading = true;
+  bool _hasError = false;
 
   HadithModel? get dailyHadith => _dailyHadith;
   bool get isLoading => _isLoading;
+  bool get hasError => _hasError;
 
   static const int _hadithPoolSize = 1000;
 
@@ -25,6 +27,7 @@ class DawahProvider extends ChangeNotifier {
   }
 
   Future<void> fetchDailyHadith() async {
+    _hasError = false;
     try {
       // Try rotating index first (new hadith collection)
       final snap = await _db.collection('hadith')
@@ -50,6 +53,7 @@ class DawahProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error fetching hadith: $e');
       _dailyHadith = null;
+      _hasError = true;
     } finally {
       _isLoading = false;
       notifyListeners();

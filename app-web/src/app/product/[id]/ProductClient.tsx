@@ -33,13 +33,13 @@ export default function ProductClient() {
         if (docSnap.exists() && docSnap.data().isActive) {
           setProduct({ id: docSnap.id, ...docSnap.data() } as Product);
         } else {
-          const staticProd = products.find(p => p.id === id);
-          setProduct(staticProd || products[0]);
+          // Not in Firestore (or inactive) — fall back to the static catalog
+          // for this exact id only. Never substitute a different product.
+          setProduct(products.find(p => p.id === id) ?? null);
         }
       } catch (e) {
         console.error('Error fetching Firestore product:', e);
-        const staticProd = products.find(p => p.id === id);
-        setProduct(staticProd || products[0]);
+        setProduct(products.find(p => p.id === id) ?? null);
       } finally {
         setLoading(false);
       }
@@ -47,10 +47,22 @@ export default function ProductClient() {
     loadProduct();
   }, [id]);
 
-  if (!product) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-[#070707] flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-container"></div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-[#070707] flex flex-col items-center justify-center gap-4 text-center px-4">
+        <p className="text-text-primary text-lg font-semibold">Product not found</p>
+        <p className="text-text-secondary text-sm">This product may have been removed or is no longer available.</p>
+        <Link href="/shop" className="text-primary-container font-bold hover:underline text-xs uppercase tracking-widest">
+          ➔ Browse Products
+        </Link>
       </div>
     );
   }
@@ -120,36 +132,6 @@ export default function ProductClient() {
               {product.name}
             </h1>
 
-            {/* Rating + badges */}
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="flex items-center gap-0.5">
-                {[1, 2, 3, 4].map(s => (
-                  <span
-                    key={s}
-                    className="material-symbols-outlined text-primary-container text-xl leading-none"
-                    style={{ fontVariationSettings: "'FILL' 1" }}
-                  >star</span>
-                ))}
-                <span
-                  className="material-symbols-outlined text-primary-container text-xl leading-none"
-                  style={{ fontVariationSettings: "'FILL' 0" }}
-                >star_half</span>
-              </div>
-              <span className="text-primary-container text-sm cursor-pointer hover:underline">4.3</span>
-              <span className="text-text-secondary text-sm">(167,855)</span>
-              {!product.isSoldOut && (
-                <span className="bg-[#1b4332] text-[#52b788] text-xs font-bold px-2 py-0.5 rounded">
-                  Customers&apos; Choice
-                </span>
-              )}
-            </div>
-
-            {!product.isSoldOut && (
-              <p className="text-sm text-text-secondary">
-                <span className="font-semibold text-text-primary">2K+</span> bought in the past month
-              </p>
-            )}
-
             <hr className="border-border-subtle" />
 
             {/* Price */}
@@ -211,9 +193,6 @@ export default function ProductClient() {
             <div className="space-y-1 text-sm border-t border-border-subtle pt-4">
               <p className="text-text-secondary">
                 <span className="text-text-primary">Category: </span>{product.category}
-              </p>
-              <p className="text-text-secondary">
-                <span className="text-text-primary">Volume: </span>50 ML
               </p>
               <p className="text-text-secondary">
                 <span className="text-text-primary">Type: </span>Alcohol-Free · Halal Certified
@@ -384,7 +363,7 @@ export default function ProductClient() {
             {[
               { id: 'description', label: 'Description' },
               { id: 'specs', label: 'Specifications' },
-              { id: 'reviews', label: 'Reviews (167)' },
+              { id: 'reviews', label: 'Reviews' },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -433,24 +412,9 @@ export default function ProductClient() {
             )}
 
             {activeTab === 'reviews' && (
-              <div className="space-y-6">
-                {[
-                  { name: 'Tariq A.', rating: 5, date: '2 days ago', text: 'SubhanAllah, the fragrance quality is outstanding. Lasted all day through prayer times.' },
-                  { name: 'Khadija R.', rating: 5, date: '1 week ago', text: 'Beautiful craftsmanship and fast delivery in Dhaka. Extremely satisfied!' }
-                ].map((rev, idx) => (
-                  <div key={idx} className="border-b border-border-subtle pb-4 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-text-primary">{rev.name}</span>
-                      <span className="text-xs text-text-secondary">{rev.date}</span>
-                    </div>
-                    <div className="flex text-primary-container text-xs">
-                      {Array.from({ length: rev.rating }).map((_, i) => (
-                        <span key={i} className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                      ))}
-                    </div>
-                    <p className="text-xs text-text-secondary">{rev.text}</p>
-                  </div>
-                ))}
+              <div className="text-center py-10">
+                <p className="text-text-secondary text-sm">No reviews yet for this product.</p>
+                <p className="text-text-secondary text-xs mt-1">Be the first to share your experience.</p>
               </div>
             )}
           </div>
