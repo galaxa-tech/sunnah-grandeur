@@ -50,22 +50,31 @@ this to a client.
 - **No image upload in the admin panel** — products are added via pasted
   image URLs; Storage rules block all client writes and no upload flow
   was ever built. Not broken, just an unbuilt feature.
-- **The "Purge Dummy Data" and "Seed Database" buttons in
-  `admin-panel/src/app/dashboard/shop/page.tsx`** are wired directly to
-  production Firestore behind only a `window.confirm()`. Left as-is since
-  it's clearly dev/demo tooling, but worth removing or gating harder
-  before this is a real client's day-to-day tool.
 - **Silent-failure pattern still exists in a few lower-traffic spots** —
   e.g. `AuthProvider.deleteAccount()`, some `cart_provider.dart` error
   paths — that weren't on the critical demo path. The Adhan/Masjid/Hadith
   ones (the most visible) are fixed; a full sweep of every `catch (e) {
   debugPrint(...) }` site wasn't done.
-- **Categories tab and Inventory tab in `admin-panel`'s shop management
-  page are hardcoded**, not backed by real Firestore queries. Products
-  and Orders tabs are real; these two aren't.
-- **`admin-panel`'s order table doesn't display the phone/email now
-  captured on each order** — the data is there (backend schema was
-  extended for it), just not surfaced in that UI yet.
+
+## Fixed after the fact — found by you, not the original audit
+
+- **Storefront cart pre-loaded 2 fake products for every visitor.**
+  `useCartStore`'s initial state hardcoded a demo cart (badge showed "3"
+  units / "2" products before anyone touched anything). You caught this
+  from a live screenshot; it wasn't in the original audit. Fixed — cart
+  starts empty.
+- **Admin panel's "Purge Dummy Data" button deleted every product in
+  Firestore, real or not**, despite the label, behind only a
+  `window.confirm()`. "Seed Database" seeded the exact same 3 demo
+  products found hardcoded in the cart above — same failure mode,
+  different door. Both removed.
+- **Categories and Inventory tabs in the admin panel showed hardcoded
+  fake numbers** regardless of real data. Now computed live from
+  Firestore; Inventory also required adding a `stockQuantity` field to
+  the product form and table, since nothing in the admin UI could set it
+  before.
+- **`admin-panel`'s order table now shows phone/email** captured on each
+  order (the backend schema already had it, the UI didn't surface it).
 
 ## Verified fine — no action needed
 
