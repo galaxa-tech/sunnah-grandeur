@@ -466,14 +466,17 @@ export default function ShopManagementPage() {
                             {order.trackingCode || `#${order.id.substring(0, 8)}`}
                           </td>
                           <td className="px-6 py-4">
-                            <p className="font-semibold text-on-surface">{order.customer?.fullName || order.customerName || "Customer"}</p>
-                            <p className="text-xs text-on-surface-variant">{order.customer?.phone || order.phone}</p>
+                            <p className="font-semibold text-on-surface">{order.shipping?.name || order.customer?.fullName || order.customerName || "Customer"}</p>
+                            <p className="text-xs text-on-surface-variant">{order.shipping?.phone || order.customer?.phone || order.phone}</p>
+                            {(order.shipping?.email || order.customer?.email) && (
+                              <p className="text-xs text-on-surface-variant">{order.shipping?.email || order.customer?.email}</p>
+                            )}
                           </td>
                           <td className="px-6 py-4 text-xs text-on-surface-variant">
                             {order.items ? `${order.items.length} item(s)` : "1 item"}
                           </td>
                           <td className="px-6 py-4 font-semibold text-primary">
-                            ৳{(order.total || order.amount || 0).toLocaleString()}
+                            ৳{(order.totalInCents != null ? order.totalInCents / 100 : (order.total || order.amount || 0)).toLocaleString()}
                           </td>
                           <td className="px-6 py-4">
                             <select
