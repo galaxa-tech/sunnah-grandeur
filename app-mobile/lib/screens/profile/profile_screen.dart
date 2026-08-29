@@ -11,7 +11,7 @@ import '../../providers/language_provider.dart';
 import '../auth/login_screen.dart';
 import '../auth/register_screen.dart';
 import 'account_identity_screen.dart';
-import 'notifications_settings_screen.dart';
+import '../prayer_tools/adhan_settings_screen.dart';
 import 'location_settings_screen.dart';
 import 'appearance_settings_screen.dart';
 import 'language_settings_screen.dart';
@@ -67,7 +67,7 @@ class ProfileScreen extends StatelessWidget {
               _MenuItem(icon: Icons.notifications_outlined,
                   label: lang.tr('notifications'),
                   sub: lang.tr('notifications_sub'),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsSettingsScreen())),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdhanSettingsScreen())),
               ),
               _MenuItem(icon: Icons.location_on_outlined,
                   label: lang.tr('location'),

@@ -11,7 +11,8 @@ import 'forgot_password_screen.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 // LoginScreen — minimal email + password sign-in.
 //
-// Also offers: Google (text only, no logo), Guest mode.
+// Google Sign-In and Guest mode live only on WelcomeScreen; this screen is a
+// clean email/password form reached via "Sign In with Email".
 // Navigation: all success paths use pushNamedAndRemoveUntil('/main', (_) => false)
 // to cleanly clear the stack regardless of where this screen was pushed from.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -28,9 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passCtrl   = TextEditingController();
   final _passFocus  = FocusNode();
 
-  bool _isLoading     = false;
-  bool _googleLoading = false;
-  bool _guestLoading  = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -40,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  bool get _anyLoading => _isLoading || _googleLoading || _guestLoading;
+  bool get _anyLoading => _isLoading;
 
   // ── Email sign-in ─────────────────────────────────────────────────────────
 
@@ -60,41 +59,6 @@ class _LoginScreenState extends State<LoginScreen> {
     } else {
       setState(() => _isLoading = false);
       _showSnack(auth.error ?? 'Sign-in failed. Please try again.');
-    }
-  }
-
-  // ── Google sign-in ────────────────────────────────────────────────────────
-
-  Future<void> _handleGoogle() async {
-    if (_anyLoading) return;
-    setState(() => _googleLoading = true);
-    final auth = context.read<AuthProvider>();
-    final ok   = await auth.signInWithGoogle();
-    if (!mounted) return;
-
-    if (ok) {
-      Navigator.pushNamedAndRemoveUntil(context, '/main', (_) => false);
-    } else {
-      setState(() => _googleLoading = false);
-      final msg = auth.error ?? '';
-      if (msg.isNotEmpty) _showSnack(msg);
-    }
-  }
-
-  // ── Guest ─────────────────────────────────────────────────────────────────
-
-  Future<void> _handleGuest() async {
-    if (_anyLoading) return;
-    setState(() => _guestLoading = true);
-    final auth = context.read<AuthProvider>();
-    final ok   = await auth.signInAsGuest();
-    if (!mounted) return;
-
-    if (ok) {
-      Navigator.pushNamedAndRemoveUntil(context, '/main', (_) => false);
-    } else {
-      setState(() => _guestLoading = false);
-      _showSnack(auth.error ?? 'Could not enter as guest. Check your connection.');
     }
   }
 
@@ -148,33 +112,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
 
                 const SizedBox(height: 36),
-
-                // ── Google button — dark luxury, text only, no logo ────────
-                _IconlessButton(
-                  label: 'Continue with Google',
-                  loading: _googleLoading,
-                  disabled: _anyLoading,
-                  onTap: _handleGoogle,
-                  style: _BtnStyle.googleDark,
-                  c: c,
-                ),
-
-                const SizedBox(height: 24),
-
-                // ── Divider ────────────────────────────────────────────────
-                Row(
-                  children: [
-                    Expanded(child: Divider(color: c.bd2, thickness: 0.8)),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      child: Text('or sign in with email',
-                          style: GoogleFonts.inter(color: c.t3, fontSize: 11)),
-                    ),
-                    Expanded(child: Divider(color: c.bd2, thickness: 0.8)),
-                  ],
-                ),
-
-                const SizedBox(height: 24),
 
                 // ── Email field ────────────────────────────────────────────
                 _AuthField(
@@ -234,38 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   loading: _isLoading,
                   disabled: _anyLoading,
                   onTap: _handleLogin,
-                  style: _BtnStyle.goldFilled,
                   c: c,
-                ),
-
-                const SizedBox(height: 20),
-
-                // ── Guest link ─────────────────────────────────────────────
-                GestureDetector(
-                  onTap: _guestLoading ? null : _handleGuest,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: _guestLoading
-                        ? SizedBox(
-                            height: 20, width: 20,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(c.t3)))
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.person_outline_rounded,
-                                  color: c.t3, size: 15),
-                              const SizedBox(width: 6),
-                              Text('Continue as Guest',
-                                style: GoogleFonts.inter(
-                                  color: c.t3,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                )),
-                            ],
-                          ),
-                  ),
                 ),
 
                 const SizedBox(height: 24),
@@ -299,10 +205,8 @@ class _LoginScreenState extends State<LoginScreen> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// _IconlessButton — dark Google or gold filled button (no logo, no icon)
+// _IconlessButton — gold filled button (no logo, no icon)
 // ─────────────────────────────────────────────────────────────────────────────
-
-enum _BtnStyle { googleDark, goldFilled }
 
 class _IconlessButton extends StatelessWidget {
   const _IconlessButton({
@@ -310,7 +214,6 @@ class _IconlessButton extends StatelessWidget {
     required this.loading,
     required this.disabled,
     required this.onTap,
-    required this.style,
     required this.c,
   });
 
@@ -318,33 +221,24 @@ class _IconlessButton extends StatelessWidget {
   final bool        loading;
   final bool        disabled;
   final VoidCallback onTap;
-  final _BtnStyle   style;
   final AppColors   c;
 
   @override
   Widget build(BuildContext context) {
-    final isGoogle = style == _BtnStyle.googleDark;
+    final deco = BoxDecoration(
+      gradient: c.goldGradient,
+      borderRadius: BorderRadius.circular(14),
+      boxShadow: [
+        BoxShadow(
+          color: c.gold.withOpacity(0.28),
+          blurRadius: 16,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    );
 
-    final deco = isGoogle
-        ? BoxDecoration(
-            color: c.surf,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: c.gold.withOpacity(0.45), width: 1.2),
-          )
-        : BoxDecoration(
-            gradient: c.goldGradient,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: c.gold.withOpacity(0.28),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          );
-
-    final textColor = isGoogle ? c.t1 : const Color(0xFF1A1200);
-    final spinnerColor = isGoogle ? c.gold : const Color(0xFF2D1F00);
+    const textColor = Color(0xFF1A1200);
+    const spinnerColor = Color(0xFF2D1F00);
 
     return GestureDetector(
       onTap: (disabled || loading) ? null : onTap,

@@ -9,7 +9,9 @@ import '../../theme/app_text_styles.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 // RegisterScreen — minimal 3-field signup (name, email, password).
 //
-// Phone removed to reduce friction. Google is the fastest path.
+// Phone removed to reduce friction. Google Sign-In is offered here only for
+// guests upgrading their account (isGuest branch) — normal registration is a
+// clean email/password form; new users pick Google from WelcomeScreen instead.
 // Navigation: all success paths use pushNamedAndRemoveUntil('/main', (_) => false).
 // ─────────────────────────────────────────────────────────────────────────────
 class RegisterScreen extends StatefulWidget {
@@ -167,33 +169,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 28),
 
-                // ── Google — fastest path (text only, no logo) ────────────
-                _IconlessButton(
-                  label: 'Continue with Google',
-                  loading: _googleLoading,
-                  disabled: _anyLoading,
-                  onTap: _handleGoogle,
-                  isGold: false,
-                  c: c,
-                ),
+                // ── Google — guest-upgrade path only (text only, no logo) ──
+                // Normal registration is email/password only; new users pick
+                // Google from WelcomeScreen. Guests upgrading get it here too
+                // since it's the fastest way to save their progress.
+                if (isGuest) ...[
+                  _IconlessButton(
+                    label: 'Continue with Google',
+                    loading: _googleLoading,
+                    disabled: _anyLoading,
+                    onTap: _handleGoogle,
+                    isGold: false,
+                    c: c,
+                  ),
 
-                const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-                // ── Divider ────────────────────────────────────────────────
-                Row(
-                  children: [
-                    Expanded(child: Divider(color: c.bd2, thickness: 0.8)),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      child: Text('or create with email',
-                          style: GoogleFonts.inter(
-                              color: c.t3, fontSize: 11)),
-                    ),
-                    Expanded(child: Divider(color: c.bd2, thickness: 0.8)),
-                  ],
-                ),
+                  // ── Divider ──────────────────────────────────────────────
+                  Row(
+                    children: [
+                      Expanded(child: Divider(color: c.bd2, thickness: 0.8)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: Text('or create with email',
+                            style: GoogleFonts.inter(
+                                color: c.t3, fontSize: 11)),
+                      ),
+                      Expanded(child: Divider(color: c.bd2, thickness: 0.8)),
+                    ],
+                  ),
 
-                const SizedBox(height: 20),
+                  const SizedBox(height: 20),
+                ],
 
                 // ── Name ───────────────────────────────────────────────────
                 _RegField(

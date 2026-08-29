@@ -22,12 +22,9 @@ import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
 import 'screens/shell_screen.dart';
 import 'screens/onboarding/welcome_screen.dart';
-import 'screens/onboarding/language_onboarding_screen.dart';
-import 'screens/onboarding/location_onboarding_screen.dart';
-import 'screens/onboarding/alarm_onboarding_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
-import 'screens/profile/notifications_settings_screen.dart';
+import 'screens/prayer_tools/adhan_settings_screen.dart';
 import 'screens/profile/location_settings_screen.dart';
 
 // ── ThemeMode + text-scale notifier ──────────────────────────────────────────
@@ -169,13 +166,10 @@ class SunnahGrandeurApp extends StatelessWidget {
           : const SplashScreen(),
       routes: {
         '/welcome':           (_) => const WelcomeScreen(),
-        '/onboard/language':  (_) => const LanguageOnboardingScreen(),
-        '/onboard/location':  (_) => const LocationOnboardingScreen(),
-        '/onboard/alarms':    (_) => const AlarmOnboardingScreen(),
         '/login':             (_) => const LoginScreen(),
         '/register':          (_) => const RegisterScreen(),
         '/main':              (_) => const ShellScreen(),
-        '/settings/notifications': (_) => const NotificationsSettingsScreen(),
+        '/settings/notifications': (_) => const AdhanSettingsScreen(),
         '/settings/location':      (_) => const LocationSettingsScreen(),
       },
     );
