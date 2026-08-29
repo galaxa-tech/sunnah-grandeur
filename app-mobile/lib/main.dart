@@ -25,6 +25,8 @@ import 'screens/onboarding/welcome_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/prayer_tools/adhan_settings_screen.dart';
+import 'screens/prayer_tools/zakat_calculator_screen.dart';
+import 'screens/prayer_tools/hijri_calendar_screen.dart';
 import 'screens/profile/location_settings_screen.dart';
 
 // ── ThemeMode + text-scale notifier ──────────────────────────────────────────
@@ -171,6 +173,8 @@ class SunnahGrandeurApp extends StatelessWidget {
         '/main':              (_) => const ShellScreen(),
         '/settings/notifications': (_) => const AdhanSettingsScreen(),
         '/settings/location':      (_) => const LocationSettingsScreen(),
+        '/tools/zakat':            (_) => const ZakatCalculatorScreen(),
+        '/tools/hijri-calendar':   (_) => const HijriCalendarScreen(),
       },
     );
   }

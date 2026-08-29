@@ -14,6 +14,8 @@ import '../prayer_tools/qibla_finder_screen.dart';
 import '../prayer_tools/tasbeeh_screen.dart';
 import '../prayer_tools/masjid_finder_screen.dart';
 import '../prayer_tools/forbidden_times_screen.dart';
+import '../prayer_tools/zakat_calculator_screen.dart';
+import '../prayer_tools/hijri_calendar_screen.dart';
 import 'namaz_schedule_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -415,6 +417,22 @@ class _QuickAccessGrid extends StatelessWidget {
             title: lang.tr('tasbeeh'), sub: lang.tr('digital_dhikr'),
             onTap: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const TasbeehScreen())),
+          )),
+        ]),
+        const SizedBox(height: 8),
+        Row(children: [
+          Expanded(child: _AccessCard(
+            c: c, icon: Icons.calculate_outlined,
+            title: lang.tr('zakat_calculator'), sub: lang.tr('calculate_zakat_due'),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const ZakatCalculatorScreen())),
+          )),
+          const SizedBox(width: 8),
+          Expanded(child: _AccessCard(
+            c: c, icon: Icons.calendar_today_outlined,
+            title: lang.tr('hijri_calendar'), sub: lang.tr('islamic_lunar_dates'),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const HijriCalendarScreen())),
           )),
         ]),
         const SizedBox(height: 8),
