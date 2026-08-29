@@ -4,6 +4,7 @@ import '../../providers/location_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../widgets/sg_pill.dart';
+import '../../widgets/app_snackbar.dart';
 
 class LocationSettingsScreen extends StatefulWidget {
   const LocationSettingsScreen({super.key});
@@ -32,14 +33,11 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
     if (ok) {
       _searchCtrl.clear();
       setState(() => _suggestions = []);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Location updated'),
-        duration: Duration(seconds: 2),
-      ));
+      showAppSnackbar(context, 'Location updated',
+          type: AppSnackbarType.success, duration: const Duration(seconds: 2));
     } else if (loc.error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(loc.error!), duration: const Duration(seconds: 3)),
-      );
+      showAppSnackbar(context, loc.error!,
+          type: AppSnackbarType.error, duration: const Duration(seconds: 3));
     }
   }
 
@@ -48,10 +46,8 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
     if (!mounted) return;
     _searchCtrl.clear();
     setState(() => _suggestions = []);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Location set to ${city.city}'),
-      duration: const Duration(seconds: 2),
-    ));
+    showAppSnackbar(context, 'Location set to ${city.city}',
+        type: AppSnackbarType.success, duration: const Duration(seconds: 2));
   }
 
   @override

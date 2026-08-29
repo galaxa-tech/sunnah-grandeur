@@ -45,7 +45,7 @@ class _QuranSurahListScreenState extends State<QuranSurahListScreen> {
 
   Widget _buildBody(AppColors c, QuranProvider quran) {
     if (quran.isLoadingSurahs && quran.surahs.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(child: CircularProgressIndicator(color: c.gold));
     }
 
     if (quran.surahsError != null && quran.surahs.isEmpty) {

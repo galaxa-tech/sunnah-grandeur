@@ -198,7 +198,7 @@ class _WatchTab extends StatelessWidget {
     final media = context.watch<MediaProvider>();
 
     return media.isLoadingQuran
-        ? const Center(child: CircularProgressIndicator())
+        ? Center(child: CircularProgressIndicator(color: c.gold))
         : RefreshIndicator(
             onRefresh: () => media.refreshType('quran'),
             child: SingleChildScrollView(
@@ -222,8 +222,19 @@ class _WatchTab extends StatelessWidget {
                 if (media.quranMedia.isEmpty)
                   Padding(
                     padding: const EdgeInsets.all(40),
-                    child: Text('No recitations available.',
-                        style: AppTextStyles.bodyMuted(c)),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.menu_book_outlined, color: c.t3, size: 40),
+                        const SizedBox(height: 12),
+                        Text('No recitations available',
+                            style: AppTextStyles.bodyMuted(c)),
+                        const SizedBox(height: 6),
+                        Text('Pull down to refresh or check your connection.',
+                            style: AppTextStyles.bodyMuted(c, size: 11),
+                            textAlign: TextAlign.center),
+                      ],
+                    ),
                   ),
 
                 ...media.quranMedia.map((m) => VideoRowItem(

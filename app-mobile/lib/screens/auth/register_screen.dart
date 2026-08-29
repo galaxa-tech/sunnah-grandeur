@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -59,6 +60,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (!mounted) return;
     if (success) {
+      HapticFeedback.lightImpact();
       Navigator.pushNamedAndRemoveUntil(context, '/main', (_) => false);
     } else {
       setState(() => _isLoading = false);

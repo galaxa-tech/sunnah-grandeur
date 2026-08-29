@@ -163,6 +163,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       // The webhook will also clear the Firestore cart, but we clear the
       // local copy immediately for a snappy UX.
       await cart.clearCart();
+      HapticFeedback.mediumImpact();
 
       if (!mounted) return;
       Navigator.pushReplacement(

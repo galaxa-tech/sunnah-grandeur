@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
+import '../../widgets/app_snackbar.dart';
 
 const _shareLink = 'https://sunnahgrandeur.com/invite';
 const _shareMsg  = 'Join me on Sunnah Grandeur — your Islamic lifestyle companion!\n$_shareLink';
@@ -104,10 +105,11 @@ class InviteFriendsScreen extends StatelessWidget {
                         const SizedBox(width: 8),
                         GestureDetector(
                           onTap: () {
+                            HapticFeedback.lightImpact();
                             Clipboard.setData(const ClipboardData(text: _shareLink));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Link copied!'), duration: Duration(seconds: 1)),
-                            );
+                            showAppSnackbar(context, 'Link copied!',
+                                type: AppSnackbarType.success,
+                                duration: const Duration(seconds: 1));
                           },
                           child: Container(
                             width: 44, height: 44,

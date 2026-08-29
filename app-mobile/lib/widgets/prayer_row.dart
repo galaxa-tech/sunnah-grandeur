@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import 'sg_pill.dart';
@@ -87,7 +88,12 @@ class PrayerRow extends StatelessWidget {
           if (completed != null) ...[
             const SizedBox(width: 10),
             GestureDetector(
-              onTap: onToggle,
+              onTap: onToggle == null
+                  ? null
+                  : () {
+                      HapticFeedback.lightImpact();
+                      onToggle!();
+                    },
               behavior: HitTestBehavior.opaque,
               child: Icon(
                 completed!

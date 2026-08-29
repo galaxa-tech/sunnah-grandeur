@@ -9,6 +9,7 @@ import '../../models/masjid_result.dart';
 import '../../providers/masjid_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
+import '../../widgets/app_snackbar.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Dark Islamic map style (matches app dark theme: bg #0D0D0F, gold #C8A55A)
@@ -194,9 +195,8 @@ class _MasjidFinderScreenState extends State<MasjidFinderScreen>
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open navigation.')),
-        );
+        showAppSnackbar(context, 'Could not open navigation.',
+            type: AppSnackbarType.error);
       }
     }
   }

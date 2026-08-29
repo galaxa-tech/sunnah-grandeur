@@ -36,7 +36,7 @@ class RuqyahScreen extends StatelessWidget {
           const SizedBox(height: 4),
           Expanded(
             child: media.isLoadingRuqyah
-                ? const Center(child: CircularProgressIndicator())
+                ? Center(child: CircularProgressIndicator(color: c.gold))
                 : RefreshIndicator(
                     onRefresh: () => media.refreshType('ruqyah'),
                     child: SingleChildScrollView(

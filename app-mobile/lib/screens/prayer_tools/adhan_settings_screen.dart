@@ -6,6 +6,7 @@ import '../../services/adhan_service.dart';
 import '../../services/notification_service.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
+import '../../widgets/app_snackbar.dart';
 
 class AdhanSettingsScreen extends StatefulWidget {
   const AdhanSettingsScreen({super.key});
@@ -34,14 +35,8 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
   Future<void> _requestPermissionsAndSave(AppColors c) async {
     await NotificationService.instance.requestPermissions();
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Adhan alarms activated.',
-              style: AppTextStyles.body(c, size: 13, color: Colors.white)),
-          backgroundColor: c.gold.withValues(alpha: 0.85),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      showAppSnackbar(context, 'Adhan alarms activated.',
+          type: AppSnackbarType.success, duration: const Duration(seconds: 2));
     }
   }
 

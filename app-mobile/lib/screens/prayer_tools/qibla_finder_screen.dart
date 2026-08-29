@@ -123,13 +123,13 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen> {
               future: _permissionFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return Center(child: CircularProgressIndicator(color: c.gold));
                 }
                 return StreamBuilder(
                   stream: FlutterQiblah.qiblahStream,
                   builder: (context, AsyncSnapshot<QiblahDirection> snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                      return Center(child: CircularProgressIndicator(color: c.gold));
                     }
                     if (snapshot.hasError) {
                       return Center(child: Text("Error: ${snapshot.error}", style: AppTextStyles.body(c)));

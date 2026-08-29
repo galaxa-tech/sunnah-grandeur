@@ -36,7 +36,7 @@ class YoutubeFeedScreen extends StatelessWidget {
 
           Expanded(
             child: media.isLoadingVideos
-              ? const Center(child: CircularProgressIndicator())
+              ? Center(child: CircularProgressIndicator(color: c.gold))
               : media.videos.isEmpty
                 ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                     Icon(Icons.play_circle_outline_rounded, color: c.t3, size: 48),

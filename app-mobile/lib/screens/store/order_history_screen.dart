@@ -66,7 +66,7 @@ class OrderHistoryScreen extends StatelessWidget {
                         .snapshots(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
+                        return Center(child: CircularProgressIndicator(color: c.gold));
                       }
                       if (snapshot.hasError) {
                         return Center(child: Text('Error: ${snapshot.error}', style: AppTextStyles.body(c)));
@@ -104,7 +104,7 @@ class OrderHistoryScreen extends StatelessWidget {
                             IconData statusIcon = Icons.local_shipping_outlined;
                             
                             if (status == 'DELIVERED') {
-                              statusColor = const Color(0xFF4CAF82);
+                              statusColor = c.green;
                               statusIcon = Icons.check_circle_outline_rounded;
                             } else if (status == 'CANCELLED') {
                               statusColor = c.red;

@@ -4,6 +4,8 @@ import '../../theme/app_text_styles.dart';
 
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/app_snackbar.dart';
+import '../../widgets/app_dialog.dart';
 
 class AccountIdentityScreen extends StatefulWidget {
   const AccountIdentityScreen({super.key});
@@ -44,12 +46,13 @@ class _AccountIdentityScreenState extends State<AccountIdentityScreen> {
       phone: _phoneCtrl.text,
     );
     setState(() => _isSaving = false);
-    
+
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(success ? 'Profile updated successfully' : 'Failed to update profile'),
-        backgroundColor: success ? const Color(0xFF4CAF82) : const Color(0xFFE53935),
-      ));
+      showAppSnackbar(
+        context,
+        success ? 'Profile updated successfully' : 'Failed to update profile',
+        type: success ? AppSnackbarType.success : AppSnackbarType.error,
+      );
     }
   }
 
@@ -173,16 +176,12 @@ class _AccountIdentityScreenState extends State<AccountIdentityScreen> {
 
                     GestureDetector(
                       onTap: () async {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            title: const Text('Delete Account'),
-                            content: const Text('Are you sure you want to permanently delete your account? This action cannot be undone.'),
-                            actions: [
-                              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                              TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('Delete', style: AppTextStyles.label(c, color: c.red))),
-                            ],
-                          ),
+                        final confirm = await showAppConfirmDialog(
+                          context,
+                          title: 'Delete Account',
+                          message: 'Are you sure you want to permanently delete your account? This action cannot be undone.',
+                          confirmLabel: 'Delete',
+                          danger: true,
                         );
                         if (confirm == true) {
                           await auth.deleteAccount();

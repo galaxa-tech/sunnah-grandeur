@@ -124,7 +124,7 @@ class _NamazScheduleScreenState extends State<NamazScheduleScreen> {
           // Prayer list
           Expanded(
             child: prayer.isLoading
-              ? const Center(child: CircularProgressIndicator())
+              ? Center(child: CircularProgressIndicator(color: c.gold))
               : SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 18),
                   child: Column(children: [

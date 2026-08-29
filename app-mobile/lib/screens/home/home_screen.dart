@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../providers/dawah_provider.dart';
@@ -87,7 +88,7 @@ class HomeScreen extends StatelessWidget {
                   trailing: SgPill(label: lang.tr('hadith'), variant: 'gold'),
                 ),
                 dawah.isLoading
-                  ? const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()))
+                  ? Center(child: Padding(padding: const EdgeInsets.all(20), child: CircularProgressIndicator(color: c.gold)))
                   : _HadithDailyCard(c: c, hadith: dawah.dailyHadith, lang: lang),
 
                 // ── Sawm section ────────────────────────────────────────────────
@@ -299,6 +300,7 @@ class _SawmCardState extends State<_SawmCard> {
   }
 
   Future<void> _toggleFasted() async {
+    HapticFeedback.lightImpact();
     final next = !_fastedToday;
     setState(() => _fastedToday = next);
     await FastingService.setFasted(DateTime.now(), next);
@@ -342,25 +344,25 @@ class _SawmCardState extends State<_SawmCard> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: _fastedToday
-                  ? const Color(0xFF4CAF82).withValues(alpha: 0.12)
-                  : Colors.white.withValues(alpha: 0.06),
+                  ? c.green.withValues(alpha: 0.12)
+                  : (c.isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                   color: _fastedToday
-                      ? const Color(0xFF4CAF82).withValues(alpha: 0.4)
-                      : Colors.white.withValues(alpha: 0.14)),
+                      ? c.green.withValues(alpha: 0.4)
+                      : (c.isDark ? Colors.white : Colors.black).withValues(alpha: 0.14)),
             ),
             child: Row(children: [
               Icon(
                 _fastedToday ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                color: _fastedToday ? const Color(0xFF4CAF82) : Colors.white60,
+                color: _fastedToday ? c.green : c.t2,
                 size: 18,
               ),
               const SizedBox(width: 10),
               Text(lang.tr('i_fasted_today'),
                   style: AppTextStyles.body(c,
                       size: 12,
-                      color: _fastedToday ? const Color(0xFF4CAF82) : Colors.white70)),
+                      color: _fastedToday ? c.green : c.t2)),
             ]),
           ),
         ),

@@ -5,6 +5,7 @@ import '../providers/auth_provider.dart';
 import '../theme/app_colors.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
+import 'app_snackbar.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AuthGate — wraps any widget that requires a real account.
@@ -71,14 +72,8 @@ class _AuthPromptScreenState extends State<_AuthPromptScreen> {
     if (mounted) {
       if (!ok) {
         setState(() => _googleLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(auth.error ?? 'Google sign-in failed.'),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
-          ),
-        );
+        showAppSnackbar(context, auth.error ?? 'Google sign-in failed.',
+            type: AppSnackbarType.error);
       }
       // On success, AuthProvider notifies → AuthGate rebuilds → shows child.
     }

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../providers/location_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
+import '../../widgets/app_snackbar.dart';
 
 class LocationOnboardingScreen extends StatefulWidget {
   const LocationOnboardingScreen({super.key});
@@ -33,9 +34,8 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
     if (ok) {
       Navigator.pushReplacementNamed(context, '/onboard/alarms');
     } else if (loc.error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(loc.error!), duration: const Duration(seconds: 3)),
-      );
+      showAppSnackbar(context, loc.error!,
+          type: AppSnackbarType.error, duration: const Duration(seconds: 3));
     }
   }
 

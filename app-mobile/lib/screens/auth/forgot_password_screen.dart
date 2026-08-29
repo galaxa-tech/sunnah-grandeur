@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
+import '../../widgets/app_snackbar.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -25,9 +26,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Future<void> _handleReset() async {
     final email = _emailCtrl.text.trim();
     if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your email')),
-      );
+      showAppSnackbar(context, 'Please enter your email',
+          type: AppSnackbarType.error);
       return;
     }
 
@@ -38,14 +38,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     if (mounted) {
       setState(() => _isLoading = false);
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password reset link sent to your email')),
-        );
+        showAppSnackbar(context, 'Password reset link sent to your email',
+            type: AppSnackbarType.success);
         Navigator.pop(context);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to send reset link. Please try again.')),
-        );
+        showAppSnackbar(context, 'Failed to send reset link. Please try again.',
+            type: AppSnackbarType.error);
       }
     }
   }
@@ -92,8 +90,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
               const SizedBox(height: 30),
               
-              _isLoading 
-                ? const CircularProgressIndicator()
+              _isLoading
+                ? CircularProgressIndicator(color: c.gold)
                 : _GoldButton(
                     label: 'Send Reset Link',
                     onTap: _handleReset,

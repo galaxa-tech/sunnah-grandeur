@@ -97,7 +97,7 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
 
   Widget _buildBody(AppColors c, QuranProvider quran, SurahDetail? detail) {
     if (detail == null && quran.isLoadingSurahDetail) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(child: CircularProgressIndicator(color: c.gold));
     }
 
     if (detail == null && quran.surahDetailError != null) {

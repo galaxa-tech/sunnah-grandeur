@@ -167,7 +167,7 @@ class _TasbeehScreenState extends State<TasbeehScreen>
           // Counter body
           Expanded(
             child: !_loaded
-              ? const Center(child: CircularProgressIndicator())
+              ? Center(child: CircularProgressIndicator(color: c.gold))
               : Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

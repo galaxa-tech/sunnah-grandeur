@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/store_provider.dart';
@@ -616,6 +617,7 @@ class _ProductGrid extends StatelessWidget {
 
   void _addToCart(BuildContext context, ProductModel p) {
     if (p.stockQuantity == 0) return;
+    HapticFeedback.lightImpact();
     cart.addToCart(p, 'Standard', 1);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
