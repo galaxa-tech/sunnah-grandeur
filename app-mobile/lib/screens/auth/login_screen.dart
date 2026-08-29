@@ -253,7 +253,7 @@ class _IconlessButton extends StatelessWidget {
           decoration: deco,
           alignment: Alignment.center,
           child: loading
-              ? SizedBox(
+              ? const SizedBox(
                   width: 22, height: 22,
                   child: CircularProgressIndicator(
                     strokeWidth: 2.2,

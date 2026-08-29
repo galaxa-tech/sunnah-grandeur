@@ -187,8 +187,8 @@ class _AlarmClockPainter extends CustomPainter {
     }
 
     // Hands — show 5:12 AM
-    final hourAngle    = (5 / 12 + 12 / 720) * 2 * math.pi - math.pi / 2;
-    final minuteAngle  = (12 / 60) * 2 * math.pi - math.pi / 2;
+    const hourAngle    = (5 / 12 + 12 / 720) * 2 * math.pi - math.pi / 2;
+    const minuteAngle  = (12 / 60) * 2 * math.pi - math.pi / 2;
     canvas.drawLine(Offset(cx, cy),
         Offset(cx + r * 0.50 * math.cos(hourAngle),
             cy + r * 0.50 * math.sin(hourAngle)), strokePaint);

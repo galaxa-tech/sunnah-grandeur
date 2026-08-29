@@ -222,8 +222,8 @@ class _HadithDailyCard extends StatelessWidget {
         color: c.isDark ? c.surf : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: c.bd),
-        boxShadow: c.isDark ? null : [
-          BoxShadow(color: const Color(0x0C644028), blurRadius: 8, offset: const Offset(0, 2))
+        boxShadow: c.isDark ? null : const [
+          BoxShadow(color: Color(0x0C644028), blurRadius: 8, offset: Offset(0, 2))
         ],
       ),
       child: Column(
@@ -544,7 +544,7 @@ class _IconBtn extends StatelessWidget {
         decoration: BoxDecoration(
           color: c.surf, borderRadius: BorderRadius.circular(10),
           border: Border.all(color: c.bd2),
-          boxShadow: [BoxShadow(color: const Color(0x0C644028), blurRadius: 3)],
+          boxShadow: const [BoxShadow(color: Color(0x0C644028), blurRadius: 3)],
         ),
         child: Icon(icon, color: c.gold, size: 18),
       ),

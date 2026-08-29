@@ -185,7 +185,7 @@ class _AccountIdentityScreenState extends State<AccountIdentityScreen> {
                         );
                         if (confirm == true) {
                           await auth.deleteAccount();
-                          if (!mounted) return;
+                          if (!context.mounted) return;
                           Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
                         }
                       },
