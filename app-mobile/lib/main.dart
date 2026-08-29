@@ -10,6 +10,7 @@ import 'providers/auth_provider.dart';
 import 'providers/store_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/media_provider.dart';
+import 'providers/quran_provider.dart';
 import 'providers/dawah_provider.dart';
 import 'providers/prayer_provider.dart';
 import 'providers/location_provider.dart';
@@ -107,6 +108,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => StoreProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => MediaProvider()),
+        ChangeNotifierProvider(create: (_) => QuranProvider()),
         ChangeNotifierProvider(create: (_) => DawahProvider()),
         ChangeNotifierProvider(create: (_) => LocationProvider()),
         ChangeNotifierProvider(create: (_) => AdhanSettingsProvider()),
