@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../services/local/tasbih_service.dart';
+import '../../providers/profile_stats_provider.dart';
 
 class TasbeehScreen extends StatefulWidget {
   const TasbeehScreen({super.key});
@@ -85,6 +87,8 @@ class _TasbeehScreenState extends State<TasbeehScreen>
       _today    = state.todayCount;
       _lifetime = state.totalCount;
     });
+    // Keep the Profile screen's lifetime tasbeeh stat in sync.
+    context.read<ProfileStatsProvider>().refresh();
   }
 
   Future<void> _onReset() async {

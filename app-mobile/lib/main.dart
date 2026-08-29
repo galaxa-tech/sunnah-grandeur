@@ -13,6 +13,8 @@ import 'providers/media_provider.dart';
 import 'providers/quran_provider.dart';
 import 'providers/dawah_provider.dart';
 import 'providers/prayer_provider.dart';
+import 'providers/prayer_tracking_provider.dart';
+import 'providers/profile_stats_provider.dart';
 import 'providers/location_provider.dart';
 import 'providers/language_provider.dart';
 import 'providers/adhan_settings_provider.dart';
@@ -123,6 +125,8 @@ void main() async {
           },
         ),
         ChangeNotifierProvider(create: (_) => MasjidProvider()),
+        ChangeNotifierProvider(create: (_) => PrayerTrackingProvider()),
+        ChangeNotifierProvider(create: (_) => ProfileStatsProvider()),
       ],
       child: SunnahGrandeurApp(firebaseError: firebaseError),
     ),

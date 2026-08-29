@@ -13,12 +13,21 @@ class PrayerRow extends StatelessWidget {
     required this.time,
     this.state = PrayerRowState.upcoming,
     this.badge,
+    this.completed,
+    this.onToggle,
   });
 
   final String name;
   final String time;
   final PrayerRowState state;
   final String? badge;   // e.g. "Now", "optional"
+
+  /// When non-null, a tappable completion checkbox is shown reflecting
+  /// this value — the user's own "I prayed this" mark. It is deliberately
+  /// independent of [state], which is derived purely from whether the
+  /// prayer time has already passed.
+  final bool? completed;
+  final VoidCallback? onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -74,6 +83,20 @@ class PrayerRow extends StatelessWidget {
           if (isOptional) ...[
             const SizedBox(width: 7),
             SgPill(label: 'optional', variant: 'gold', fontSize: 7.5),
+          ],
+          if (completed != null) ...[
+            const SizedBox(width: 10),
+            GestureDetector(
+              onTap: onToggle,
+              behavior: HitTestBehavior.opaque,
+              child: Icon(
+                completed!
+                    ? Icons.check_circle_rounded
+                    : Icons.radio_button_unchecked_rounded,
+                color: completed! ? c.green : c.t3,
+                size: 20,
+              ),
+            ),
           ],
         ]),
       ),

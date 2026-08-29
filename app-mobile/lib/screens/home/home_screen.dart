@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../providers/dawah_provider.dart';
 import '../../providers/prayer_provider.dart';
 import '../../providers/language_provider.dart';
+import '../../providers/profile_stats_provider.dart';
+import '../../services/local/fasting_service.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import 'package:intl/intl.dart';
@@ -265,8 +267,13 @@ class _SawmCard extends StatefulWidget {
 
 class _SawmCardState extends State<_SawmCard> {
   bool _fastedToday = false;
-  static const _key     = 'sawm_fasted_today';
-  static const _dateKey = 'sawm_fasted_date';
+
+  // Legacy single-day keys from the old tracker (SharedPreferences-only,
+  // single-day, no history). Read once on load so a day already marked
+  // fasted under the old scheme isn't silently lost when the real
+  // per-date FastingService takes over. Never written to again.
+  static const _legacyKey     = 'sawm_fasted_today';
+  static const _legacyDateKey = 'sawm_fasted_date';
 
   @override
   void initState() {
@@ -275,24 +282,27 @@ class _SawmCardState extends State<_SawmCard> {
   }
 
   Future<void> _loadFasted() async {
-    final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getString(_dateKey);
-    final today = DateTime.now().toIso8601String().substring(0, 10);
-    if (saved == today) {
-      setState(() => _fastedToday = prefs.getBool(_key) ?? false);
-    } else {
-      await prefs.setBool(_key, false);
-      await prefs.setString(_dateKey, today);
+    final today = DateTime.now();
+    var fasted = await FastingService.isFastedOnDate(today);
+
+    if (!fasted) {
+      final prefs      = await SharedPreferences.getInstance();
+      final legacyDate = prefs.getString(_legacyDateKey);
+      final todayKey   = today.toIso8601String().substring(0, 10);
+      if (legacyDate == todayKey && (prefs.getBool(_legacyKey) ?? false)) {
+        fasted = true;
+        await FastingService.setFasted(today, true);
+      }
     }
+
+    if (mounted) setState(() => _fastedToday = fasted);
   }
 
   Future<void> _toggleFasted() async {
-    final prefs = await SharedPreferences.getInstance();
-    final today = DateTime.now().toIso8601String().substring(0, 10);
-    final next  = !_fastedToday;
-    await prefs.setBool(_key, next);
-    await prefs.setString(_dateKey, today);
+    final next = !_fastedToday;
     setState(() => _fastedToday = next);
+    await FastingService.setFasted(DateTime.now(), next);
+    if (mounted) context.read<ProfileStatsProvider>().refresh();
   }
 
   @override

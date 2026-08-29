@@ -8,6 +8,8 @@ import '../../widgets/eye_row.dart';
 import '../../widgets/sg_pill.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
+import '../../providers/prayer_tracking_provider.dart';
+import '../../providers/profile_stats_provider.dart';
 import '../auth/login_screen.dart';
 import '../auth/register_screen.dart';
 import 'account_identity_screen.dart';
@@ -306,18 +308,29 @@ class _StatsBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Real, locally-tracked stats — a brand new user with no history
+    // simply sees 0s (both providers default their numbers to 0 while
+    // their first async load is in flight, so there is no placeholder /
+    // crash state to handle here).
+    final tracking = context.watch<PrayerTrackingProvider>();
+    final stats    = context.watch<ProfileStatsProvider>();
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 18),
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
       decoration: c.surfaceCardDecoration,
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-        _StatCell(c: c, value: '342',   label: lang.tr('prayers_stat')),
+        _StatCell(c: c, value: '${tracking.totalCompleted}',
+            label: lang.tr('prayers_stat')),
         Container(width: 1, height: 40, color: c.bd),
-        _StatCell(c: c, value: '98%',   label: lang.tr('streak')),
+        _StatCell(c: c, value: '${tracking.currentStreak}',
+            label: lang.tr('streak')),
         Container(width: 1, height: 40, color: c.bd),
-        _StatCell(c: c, value: '12',    label: lang.tr('days_fasted')),
+        _StatCell(c: c, value: '${stats.daysFasted}',
+            label: lang.tr('days_fasted')),
         Container(width: 1, height: 40, color: c.bd),
-        _StatCell(c: c, value: '5,420', label: lang.tr('tasbeeh_stat')),
+        _StatCell(c: c, value: '${stats.tasbihLifetime}',
+            label: lang.tr('tasbeeh_stat')),
       ]),
     );
   }
