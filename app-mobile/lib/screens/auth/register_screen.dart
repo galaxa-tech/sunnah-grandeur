@@ -150,7 +150,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     decoration: BoxDecoration(
                       color: c.goldSurface,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: c.gold.withOpacity(0.22)),
+                      border: Border.all(color: c.gold.withValues(alpha: 0.22)),
                     ),
                     child: Row(
                       children: [
@@ -328,7 +328,7 @@ class _IconlessButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: c.gold.withOpacity(0.28),
+                color: c.gold.withValues(alpha: 0.28),
                 blurRadius: 16,
                 offset: const Offset(0, 4),
               ),
@@ -337,7 +337,7 @@ class _IconlessButton extends StatelessWidget {
         : BoxDecoration(
             color: c.surf,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: c.gold.withOpacity(0.45), width: 1.2),
+            border: Border.all(color: c.gold.withValues(alpha: 0.45), width: 1.2),
           );
 
     final textColor = isGold ? const Color(0xFF1A1200) : c.t1;

@@ -175,7 +175,7 @@ class _GoldButton extends StatelessWidget {
           gradient: c.goldGradient,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
-            BoxShadow(color: c.gold.withOpacity(0.30), blurRadius: 14, offset: const Offset(0, 4))
+            BoxShadow(color: c.gold.withValues(alpha: 0.30), blurRadius: 14, offset: const Offset(0, 4))
           ],
         ),
         alignment: Alignment.center,

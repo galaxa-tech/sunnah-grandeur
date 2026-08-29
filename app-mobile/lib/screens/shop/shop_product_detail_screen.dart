@@ -645,7 +645,7 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
                 decoration: BoxDecoration(
                   color: _surf,
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: _bd.withOpacity(0.5)),
+                  border: Border.all(color: _bd.withValues(alpha: 0.5)),
                 ),
                 child: Column(
                   children: [

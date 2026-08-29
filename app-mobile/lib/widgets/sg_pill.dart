@@ -22,18 +22,18 @@ class SgPill extends StatelessWidget {
     Color bg, border, fg;
     switch (variant) {
       case 'green':
-        bg     = c.green.withOpacity(0.10);
-        border = c.green.withOpacity(0.22);
+        bg     = c.green.withValues(alpha: 0.10);
+        border = c.green.withValues(alpha: 0.22);
         fg     = c.green;
         break;
       case 'red':
-        bg     = c.red.withOpacity(0.10);
-        border = c.red.withOpacity(0.22);
+        bg     = c.red.withValues(alpha: 0.10);
+        border = c.red.withValues(alpha: 0.22);
         fg     = c.red;
         break;
       default:
         bg     = c.goldSurface;
-        border = c.gold.withOpacity(0.22);
+        border = c.gold.withValues(alpha: 0.22);
         fg     = c.gold;
     }
     return Container(

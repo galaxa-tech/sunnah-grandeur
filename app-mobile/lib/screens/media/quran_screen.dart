@@ -79,7 +79,7 @@ class _QuranScreenState extends State<QuranScreen>
               indicator: BoxDecoration(
                 borderRadius: BorderRadius.circular(9),
                 color: c.goldSurface,
-                border: Border.all(color: c.gold.withOpacity(0.4)),
+                border: Border.all(color: c.gold.withValues(alpha: 0.4)),
               ),
               indicatorSize: TabBarIndicatorSize.tab,
               dividerColor: Colors.transparent,

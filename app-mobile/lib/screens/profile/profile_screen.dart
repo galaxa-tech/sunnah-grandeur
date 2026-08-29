@@ -130,7 +130,7 @@ class ProfileScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: [
                             BoxShadow(
-                              color: c.gold.withOpacity(0.25),
+                              color: c.gold.withValues(alpha: 0.25),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -156,7 +156,7 @@ class ProfileScreen extends StatelessWidget {
                       label: Text(lang.tr('sign_out'),
                           style: AppTextStyles.body(c, color: c.red, size: 13)),
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: c.red.withOpacity(0.22)),
+                        side: BorderSide(color: c.red.withValues(alpha: 0.22)),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 12),
                       ),
@@ -182,7 +182,7 @@ class _GuestBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: c.goldSurface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: c.gold.withOpacity(0.25)),
+        border: Border.all(color: c.gold.withValues(alpha: 0.25)),
       ),
       child: Row(
         children: [
@@ -190,7 +190,7 @@ class _GuestBanner extends StatelessWidget {
             width: 36, height: 36,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: c.gold.withOpacity(0.12),
+              color: c.gold.withValues(alpha: 0.12),
             ),
             child: Icon(Icons.person_outline_rounded, color: c.gold, size: 18),
           ),
@@ -402,7 +402,7 @@ class _MenuItem extends StatelessWidget {
             decoration: BoxDecoration(
               color: c.goldSurface,
               borderRadius: BorderRadius.circular(9),
-              border: Border.all(color: c.gold.withOpacity(0.16)),
+              border: Border.all(color: c.gold.withValues(alpha: 0.16)),
             ),
             child: Icon(icon, color: c.gold, size: 17),
           ),

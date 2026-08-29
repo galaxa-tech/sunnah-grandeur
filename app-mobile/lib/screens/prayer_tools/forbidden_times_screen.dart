@@ -55,9 +55,9 @@ class ForbiddenTimesScreen extends StatelessWidget {
                       margin: const EdgeInsets.only(top: 10, bottom: 4),
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: c.red.withOpacity(0.05),
+                        color: c.red.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: c.red.withOpacity(0.16)),
+                        border: Border.all(color: c.red.withValues(alpha: 0.16)),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -65,9 +65,9 @@ class ForbiddenTimesScreen extends StatelessWidget {
                           Container(
                             width: 34, height: 34,
                             decoration: BoxDecoration(
-                              color: c.red.withOpacity(0.12),
+                              color: c.red.withValues(alpha: 0.12),
                               shape: BoxShape.circle,
-                              border: Border.all(color: c.red.withOpacity(0.22)),
+                              border: Border.all(color: c.red.withValues(alpha: 0.22)),
                             ),
                             child: Icon(Icons.info_outline_rounded, color: c.red, size: 16),
                           ),
@@ -95,7 +95,7 @@ class ForbiddenTimesScreen extends StatelessWidget {
                         children: [
                           Text("TODAY'S WINDOWS", style: AppTextStyles.brandTag(c)),
                           const SizedBox(width: 10),
-                          Expanded(child: Container(height: 1, decoration: BoxDecoration(gradient: LinearGradient(colors: [c.gold.withOpacity(0.2), Colors.transparent])))),
+                          Expanded(child: Container(height: 1, decoration: BoxDecoration(gradient: LinearGradient(colors: [c.gold.withValues(alpha: 0.2), Colors.transparent])))),
                           const SizedBox(width: 8),
                           const SgPill(label: 'New York · Mar 10', variant: 'gold', fontSize: 7.5),
                         ],
@@ -193,9 +193,9 @@ class _ForbiddenCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.04),
+        color: color.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.20)),
+        border: Border.all(color: color.withValues(alpha: 0.20)),
       ),
       child: Column(
         children: [
@@ -231,7 +231,7 @@ class _ForbiddenCard extends StatelessWidget {
             width: double.infinity,
             margin: const EdgeInsets.only(bottom: 8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
+              color: color.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(1),
             ),
             alignment: isPassed ? Alignment.centerLeft : Alignment.centerRight,
@@ -240,7 +240,7 @@ class _ForbiddenCard extends StatelessWidget {
               child: Container(
                 height: 2,
                 decoration: BoxDecoration(
-                  gradient: isUpcoming ? c.goldGradient : LinearGradient(colors: [c.red.withOpacity(0.6), c.red.withOpacity(0.3)]),
+                  gradient: isUpcoming ? c.goldGradient : LinearGradient(colors: [c.red.withValues(alpha: 0.6), c.red.withValues(alpha: 0.3)]),
                   borderRadius: BorderRadius.circular(1),
                 ),
               ),

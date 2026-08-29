@@ -463,12 +463,12 @@ class _TitleBar extends StatelessWidget {
       height: 44,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color:        c.bg2.withOpacity(0.96),
+        color:        c.bg2.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(13),
         border:       Border.all(color: c.bd2),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.30),
+              color: Colors.black.withValues(alpha: 0.30),
               blurRadius: 12,
               offset: const Offset(0, 4)),
         ],
@@ -512,12 +512,12 @@ class _SearchField extends StatelessWidget {
       height: 44,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color:        c.bg2.withOpacity(0.97),
+        color:        c.bg2.withValues(alpha: 0.97),
         borderRadius: BorderRadius.circular(13),
-        border:       Border.all(color: c.gold.withOpacity(0.35)),
+        border:       Border.all(color: c.gold.withValues(alpha: 0.35)),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.30),
+              color: Colors.black.withValues(alpha: 0.30),
               blurRadius: 12,
               offset: const Offset(0, 4)),
         ],
@@ -572,12 +572,12 @@ class _MapBtn extends StatelessWidget {
       child: Container(
         width: 40, height: 40,
         decoration: BoxDecoration(
-          color:        gold ? c.gold : c.bg2.withOpacity(0.96),
+          color:        gold ? c.gold : c.bg2.withValues(alpha: 0.96),
           borderRadius: BorderRadius.circular(12),
           border:       Border.all(color: gold ? c.gold : c.bd2),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.30),
+                color: Colors.black.withValues(alpha: 0.30),
                 blurRadius: 10,
                 offset: const Offset(0, 3)),
           ],
@@ -604,12 +604,12 @@ class _ErrorBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color:        c.bg2.withOpacity(0.96),
+        color:        c.bg2.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(14),
-        border:       Border.all(color: c.red.withOpacity(0.30)),
+        border:       Border.all(color: c.red.withValues(alpha: 0.30)),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.25),
+              color: Colors.black.withValues(alpha: 0.25),
               blurRadius: 12,
               offset: const Offset(0, 4)),
         ],
@@ -673,7 +673,7 @@ class _BottomSheet extends StatelessWidget {
         border: Border(top: BorderSide(color: c.bd2, width: 1)),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.40),
+              color: Colors.black.withValues(alpha: 0.40),
               blurRadius: 24,
               offset: const Offset(0, -8)),
         ],
@@ -742,7 +742,7 @@ class _BottomSheet extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.mosque_outlined,
-                                color: c.t3.withOpacity(0.4), size: 52),
+                                color: c.t3.withValues(alpha: 0.4), size: 52),
                             const SizedBox(height: 14),
                             Text('No mosques found nearby',
                                 style:
@@ -805,23 +805,23 @@ class _MasjidCard extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color:        isSelected
-              ? c.gold.withOpacity(0.08)
+              ? c.gold.withValues(alpha: 0.08)
               : highlighted
                   ? c.goldSurface
                   : c.surf,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
-                ? c.gold.withOpacity(0.40)
+                ? c.gold.withValues(alpha: 0.40)
                 : highlighted
-                    ? c.gold.withOpacity(0.18)
+                    ? c.gold.withValues(alpha: 0.18)
                     : c.bd,
             width: isSelected ? 1.5 : 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                      color: c.gold.withOpacity(0.12),
+                      color: c.gold.withValues(alpha: 0.12),
                       blurRadius: 16,
                       offset: const Offset(0, 4))
                 ]
@@ -834,12 +834,12 @@ class _MasjidCard extends StatelessWidget {
               width: 46, height: 46,
               decoration: BoxDecoration(
                 color:        highlighted
-                    ? c.gold.withOpacity(0.12)
+                    ? c.gold.withValues(alpha: 0.12)
                     : c.elev,
                 borderRadius: BorderRadius.circular(12),
                 border:       Border.all(
                     color: highlighted
-                        ? c.gold.withOpacity(0.25)
+                        ? c.gold.withValues(alpha: 0.25)
                         : c.bd2),
               ),
               child: Icon(Icons.mosque_rounded,
@@ -920,7 +920,7 @@ class _MasjidCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
-                        color: c.gold.withOpacity(0.25),
+                        color: c.gold.withValues(alpha: 0.25),
                         blurRadius: 8,
                         offset: const Offset(0, 2))
                   ],
@@ -953,9 +953,9 @@ class _Pill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color:        color.withOpacity(0.10),
+        color:        color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(6),
-        border:       Border.all(color: color.withOpacity(0.25)),
+        border:       Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1028,7 +1028,7 @@ class _MasjidDetailSheet extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                        color: c.gold.withOpacity(0.30),
+                        color: c.gold.withValues(alpha: 0.30),
                         blurRadius: 14,
                         offset: const Offset(0, 4))
                   ],
@@ -1126,7 +1126,7 @@ class _MasjidDetailSheet extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                      color: c.gold.withOpacity(0.30),
+                      color: c.gold.withValues(alpha: 0.30),
                       blurRadius: 16,
                       offset: const Offset(0, 5))
                 ],

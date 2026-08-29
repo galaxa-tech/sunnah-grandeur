@@ -118,7 +118,7 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                     quran.loadSurah(widget.surahNumber, forceRefresh: true),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: c.gold,
-                  side: BorderSide(color: c.gold.withOpacity(0.4)),
+                  side: BorderSide(color: c.gold.withValues(alpha: 0.4)),
                   padding: const EdgeInsets.symmetric(
                       horizontal: 20, vertical: 10),
                   shape: RoundedRectangleBorder(
@@ -170,7 +170,7 @@ class _AyahCard extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: c.goldSurface,
-                border: Border.all(color: c.gold.withOpacity(0.35)),
+                border: Border.all(color: c.gold.withValues(alpha: 0.35)),
               ),
               child: Text('${ayah.numberInSurah}',
                   style: AppTextStyles.pill(c, size: 10)),

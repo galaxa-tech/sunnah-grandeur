@@ -80,10 +80,10 @@ class _LanguageOnboardingScreenState extends State<LanguageOnboardingScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 13),
                       decoration: BoxDecoration(
-                        color: isOn ? c.gold.withOpacity(0.07) : c.surf,
+                        color: isOn ? c.gold.withValues(alpha: 0.07) : c.surf,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: isOn ? c.gold.withOpacity(0.28) : c.bd,
+                          color: isOn ? c.gold.withValues(alpha: 0.28) : c.bd,
                         ),
                       ),
                       child: Row(children: [
@@ -107,7 +107,7 @@ class _LanguageOnboardingScreenState extends State<LanguageOnboardingScreen> {
                             borderRadius: BorderRadius.circular(7),
                             border: Border.all(
                                 color: isOn
-                                    ? c.gold.withOpacity(0.22)
+                                    ? c.gold.withValues(alpha: 0.22)
                                     : c.bd2),
                           ),
                           child: Text(item['code']!.toUpperCase(),
@@ -184,16 +184,16 @@ class _GlobePainter extends CustomPainter {
 
     canvas.drawCircle(Offset(cx, cy), r,
         Paint()
-          ..color = c.gold.withOpacity(0.08)
+          ..color = c.gold.withValues(alpha: 0.08)
           ..style = PaintingStyle.fill);
     canvas.drawCircle(Offset(cx, cy), r,
         Paint()
-          ..color = c.gold.withOpacity(0.32)
+          ..color = c.gold.withValues(alpha: 0.32)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.4);
 
     final linePaint = Paint()
-      ..color = c.gold.withOpacity(0.16)
+      ..color = c.gold.withValues(alpha: 0.16)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.8;
 
@@ -221,7 +221,7 @@ class _GlobePainter extends CustomPainter {
       final dx = cx + (r + 10) * math.cos(angle);
       final dy = cy + (r + 10) * math.sin(angle);
       canvas.drawCircle(
-          Offset(dx, dy), 2.5, Paint()..color = c.gold.withOpacity(0.38));
+          Offset(dx, dy), 2.5, Paint()..color = c.gold.withValues(alpha: 0.38));
     }
   }
 
@@ -247,7 +247,7 @@ class _GoldButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-                color: c.gold.withOpacity(0.30),
+                color: c.gold.withValues(alpha: 0.30),
                 blurRadius: 14,
                 offset: const Offset(0, 4))
           ],

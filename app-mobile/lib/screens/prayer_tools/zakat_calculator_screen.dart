@@ -114,9 +114,9 @@ class _ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
                   margin: const EdgeInsets.only(top: 10, bottom: 4),
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: c.gold.withOpacity(0.05),
+                    color: c.gold.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: c.gold.withOpacity(0.16)),
+                    border: Border.all(color: c.gold.withValues(alpha: 0.16)),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,7 +126,7 @@ class _ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
                         decoration: BoxDecoration(
                           color: c.goldSurface,
                           shape: BoxShape.circle,
-                          border: Border.all(color: c.gold.withOpacity(0.22)),
+                          border: Border.all(color: c.gold.withValues(alpha: 0.22)),
                         ),
                         child: Icon(Icons.info_outline_rounded, color: c.gold, size: 16),
                       ),
@@ -150,7 +150,7 @@ class _ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
                   ),
                 ),
 
-                EyeRow(label: 'YOUR ZAKATABLE ASSETS'),
+                const EyeRow(label: 'YOUR ZAKATABLE ASSETS'),
                 _AmountField(
                   c: c, label: 'Cash & Savings',
                   hint: 'Bank balances, cash on hand',
@@ -180,9 +180,9 @@ class _ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
                 ),
 
                 const SizedBox(height: 6),
-                EyeRow(
+                const EyeRow(
                   label: 'CURRENT MARKET PRICES',
-                  trailing: const SgPill(label: 'Update with today\'s price', variant: 'gold', fontSize: 7.5),
+                  trailing: SgPill(label: 'Update with today\'s price', variant: 'gold', fontSize: 7.5),
                 ),
                 _AmountField(
                   c: c, label: 'Gold Price (per gram)',
@@ -198,7 +198,7 @@ class _ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
                 ),
 
                 const SizedBox(height: 10),
-                EyeRow(label: 'RESULT'),
+                const EyeRow(label: 'RESULT'),
                 _ResultCard(
                   c: c,
                   totalWealth: totalWealth,
@@ -349,7 +349,7 @@ class _ResultCard extends StatelessWidget {
           Text(_fmt(nisab), style: AppTextStyles.body(c, size: 13, color: c.t2)),
         ]),
         const SizedBox(height: 14),
-        Divider(color: c.gold.withOpacity(0.18), height: 1),
+        Divider(color: c.gold.withValues(alpha: 0.18), height: 1),
         const SizedBox(height: 14),
         if (meetsNisab) ...[
           Row(children: [

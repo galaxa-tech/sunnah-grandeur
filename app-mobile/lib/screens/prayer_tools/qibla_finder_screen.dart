@@ -197,8 +197,8 @@ class _CompassPainter extends CustomPainter {
     final r = size.width * 0.32; // compass ring radius ~100/310
 
     // ── Atmosphere rings
-    _drawRing(canvas, cx, cy, size.width * 0.499, c.gold.withOpacity(0.07));
-    _drawRing(canvas, cx, cy, size.width * 0.476, c.gold.withOpacity(0.04));
+    _drawRing(canvas, cx, cy, size.width * 0.499, c.gold.withValues(alpha: 0.07));
+    _drawRing(canvas, cx, cy, size.width * 0.476, c.gold.withValues(alpha: 0.04));
 
     // ── Compass disc
     final discPaint = Paint()
@@ -207,12 +207,12 @@ class _CompassPainter extends CustomPainter {
     canvas.drawCircle(Offset(cx, cy), r, discPaint);
     canvas.drawCircle(Offset(cx, cy), r,
         Paint()
-          ..color = c.gold.withOpacity(c.isDark ? 0.22 : 0.26)
+          ..color = c.gold.withValues(alpha: c.isDark ? 0.22 : 0.26)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.6);
     canvas.drawCircle(Offset(cx, cy), r * 0.94,
         Paint()
-          ..color = c.gold.withOpacity(c.isDark ? 0.07 : 0.08)
+          ..color = c.gold.withValues(alpha: c.isDark ? 0.07 : 0.08)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 0.6);
 
@@ -240,7 +240,7 @@ class _CompassPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.4);
     canvas.drawCircle(Offset(cx, cy), 4,
-        Paint()..color = c.gold.withOpacity(0.92));
+        Paint()..color = c.gold.withValues(alpha: 0.92));
   }
 
   void _drawRing(Canvas canvas, double cx, double cy, double r, Color color) {
@@ -253,11 +253,11 @@ class _CompassPainter extends CustomPainter {
 
   void _drawTicks(Canvas canvas, double cx, double cy, double r) {
     final majorPaint = Paint()
-      ..color = c.gold.withOpacity(c.isDark ? 0.30 : 0.34)
+      ..color = c.gold.withValues(alpha: c.isDark ? 0.30 : 0.34)
       ..strokeWidth = 1.4
       ..strokeCap = StrokeCap.round;
     final minorPaint = Paint()
-      ..color = c.gold.withOpacity(c.isDark ? 0.15 : 0.16)
+      ..color = c.gold.withValues(alpha: c.isDark ? 0.15 : 0.16)
       ..strokeWidth = 0.9
       ..strokeCap = StrokeCap.round;
 
@@ -290,7 +290,7 @@ class _CompassPainter extends CustomPainter {
     );
     final mutedStyle = GoogleFonts.inter(
       fontSize: 10, fontWeight: FontWeight.w400,
-      color: c.gold.withOpacity(0.38),
+      color: c.gold.withValues(alpha: 0.38),
     );
 
     _drawText(canvas, 'N', cx, cy - r * 1.17, style);
@@ -344,7 +344,7 @@ class _CompassPainter extends CustomPainter {
     canvas.drawPath(lowerPath,
         Paint()..color = c.isDark
             ? const Color(0xBF282420)
-            : Colors.black.withOpacity(0.35));
+            : Colors.black.withValues(alpha: 0.35));
 
     canvas.restore();
   }
@@ -358,12 +358,12 @@ class _CompassPainter extends CustomPainter {
     // Glow halos
     canvas.drawCircle(Offset(kx, ky), 30,
         Paint()
-          ..color = c.gold.withOpacity(c.isDark ? 0.12 : 0.14)
+          ..color = c.gold.withValues(alpha: c.isDark ? 0.12 : 0.14)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.4);
     canvas.drawCircle(Offset(kx, ky), 23,
         Paint()
-          ..color = c.gold.withOpacity(c.isDark ? 0.07 : 0.08)
+          ..color = c.gold.withValues(alpha: c.isDark ? 0.07 : 0.08)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 0.9);
 
@@ -381,7 +381,7 @@ class _CompassPainter extends CustomPainter {
 
     // Cloth bands
     final bandPaint = Paint()
-      ..color = c.gold.withOpacity(0.55)
+      ..color = c.gold.withValues(alpha: 0.55)
       ..strokeWidth = 0.9;
     for (var offset in [-5.0, 0.0, 5.0]) {
       canvas.drawLine(
@@ -395,7 +395,7 @@ class _CompassPainter extends CustomPainter {
     final doorRect = RRect.fromRectAndRadius(
         Rect.fromLTWH(kx - 4, ky + 3, 8, 10), const Radius.circular(1.5));
     canvas.drawRRect(doorRect,
-        Paint()..color = c.gold.withOpacity(0.15));
+        Paint()..color = c.gold.withValues(alpha: 0.15));
     canvas.drawRRect(doorRect,
         Paint()
           ..color = c.gold
@@ -407,7 +407,7 @@ class _CompassPainter extends CustomPainter {
         GoogleFonts.inter(
           fontSize: 7.5,
           fontWeight: FontWeight.w700,
-          color: c.gold.withOpacity(0.80),
+          color: c.gold.withValues(alpha: 0.80),
           letterSpacing: 1.2,
         ));
   }
@@ -423,7 +423,7 @@ class _CompassPainter extends CustomPainter {
     final y2 = cy - (kDist - 14) * math.cos(bearingRad);
 
     final paint = Paint()
-      ..color = c.gold.withOpacity(0.20)
+      ..color = c.gold.withValues(alpha: 0.20)
       ..strokeWidth = 1;
 
     const dashLen = 3.0;
@@ -464,9 +464,9 @@ class _StatsCard extends StatelessWidget {
       decoration: c.goldCardDecoration,
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
         _StatCell(c: c, label: 'Qibla',   value: '$bearing°', sub: 'From North'),
-        Container(width: 1, height: 56, color: c.gold.withOpacity(0.16)),
+        Container(width: 1, height: 56, color: c.gold.withValues(alpha: 0.16)),
         _StatCell(c: c, label: 'Offset',  value: '$offset°',  sub: 'Relative'),
-        Container(width: 1, height: 56, color: c.gold.withOpacity(0.16)),
+        Container(width: 1, height: 56, color: c.gold.withValues(alpha: 0.16)),
         _StatCell(c: c, label: 'Accuracy', value: 'High',   sub: '±2°', valueColor: c.green),
       ]),
     );

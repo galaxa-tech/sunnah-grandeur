@@ -38,9 +38,13 @@ class PrayerRow extends StatelessWidget {
     final isOptional = state == PrayerRowState.optional;
 
     Color dotColor;
-    if (isActive)       dotColor = c.gold;
-    else if (isDone)    dotColor = c.green;
-    else                dotColor = c.bd2;
+    if (isActive) {
+      dotColor = c.gold;
+    } else if (isDone) {
+      dotColor = c.green;
+    } else {
+      dotColor = c.bd2;
+    }
 
     Color nameColor = isActive ? c.gold : (isOptional ? c.t3 : c.t1);
     Color timeColor = isActive ? c.gold2 : c.t3;
@@ -51,10 +55,10 @@ class PrayerRow extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 5),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color:        isActive ? c.gold.withOpacity(0.07) : Colors.transparent,
+          color:        isActive ? c.gold.withValues(alpha: 0.07) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border:       Border.all(
-            color: isActive ? c.gold.withOpacity(0.18) : Colors.transparent,
+            color: isActive ? c.gold.withValues(alpha: 0.18) : Colors.transparent,
           ),
         ),
         child: Row(children: [
@@ -83,7 +87,7 @@ class PrayerRow extends StatelessWidget {
           ],
           if (isOptional) ...[
             const SizedBox(width: 7),
-            SgPill(label: 'optional', variant: 'gold', fontSize: 7.5),
+            const SgPill(label: 'optional', variant: 'gold', fontSize: 7.5),
           ],
           if (completed != null) ...[
             const SizedBox(width: 10),

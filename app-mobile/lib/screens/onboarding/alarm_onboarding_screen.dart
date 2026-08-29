@@ -82,10 +82,10 @@ class _AlarmOnboardingScreenState extends State<AlarmOnboardingScreen> {
                       Container(
                         width: 34, height: 34,
                         decoration: BoxDecoration(
-                          color: (val ? c.gold : c.t3).withOpacity(0.10),
+                          color: (val ? c.gold : c.t3).withValues(alpha: 0.10),
                           borderRadius: BorderRadius.circular(9),
                           border: Border.all(
-                              color: (val ? c.gold : c.t3).withOpacity(0.18)),
+                              color: (val ? c.gold : c.t3).withValues(alpha: 0.18)),
                         ),
                         child: Icon(Icons.alarm_outlined,
                             color: val ? c.gold : c.t3, size: 17),
@@ -153,20 +153,20 @@ class _AlarmClockPainter extends CustomPainter {
     final cx = size.width / 2, cy = size.height / 2 + 6;
     final r = size.width * 0.34;
     final strokePaint = Paint()
-      ..color = c.gold.withOpacity(0.55)
+      ..color = c.gold.withValues(alpha: 0.55)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.6
       ..strokeCap = StrokeCap.round;
 
     // Face
     canvas.drawCircle(Offset(cx, cy), r,
-        Paint()..color = c.gold.withOpacity(0.08));
+        Paint()..color = c.gold.withValues(alpha: 0.08));
     canvas.drawCircle(Offset(cx, cy), r,
-        Paint()..color = c.gold.withOpacity(0.40)
+        Paint()..color = c.gold.withValues(alpha: 0.40)
             ..style = PaintingStyle.stroke
             ..strokeWidth = 1.8);
     canvas.drawCircle(Offset(cx, cy), r * 0.92,
-        Paint()..color = c.gold.withOpacity(0.12)
+        Paint()..color = c.gold.withValues(alpha: 0.12)
             ..style = PaintingStyle.stroke
             ..strokeWidth = 0.7);
 
@@ -180,7 +180,7 @@ class _AlarmClockPainter extends CustomPainter {
         Offset(cx + outerR * math.sin(angle), cy - outerR * math.cos(angle)),
         Offset(cx + innerR * math.sin(angle), cy - innerR * math.cos(angle)),
         Paint()
-          ..color = c.gold.withOpacity(isMajor ? 0.55 : 0.22)
+          ..color = c.gold.withValues(alpha: isMajor ? 0.55 : 0.22)
           ..strokeWidth = isMajor ? 1.5 : 0.9
           ..strokeCap = StrokeCap.round,
       );
@@ -214,7 +214,7 @@ class _AlarmClockPainter extends CustomPainter {
 
     // Bell ring lines
     final rp = Paint()
-      ..color = c.gold.withOpacity(0.28)
+      ..color = c.gold.withValues(alpha: 0.28)
       ..strokeWidth = 1
       ..strokeCap = StrokeCap.round;
     for (final i in [-1, 1]) {
@@ -280,7 +280,7 @@ class _GoldButton extends StatelessWidget {
           gradient: c.goldGradient,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [BoxShadow(
-            color: c.gold.withOpacity(0.28),
+            color: c.gold.withValues(alpha: 0.28),
             blurRadius: 14, offset: const Offset(0, 4),
           )],
         ),

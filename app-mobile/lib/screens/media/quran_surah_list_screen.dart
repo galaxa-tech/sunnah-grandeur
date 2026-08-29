@@ -65,7 +65,7 @@ class _QuranSurahListScreenState extends State<QuranSurahListScreen> {
                 onPressed: () => quran.loadSurahList(forceRefresh: true),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: c.gold,
-                  side: BorderSide(color: c.gold.withOpacity(0.4)),
+                  side: BorderSide(color: c.gold.withValues(alpha: 0.4)),
                   padding: const EdgeInsets.symmetric(
                       horizontal: 20, vertical: 10),
                   shape: RoundedRectangleBorder(
@@ -124,7 +124,7 @@ class _SurahRow extends StatelessWidget {
             decoration: BoxDecoration(
               color: c.goldSurface,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: c.gold.withOpacity(0.25)),
+              border: Border.all(color: c.gold.withValues(alpha: 0.25)),
             ),
             child: Text('${surah.number}',
                 style: AppTextStyles.pill(c, size: 11)),

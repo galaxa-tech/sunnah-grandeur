@@ -260,7 +260,7 @@ class _CartItemsList extends StatelessWidget {
         ),
       ),
       child: Icon(Icons.shopping_bag_outlined,
-          color: _gold.withOpacity(0.3), size: 28),
+          color: _gold.withValues(alpha: 0.3), size: 28),
     );
   }
 }

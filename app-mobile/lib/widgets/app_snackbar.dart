@@ -41,7 +41,7 @@ void showAppSnackbar(
       duration: duration,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: accent.withOpacity(0.25)),
+        side: BorderSide(color: accent.withValues(alpha: 0.25)),
       ),
       content: Row(
         children: [

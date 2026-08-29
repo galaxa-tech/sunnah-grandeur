@@ -93,14 +93,14 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
                 decoration: BoxDecoration(
                   color: c.isDark ? c.surf : Colors.white,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: loc.hasLocation ? c.gold.withOpacity(0.40) : c.bd),
+                  border: Border.all(color: loc.hasLocation ? c.gold.withValues(alpha: 0.40) : c.bd),
                 ),
                 child: Row(children: [
                   Container(
                     width: 38, height: 38,
                     decoration: BoxDecoration(
                       color: c.goldSurface, shape: BoxShape.circle,
-                      border: Border.all(color: c.gold.withOpacity(0.22)),
+                      border: Border.all(color: c.gold.withValues(alpha: 0.22)),
                     ),
                     child: loc.isLoading
                         ? Padding(
@@ -128,7 +128,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
                       decoration: BoxDecoration(
                         color: c.goldSurface,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: c.gold.withOpacity(0.20)),
+                        border: Border.all(color: c.gold.withValues(alpha: 0.20)),
                       ),
                       child: Text('Detect', style: AppTextStyles.pill(c, size: 10.5)),
                     ),
@@ -169,7 +169,7 @@ class _LocationOnboardingScreenState extends State<LocationOnboardingScreen> {
                     decoration: BoxDecoration(
                       color: c.surf,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: c.gold.withOpacity(0.30)),
+                      border: Border.all(color: c.gold.withValues(alpha: 0.30)),
                     ),
                     child: Row(children: [
                       Icon(Icons.search_rounded, color: c.gold, size: 15),
@@ -271,19 +271,19 @@ class _MosquePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
     final basePaint = Paint()
-      ..color = c.gold.withOpacity(0.18)
+      ..color = c.gold.withValues(alpha: 0.18)
       ..style = PaintingStyle.fill;
     final strokePaint = Paint()
-      ..color = c.gold.withOpacity(0.50)
+      ..color = c.gold.withValues(alpha: 0.50)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.4;
     final goldFill = Paint()
-      ..color = c.gold.withOpacity(0.12)
+      ..color = c.gold.withValues(alpha: 0.12)
       ..style = PaintingStyle.fill;
 
     canvas.drawPath(
         Path()..addRect(Rect.fromLTWH(0, h * 0.82, w, h * 0.18)),
-        Paint()..color = c.gold.withOpacity(0.08));
+        Paint()..color = c.gold.withValues(alpha: 0.08));
 
     _drawMinaret(canvas, Offset(w * 0.10, h * 0.82), w * 0.065,
         basePaint, strokePaint, c, h);
@@ -332,12 +332,12 @@ class _MosquePainter extends CustomPainter {
       Rect.fromCenter(center: Offset(w * 0.50, h * 0.44),
           width: w * 0.08, height: w * 0.08),
       -math.pi * 0.3, math.pi * 1.6, false,
-      Paint()..color = c.gold.withOpacity(0.80)
+      Paint()..color = c.gold.withValues(alpha: 0.80)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2.2,
     );
     canvas.drawCircle(Offset(w * 0.50, h * 0.44 - w * 0.06), 3.5,
-        Paint()..color = c.gold.withOpacity(0.85));
+        Paint()..color = c.gold.withValues(alpha: 0.85));
   }
 
   void _drawMinaret(Canvas canvas, Offset base, double width,
@@ -392,7 +392,7 @@ class _GoldButton extends StatelessWidget {
             gradient: c.goldGradient,
             borderRadius: BorderRadius.circular(12),
             boxShadow: [BoxShadow(
-              color: c.gold.withOpacity(0.28),
+              color: c.gold.withValues(alpha: 0.28),
               blurRadius: 14, offset: const Offset(0, 4),
             )],
           ),

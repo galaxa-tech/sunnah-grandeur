@@ -61,7 +61,7 @@ class InviteFriendsScreen extends StatelessWidget {
                       padding: const EdgeInsets.all(24),
                       decoration: c.goldCardDecoration.copyWith(
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: c.gold.withOpacity(0.15)),
+                        border: Border.all(color: c.gold.withValues(alpha: 0.15)),
                       ),
                       child: Column(
                         children: [
@@ -238,7 +238,7 @@ class _EyeRow extends StatelessWidget {
         children: [
           Text(label.toUpperCase(), style: AppTextStyles.brandTag(c)),
           const SizedBox(width: 10),
-          Expanded(child: Container(height: 1, decoration: BoxDecoration(gradient: LinearGradient(colors: [c.gold.withOpacity(0.2), Colors.transparent])))),
+          Expanded(child: Container(height: 1, decoration: BoxDecoration(gradient: LinearGradient(colors: [c.gold.withValues(alpha: 0.2), Colors.transparent])))),
         ],
       ),
     );

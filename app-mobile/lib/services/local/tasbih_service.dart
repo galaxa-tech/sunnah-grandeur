@@ -70,7 +70,7 @@ class TasbihService {
   static Future<int> getLifetimeTotal() async {
     final prefs = await SharedPreferences.getInstance();
     var total = 0;
-    final countPrefix = '${_prefix}_count_';
+    const countPrefix = '${_prefix}_count_';
     for (final k in prefs.getKeys()) {
       if (k.startsWith(countPrefix)) {
         total += prefs.getInt(k) ?? 0;
@@ -83,7 +83,9 @@ class TasbihService {
   static Future<void> clearAll() async {
     final prefs = await SharedPreferences.getInstance();
     final keys  = prefs.getKeys().where((k) => k.startsWith(_prefix));
-    for (final k in keys) await prefs.remove(k);
+    for (final k in keys) {
+      await prefs.remove(k);
+    }
   }
 
   // ── Private ─────────────────────────────────────────────────────────────────

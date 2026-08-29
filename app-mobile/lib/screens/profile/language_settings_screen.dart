@@ -104,7 +104,7 @@ class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: isAct
-                                    ? c.gold.withOpacity(0.5)
+                                    ? c.gold.withValues(alpha: 0.5)
                                     : c.bd2,
                                 width: isAct ? 1.5 : 1,
                               ),
@@ -211,7 +211,7 @@ class _EyeRow extends StatelessWidget {
               height: 1,
               decoration: BoxDecoration(
                 gradient: LinearGradient(colors: [
-                  c.gold.withOpacity(0.2),
+                  c.gold.withValues(alpha: 0.2),
                   Colors.transparent,
                 ]),
               ),

@@ -232,7 +232,7 @@ class _IconlessButton extends StatelessWidget {
       borderRadius: BorderRadius.circular(14),
       boxShadow: [
         BoxShadow(
-          color: c.gold.withOpacity(0.28),
+          color: c.gold.withValues(alpha: 0.28),
           blurRadius: 16,
           offset: const Offset(0, 4),
         ),

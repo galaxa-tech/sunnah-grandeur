@@ -207,12 +207,12 @@ class _DayCell extends StatelessWidget {
       border = c.gold;
       numColor = Colors.white;
     } else if (isEid) {
-      bg = c.gold.withOpacity(0.12);
-      border = c.gold.withOpacity(0.35);
+      bg = c.gold.withValues(alpha: 0.12);
+      border = c.gold.withValues(alpha: 0.35);
       numColor = c.gold;
     } else if (isRamadan) {
-      bg = c.green.withOpacity(0.07);
-      border = c.green.withOpacity(0.20);
+      bg = c.green.withValues(alpha: 0.07);
+      border = c.green.withValues(alpha: 0.20);
     }
 
     return Container(
@@ -256,8 +256,8 @@ class _LegendRow extends StatelessWidget {
       alignment: WrapAlignment.center,
       children: [
         _LegendItem(c: c, color: c.gold, label: 'Today'),
-        _LegendItem(c: c, color: c.gold.withOpacity(0.4), icon: Icons.star_rounded, label: 'Eid'),
-        _LegendItem(c: c, color: c.green.withOpacity(0.5), icon: Icons.nightlight_round, label: 'Ramadan'),
+        _LegendItem(c: c, color: c.gold.withValues(alpha: 0.4), icon: Icons.star_rounded, label: 'Eid'),
+        _LegendItem(c: c, color: c.green.withValues(alpha: 0.5), icon: Icons.nightlight_round, label: 'Ramadan'),
       ],
     );
   }
@@ -295,9 +295,9 @@ class _EventChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
-        color: c.gold.withOpacity(0.15),
+        color: c.gold.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(100),
-        border: Border.all(color: c.gold.withOpacity(0.35)),
+        border: Border.all(color: c.gold.withValues(alpha: 0.35)),
       ),
       child: Text(label, style: AppTextStyles.pill(c, size: 10)),
     );

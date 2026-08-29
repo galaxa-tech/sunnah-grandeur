@@ -100,7 +100,7 @@ class _AuthPromptScreenState extends State<_AuthPromptScreen> {
                     shape: BoxShape.circle,
                     color: c.goldSurface,
                     border: Border.all(
-                        color: c.gold.withOpacity(0.25)),
+                        color: c.gold.withValues(alpha: 0.25)),
                   ),
                   child: Icon(widget.icon, color: c.gold, size: 34),
                 ),
@@ -203,7 +203,7 @@ class _GoogleSignInButton extends StatelessWidget {
           border: Border.all(color: c.bd2),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(c.isDark ? 0.22 : 0.05),
+              color: Colors.black.withValues(alpha: c.isDark ? 0.22 : 0.05),
               blurRadius: 12,
               offset: const Offset(0, 3),
             ),
@@ -269,7 +269,7 @@ class _OutlineButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: c.gold.withOpacity(0.28),
+              color: c.gold.withValues(alpha: 0.28),
               blurRadius: 14,
               offset: const Offset(0, 4),
             ),

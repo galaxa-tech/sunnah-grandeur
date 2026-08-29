@@ -64,7 +64,7 @@ class _PrayerMethodScreenState extends State<PrayerMethodScreen> {
                       decoration: BoxDecoration(
                         color: c.goldSurface,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: c.gold.withOpacity(0.15)),
+                        border: Border.all(color: c.gold.withValues(alpha: 0.15)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,7 +101,7 @@ class _PrayerMethodScreenState extends State<PrayerMethodScreen> {
                               decoration: BoxDecoration(
                                 color: _asrMadhab == "Shafi'i" ? c.goldSurface : c.surf,
                                 borderRadius: BorderRadius.circular(13),
-                                border: Border.all(color: _asrMadhab == "Shafi'i" ? c.gold.withOpacity(0.35) : c.bd, width: _asrMadhab == "Shafi'i" ? 1.5 : 1),
+                                border: Border.all(color: _asrMadhab == "Shafi'i" ? c.gold.withValues(alpha: 0.35) : c.bd, width: _asrMadhab == "Shafi'i" ? 1.5 : 1),
                               ),
                               child: Row(
                                 children: [
@@ -129,7 +129,7 @@ class _PrayerMethodScreenState extends State<PrayerMethodScreen> {
                               decoration: BoxDecoration(
                                 color: _asrMadhab == "Hanafi" ? c.goldSurface : c.surf,
                                 borderRadius: BorderRadius.circular(13),
-                                border: Border.all(color: _asrMadhab == "Hanafi" ? c.gold.withOpacity(0.35) : c.bd, width: _asrMadhab == "Hanafi" ? 1.5 : 1),
+                                border: Border.all(color: _asrMadhab == "Hanafi" ? c.gold.withValues(alpha: 0.35) : c.bd, width: _asrMadhab == "Hanafi" ? 1.5 : 1),
                               ),
                               child: Row(
                                 children: [
@@ -160,7 +160,7 @@ class _PrayerMethodScreenState extends State<PrayerMethodScreen> {
                       decoration: BoxDecoration(
                         gradient: c.goldGradient,
                         borderRadius: BorderRadius.circular(16),
-                        boxShadow: [BoxShadow(color: c.gold.withOpacity(0.22), blurRadius: 20, offset: const Offset(0, 4))],
+                        boxShadow: [BoxShadow(color: c.gold.withValues(alpha: 0.22), blurRadius: 20, offset: const Offset(0, 4))],
                       ),
                       alignment: Alignment.center,
                       child: Text('Save Prayer Method', style: AppTextStyles.button(c).copyWith(color: const Color(0xFF0D0D0F))),
@@ -194,7 +194,7 @@ class _MethodRow extends StatelessWidget {
         decoration: BoxDecoration(
           color: isEq ? c.goldSurface : c.surf,
           borderRadius: BorderRadius.circular(13),
-          border: Border.all(color: isEq ? c.gold.withOpacity(0.35) : c.bd, width: isEq ? 1.5 : 1),
+          border: Border.all(color: isEq ? c.gold.withValues(alpha: 0.35) : c.bd, width: isEq ? 1.5 : 1),
         ),
         child: Row(
           children: [
@@ -250,7 +250,7 @@ class _EyeRow extends StatelessWidget {
         children: [
           Text(label.toUpperCase(), style: AppTextStyles.brandTag(c)),
           const SizedBox(width: 10),
-          Expanded(child: Container(height: 1, decoration: BoxDecoration(gradient: LinearGradient(colors: [c.gold.withOpacity(0.2), Colors.transparent])))),
+          Expanded(child: Container(height: 1, decoration: BoxDecoration(gradient: LinearGradient(colors: [c.gold.withValues(alpha: 0.2), Colors.transparent])))),
         ],
       ),
     );

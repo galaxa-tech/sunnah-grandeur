@@ -480,9 +480,9 @@ class _QuickAccessGrid extends StatelessWidget {
     return Container(
       width: 34, height: 34,
       decoration: BoxDecoration(
-        color: col.withOpacity(0.09),
+        color: col.withValues(alpha: 0.09),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: col.withOpacity(0.18)),
+        border: Border.all(color: col.withValues(alpha: 0.18)),
       ),
       child: Icon(icon, color: col, size: 18),
     );
@@ -513,9 +513,9 @@ class _AccessCard extends StatelessWidget {
           Container(
             width: 34, height: 34,
             decoration: BoxDecoration(
-              color: col.withOpacity(0.09),
+              color: col.withValues(alpha: 0.09),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: col.withOpacity(0.18)),
+              border: Border.all(color: col.withValues(alpha: 0.18)),
             ),
             child: Icon(icon, color: col, size: 18),
           ),
