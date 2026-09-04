@@ -108,15 +108,15 @@ class AppColors {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      gold.withOpacity(isDark ? 0.09 : 0.10),
-      gold.withOpacity(isDark ? 0.02 : 0.03),
+      gold.withValues(alpha: isDark ? 0.09 : 0.10),
+      gold.withValues(alpha: isDark ? 0.02 : 0.03),
     ],
   );
 
   BoxDecoration get goldCardDecoration => BoxDecoration(
     gradient: goldCardGradient,
     borderRadius: BorderRadius.circular(20),
-    border: Border.all(color: gold.withOpacity(isDark ? 0.15 : 0.18)),
+    border: Border.all(color: gold.withValues(alpha: isDark ? 0.15 : 0.18)),
   );
 
   BoxDecoration get surfaceCardDecoration => BoxDecoration(

@@ -8,10 +8,12 @@ import '../../widgets/eye_row.dart';
 import '../../widgets/sg_pill.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
+import '../../providers/prayer_tracking_provider.dart';
+import '../../providers/profile_stats_provider.dart';
 import '../auth/login_screen.dart';
 import '../auth/register_screen.dart';
 import 'account_identity_screen.dart';
-import 'notifications_settings_screen.dart';
+import '../prayer_tools/adhan_settings_screen.dart';
 import 'location_settings_screen.dart';
 import 'appearance_settings_screen.dart';
 import 'language_settings_screen.dart';
@@ -67,7 +69,7 @@ class ProfileScreen extends StatelessWidget {
               _MenuItem(icon: Icons.notifications_outlined,
                   label: lang.tr('notifications'),
                   sub: lang.tr('notifications_sub'),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsSettingsScreen())),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdhanSettingsScreen())),
               ),
               _MenuItem(icon: Icons.location_on_outlined,
                   label: lang.tr('location'),
@@ -128,7 +130,7 @@ class ProfileScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: [
                             BoxShadow(
-                              color: c.gold.withOpacity(0.25),
+                              color: c.gold.withValues(alpha: 0.25),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -154,7 +156,7 @@ class ProfileScreen extends StatelessWidget {
                       label: Text(lang.tr('sign_out'),
                           style: AppTextStyles.body(c, color: c.red, size: 13)),
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: c.red.withOpacity(0.22)),
+                        side: BorderSide(color: c.red.withValues(alpha: 0.22)),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 12),
                       ),
@@ -180,7 +182,7 @@ class _GuestBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: c.goldSurface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: c.gold.withOpacity(0.25)),
+        border: Border.all(color: c.gold.withValues(alpha: 0.25)),
       ),
       child: Row(
         children: [
@@ -188,7 +190,7 @@ class _GuestBanner extends StatelessWidget {
             width: 36, height: 36,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: c.gold.withOpacity(0.12),
+              color: c.gold.withValues(alpha: 0.12),
             ),
             child: Icon(Icons.person_outline_rounded, color: c.gold, size: 18),
           ),
@@ -306,18 +308,29 @@ class _StatsBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Real, locally-tracked stats — a brand new user with no history
+    // simply sees 0s (both providers default their numbers to 0 while
+    // their first async load is in flight, so there is no placeholder /
+    // crash state to handle here).
+    final tracking = context.watch<PrayerTrackingProvider>();
+    final stats    = context.watch<ProfileStatsProvider>();
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 18),
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
       decoration: c.surfaceCardDecoration,
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-        _StatCell(c: c, value: '342',   label: lang.tr('prayers_stat')),
+        _StatCell(c: c, value: '${tracking.totalCompleted}',
+            label: lang.tr('prayers_stat')),
         Container(width: 1, height: 40, color: c.bd),
-        _StatCell(c: c, value: '98%',   label: lang.tr('streak')),
+        _StatCell(c: c, value: '${tracking.currentStreak}',
+            label: lang.tr('streak')),
         Container(width: 1, height: 40, color: c.bd),
-        _StatCell(c: c, value: '12',    label: lang.tr('days_fasted')),
+        _StatCell(c: c, value: '${stats.daysFasted}',
+            label: lang.tr('days_fasted')),
         Container(width: 1, height: 40, color: c.bd),
-        _StatCell(c: c, value: '5,420', label: lang.tr('tasbeeh_stat')),
+        _StatCell(c: c, value: '${stats.tasbihLifetime}',
+            label: lang.tr('tasbeeh_stat')),
       ]),
     );
   }
@@ -389,7 +402,7 @@ class _MenuItem extends StatelessWidget {
             decoration: BoxDecoration(
               color: c.goldSurface,
               borderRadius: BorderRadius.circular(9),
-              border: Border.all(color: c.gold.withOpacity(0.16)),
+              border: Border.all(color: c.gold.withValues(alpha: 0.16)),
             ),
             child: Icon(icon, color: c.gold, size: 17),
           ),

@@ -84,9 +84,9 @@ class MediaSectionCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.18),
+                color: Colors.white.withValues(alpha: 0.18),
                 borderRadius: BorderRadius.circular(100),
-                border: Border.all(color: Colors.white.withOpacity(0.32)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.32)),
               ),
               child: Text(badge,
                 style: AppTextStyles.bodyMuted(c, size: 8)

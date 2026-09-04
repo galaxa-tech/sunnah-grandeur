@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../providers/dawah_provider.dart';
 import '../../providers/prayer_provider.dart';
 import '../../providers/language_provider.dart';
+import '../../providers/profile_stats_provider.dart';
+import '../../services/local/fasting_service.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import 'package:intl/intl.dart';
@@ -14,6 +17,8 @@ import '../prayer_tools/qibla_finder_screen.dart';
 import '../prayer_tools/tasbeeh_screen.dart';
 import '../prayer_tools/masjid_finder_screen.dart';
 import '../prayer_tools/forbidden_times_screen.dart';
+import '../prayer_tools/zakat_calculator_screen.dart';
+import '../prayer_tools/hijri_calendar_screen.dart';
 import 'namaz_schedule_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -83,7 +88,7 @@ class HomeScreen extends StatelessWidget {
                   trailing: SgPill(label: lang.tr('hadith'), variant: 'gold'),
                 ),
                 dawah.isLoading
-                  ? const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()))
+                  ? Center(child: Padding(padding: const EdgeInsets.all(20), child: CircularProgressIndicator(color: c.gold)))
                   : _HadithDailyCard(c: c, hadith: dawah.dailyHadith, lang: lang),
 
                 // ── Sawm section ────────────────────────────────────────────────
@@ -217,8 +222,8 @@ class _HadithDailyCard extends StatelessWidget {
         color: c.isDark ? c.surf : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: c.bd),
-        boxShadow: c.isDark ? null : [
-          BoxShadow(color: const Color(0x0C644028), blurRadius: 8, offset: const Offset(0, 2))
+        boxShadow: c.isDark ? null : const [
+          BoxShadow(color: Color(0x0C644028), blurRadius: 8, offset: Offset(0, 2))
         ],
       ),
       child: Column(
@@ -263,8 +268,13 @@ class _SawmCard extends StatefulWidget {
 
 class _SawmCardState extends State<_SawmCard> {
   bool _fastedToday = false;
-  static const _key     = 'sawm_fasted_today';
-  static const _dateKey = 'sawm_fasted_date';
+
+  // Legacy single-day keys from the old tracker (SharedPreferences-only,
+  // single-day, no history). Read once on load so a day already marked
+  // fasted under the old scheme isn't silently lost when the real
+  // per-date FastingService takes over. Never written to again.
+  static const _legacyKey     = 'sawm_fasted_today';
+  static const _legacyDateKey = 'sawm_fasted_date';
 
   @override
   void initState() {
@@ -273,24 +283,28 @@ class _SawmCardState extends State<_SawmCard> {
   }
 
   Future<void> _loadFasted() async {
-    final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getString(_dateKey);
-    final today = DateTime.now().toIso8601String().substring(0, 10);
-    if (saved == today) {
-      setState(() => _fastedToday = prefs.getBool(_key) ?? false);
-    } else {
-      await prefs.setBool(_key, false);
-      await prefs.setString(_dateKey, today);
+    final today = DateTime.now();
+    var fasted = await FastingService.isFastedOnDate(today);
+
+    if (!fasted) {
+      final prefs      = await SharedPreferences.getInstance();
+      final legacyDate = prefs.getString(_legacyDateKey);
+      final todayKey   = today.toIso8601String().substring(0, 10);
+      if (legacyDate == todayKey && (prefs.getBool(_legacyKey) ?? false)) {
+        fasted = true;
+        await FastingService.setFasted(today, true);
+      }
     }
+
+    if (mounted) setState(() => _fastedToday = fasted);
   }
 
   Future<void> _toggleFasted() async {
-    final prefs = await SharedPreferences.getInstance();
-    final today = DateTime.now().toIso8601String().substring(0, 10);
-    final next  = !_fastedToday;
-    await prefs.setBool(_key, next);
-    await prefs.setString(_dateKey, today);
+    HapticFeedback.lightImpact();
+    final next = !_fastedToday;
     setState(() => _fastedToday = next);
+    await FastingService.setFasted(DateTime.now(), next);
+    if (mounted) context.read<ProfileStatsProvider>().refresh();
   }
 
   @override
@@ -330,25 +344,25 @@ class _SawmCardState extends State<_SawmCard> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: _fastedToday
-                  ? const Color(0xFF4CAF82).withValues(alpha: 0.12)
-                  : Colors.white.withValues(alpha: 0.06),
+                  ? c.green.withValues(alpha: 0.12)
+                  : (c.isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                   color: _fastedToday
-                      ? const Color(0xFF4CAF82).withValues(alpha: 0.4)
-                      : Colors.white.withValues(alpha: 0.14)),
+                      ? c.green.withValues(alpha: 0.4)
+                      : (c.isDark ? Colors.white : Colors.black).withValues(alpha: 0.14)),
             ),
             child: Row(children: [
               Icon(
                 _fastedToday ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                color: _fastedToday ? const Color(0xFF4CAF82) : Colors.white60,
+                color: _fastedToday ? c.green : c.t2,
                 size: 18,
               ),
               const SizedBox(width: 10),
               Text(lang.tr('i_fasted_today'),
                   style: AppTextStyles.body(c,
                       size: 12,
-                      color: _fastedToday ? const Color(0xFF4CAF82) : Colors.white70)),
+                      color: _fastedToday ? c.green : c.t2)),
             ]),
           ),
         ),
@@ -418,6 +432,22 @@ class _QuickAccessGrid extends StatelessWidget {
           )),
         ]),
         const SizedBox(height: 8),
+        Row(children: [
+          Expanded(child: _AccessCard(
+            c: c, icon: Icons.calculate_outlined,
+            title: lang.tr('zakat_calculator'), sub: lang.tr('calculate_zakat_due'),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const ZakatCalculatorScreen())),
+          )),
+          const SizedBox(width: 8),
+          Expanded(child: _AccessCard(
+            c: c, icon: Icons.calendar_today_outlined,
+            title: lang.tr('hijri_calendar'), sub: lang.tr('islamic_lunar_dates'),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const HijriCalendarScreen())),
+          )),
+        ]),
+        const SizedBox(height: 8),
         GestureDetector(
           onTap: () => Navigator.push(context,
               MaterialPageRoute(builder: (_) => const MasjidFinderScreen())),
@@ -450,9 +480,9 @@ class _QuickAccessGrid extends StatelessWidget {
     return Container(
       width: 34, height: 34,
       decoration: BoxDecoration(
-        color: col.withOpacity(0.09),
+        color: col.withValues(alpha: 0.09),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: col.withOpacity(0.18)),
+        border: Border.all(color: col.withValues(alpha: 0.18)),
       ),
       child: Icon(icon, color: col, size: 18),
     );
@@ -483,9 +513,9 @@ class _AccessCard extends StatelessWidget {
           Container(
             width: 34, height: 34,
             decoration: BoxDecoration(
-              color: col.withOpacity(0.09),
+              color: col.withValues(alpha: 0.09),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: col.withOpacity(0.18)),
+              border: Border.all(color: col.withValues(alpha: 0.18)),
             ),
             child: Icon(icon, color: col, size: 18),
           ),
@@ -514,7 +544,7 @@ class _IconBtn extends StatelessWidget {
         decoration: BoxDecoration(
           color: c.surf, borderRadius: BorderRadius.circular(10),
           border: Border.all(color: c.bd2),
-          boxShadow: [BoxShadow(color: const Color(0x0C644028), blurRadius: 3)],
+          boxShadow: const [BoxShadow(color: Color(0x0C644028), blurRadius: 3)],
         ),
         child: Icon(icon, color: c.gold, size: 18),
       ),

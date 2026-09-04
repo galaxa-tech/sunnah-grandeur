@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/cart_provider.dart';
@@ -211,8 +212,11 @@ class _CartItemsList extends StatelessWidget {
                         ),
                         child: Row(mainAxisSize: MainAxisSize.min, children: [
                           _QtyBtn(Icons.remove_rounded,
-                              () => cart.updateQuantity(
-                                  item, item.quantity - 1)),
+                              () {
+                                HapticFeedback.selectionClick();
+                                cart.updateQuantity(
+                                    item, item.quantity - 1);
+                              }),
                           SizedBox(
                             width: 36,
                             child: Text('${item.quantity}',
@@ -221,8 +225,11 @@ class _CartItemsList extends StatelessWidget {
                                   fontSize: 13, color: _t1)),
                           ),
                           _QtyBtn(Icons.add_rounded,
-                              () => cart.updateQuantity(
-                                  item, item.quantity + 1)),
+                              () {
+                                HapticFeedback.selectionClick();
+                                cart.updateQuantity(
+                                    item, item.quantity + 1);
+                              }),
                         ]),
                       ),
                       Text('\$${item.totalPrice.toStringAsFixed(2)}',
@@ -253,7 +260,7 @@ class _CartItemsList extends StatelessWidget {
         ),
       ),
       child: Icon(Icons.shopping_bag_outlined,
-          color: _gold.withOpacity(0.3), size: 28),
+          color: _gold.withValues(alpha: 0.3), size: 28),
     );
   }
 }

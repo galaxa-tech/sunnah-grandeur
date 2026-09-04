@@ -2,6 +2,7 @@ import 'package:adhan/adhan.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/prayer_provider.dart';
+import '../../providers/prayer_tracking_provider.dart';
 import '../../providers/location_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../theme/app_colors.dart';
@@ -44,6 +45,7 @@ class _NamazScheduleScreenState extends State<NamazScheduleScreen> {
     final c            = AppColors.of(context);
     final lang         = context.watch<LanguageProvider>();
     final prayer       = context.watch<PrayerProvider>();
+    final tracking     = context.watch<PrayerTrackingProvider>();
     final location     = context.watch<LocationProvider>();
     final selectedDate = _days[_selectedDay];
     final isToday      = _selectedDay == 0;
@@ -122,7 +124,7 @@ class _NamazScheduleScreenState extends State<NamazScheduleScreen> {
           // Prayer list
           Expanded(
             child: prayer.isLoading
-              ? const Center(child: CircularProgressIndicator())
+              ? Center(child: CircularProgressIndicator(color: c.gold))
               : SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 18),
                   child: Column(children: [
@@ -130,6 +132,10 @@ class _NamazScheduleScreenState extends State<NamazScheduleScreen> {
                       name: lang.tr('fajr'),
                       time: fmt(times?.fajr),
                       state: _rowState(times?.fajr, isToday, nextKey, 'fajr'),
+                      // Completion marking only makes sense for today —
+                      // future days haven't happened yet.
+                      completed: isToday ? tracking.isCompleted('fajr') : null,
+                      onToggle: isToday ? () => tracking.togglePrayer('fajr') : null,
                     ),
                     PrayerRow(
                       name: lang.tr('sunrise'),
@@ -140,24 +146,32 @@ class _NamazScheduleScreenState extends State<NamazScheduleScreen> {
                       name: lang.tr('dhuhr'),
                       time: fmt(times?.dhuhr),
                       state: _rowState(times?.dhuhr, isToday, nextKey, 'dhuhr'),
+                      completed: isToday ? tracking.isCompleted('dhuhr') : null,
+                      onToggle: isToday ? () => tracking.togglePrayer('dhuhr') : null,
                     ),
                     PrayerRow(
                       name: lang.tr('asr'),
                       time: fmt(times?.asr),
                       state: _rowState(times?.asr, isToday, nextKey, 'asr'),
                       badge: nextKey == 'asr' && isToday ? lang.tr('active') : null,
+                      completed: isToday ? tracking.isCompleted('asr') : null,
+                      onToggle: isToday ? () => tracking.togglePrayer('asr') : null,
                     ),
                     PrayerRow(
                       name: lang.tr('maghrib'),
                       time: fmt(times?.maghrib),
                       state: _rowState(times?.maghrib, isToday, nextKey, 'maghrib'),
                       badge: nextKey == 'maghrib' && isToday ? lang.tr('active') : null,
+                      completed: isToday ? tracking.isCompleted('maghrib') : null,
+                      onToggle: isToday ? () => tracking.togglePrayer('maghrib') : null,
                     ),
                     PrayerRow(
                       name: lang.tr('isha'),
                       time: fmt(times?.isha),
                       state: _rowState(times?.isha, isToday, nextKey, 'isha'),
                       badge: nextKey == 'isha' && isToday ? lang.tr('active') : null,
+                      completed: isToday ? tracking.isCompleted('isha') : null,
+                      onToggle: isToday ? () => tracking.togglePrayer('isha') : null,
                     ),
 
                     if (times != null) ...[

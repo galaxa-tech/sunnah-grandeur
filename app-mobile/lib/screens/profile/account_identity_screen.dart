@@ -4,6 +4,8 @@ import '../../theme/app_text_styles.dart';
 
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/app_snackbar.dart';
+import '../../widgets/app_dialog.dart';
 
 class AccountIdentityScreen extends StatefulWidget {
   const AccountIdentityScreen({super.key});
@@ -44,12 +46,13 @@ class _AccountIdentityScreenState extends State<AccountIdentityScreen> {
       phone: _phoneCtrl.text,
     );
     setState(() => _isSaving = false);
-    
+
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(success ? 'Profile updated successfully' : 'Failed to update profile'),
-        backgroundColor: success ? const Color(0xFF4CAF82) : const Color(0xFFE53935),
-      ));
+      showAppSnackbar(
+        context,
+        success ? 'Profile updated successfully' : 'Failed to update profile',
+        type: success ? AppSnackbarType.success : AppSnackbarType.error,
+      );
     }
   }
 
@@ -96,7 +99,7 @@ class _AccountIdentityScreenState extends State<AccountIdentityScreen> {
                       decoration: BoxDecoration(
                         color: c.goldSurface,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: c.gold.withOpacity(0.28)),
+                        border: Border.all(color: c.gold.withValues(alpha: 0.28)),
                       ),
                       child: _isSaving 
                         ? SizedBox(width: 14, height: 14, child: CircularProgressIndicator(color: c.gold, strokeWidth: 2))
@@ -126,7 +129,7 @@ class _AccountIdentityScreenState extends State<AccountIdentityScreen> {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   color: c.goldSurface,
-                                  border: Border.all(color: c.gold.withOpacity(0.28), width: 1.5),
+                                  border: Border.all(color: c.gold.withValues(alpha: 0.28), width: 1.5),
                                 ),
                                 child: Icon(Icons.person_outline_rounded, color: c.gold, size: 34),
                               ),
@@ -173,38 +176,35 @@ class _AccountIdentityScreenState extends State<AccountIdentityScreen> {
 
                     GestureDetector(
                       onTap: () async {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            title: const Text('Delete Account'),
-                            content: const Text('Are you sure you want to permanently delete your account? This action cannot be undone.'),
-                            actions: [
-                              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                              TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text('Delete', style: AppTextStyles.label(c, color: c.red))),
-                            ],
-                          ),
+                        final confirm = await showAppConfirmDialog(
+                          context,
+                          title: 'Delete Account',
+                          message: 'Are you sure you want to permanently delete your account? This action cannot be undone.',
+                          confirmLabel: 'Delete',
+                          danger: true,
                         );
                         if (confirm == true) {
                           await auth.deleteAccount();
-                          if (mounted) Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+                          if (!context.mounted) return;
+                          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
                         }
                       },
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 16),
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                         decoration: BoxDecoration(
-                          color: c.red.withOpacity(0.04),
+                          color: c.red.withValues(alpha: 0.04),
                           borderRadius: BorderRadius.circular(13),
-                          border: Border.all(color: c.red.withOpacity(0.18)),
+                          border: Border.all(color: c.red.withValues(alpha: 0.18)),
                         ),
                         child: Row(
                           children: [
                             Container(
                               width: 32, height: 32,
                               decoration: BoxDecoration(
-                                color: c.red.withOpacity(0.10),
+                                color: c.red.withValues(alpha: 0.10),
                                 borderRadius: BorderRadius.circular(9),
-                                border: Border.all(color: c.red.withOpacity(0.18)),
+                                border: Border.all(color: c.red.withValues(alpha: 0.18)),
                               ),
                               child: Icon(Icons.delete_outline_rounded, color: c.red, size: 16),
                             ),
@@ -244,7 +244,7 @@ class _EyeRow extends StatelessWidget {
             height: 1,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [c.gold.withOpacity(0.2), Colors.transparent],
+                colors: [c.gold.withValues(alpha: 0.2), Colors.transparent],
               ),
             ),
           ),
@@ -335,7 +335,7 @@ class _SettingsRow extends StatelessWidget {
             decoration: BoxDecoration(
               color: c.goldSurface,
               borderRadius: BorderRadius.circular(9),
-              border: Border.all(color: c.gold.withOpacity(0.14)),
+              border: Border.all(color: c.gold.withValues(alpha: 0.14)),
             ),
             child: Icon(icon, color: c.gold, size: 16),
           ),

@@ -4,6 +4,7 @@ import '../../providers/location_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../widgets/sg_pill.dart';
+import '../../widgets/app_snackbar.dart';
 
 class LocationSettingsScreen extends StatefulWidget {
   const LocationSettingsScreen({super.key});
@@ -32,14 +33,11 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
     if (ok) {
       _searchCtrl.clear();
       setState(() => _suggestions = []);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Location updated'),
-        duration: Duration(seconds: 2),
-      ));
+      showAppSnackbar(context, 'Location updated',
+          type: AppSnackbarType.success, duration: const Duration(seconds: 2));
     } else if (loc.error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(loc.error!), duration: const Duration(seconds: 3)),
-      );
+      showAppSnackbar(context, loc.error!,
+          type: AppSnackbarType.error, duration: const Duration(seconds: 3));
     }
   }
 
@@ -48,10 +46,8 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
     if (!mounted) return;
     _searchCtrl.clear();
     setState(() => _suggestions = []);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Location set to ${city.city}'),
-      duration: const Duration(seconds: 2),
-    ));
+    showAppSnackbar(context, 'Location set to ${city.city}',
+        type: AppSnackbarType.success, duration: const Duration(seconds: 2));
   }
 
   @override
@@ -108,15 +104,15 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
                     padding: const EdgeInsets.all(18),
                     decoration: c.goldCardDecoration.copyWith(
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: c.gold.withOpacity(0.15)),
+                      border: Border.all(color: c.gold.withValues(alpha: 0.15)),
                     ),
                     child: Row(children: [
                       Container(
                         width: 42, height: 42,
                         decoration: BoxDecoration(
-                          color: c.gold.withOpacity(0.15),
+                          color: c.gold.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: c.gold.withOpacity(0.25)),
+                          border: Border.all(color: c.gold.withValues(alpha: 0.25)),
                         ),
                         child: Icon(Icons.my_location_rounded, color: c.gold, size: 20),
                       ),
@@ -162,7 +158,7 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
                           decoration: BoxDecoration(
                             color: c.goldSurface,
                             borderRadius: BorderRadius.circular(9),
-                            border: Border.all(color: c.gold.withOpacity(0.14)),
+                            border: Border.all(color: c.gold.withValues(alpha: 0.14)),
                           ),
                           child: loc.isLoading
                               ? Padding(
@@ -196,7 +192,7 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: _searchCtrl.text.isNotEmpty
-                            ? c.gold.withOpacity(0.40) : c.bd2,
+                            ? c.gold.withValues(alpha: 0.40) : c.bd2,
                       ),
                     ),
                     child: Row(children: [
@@ -282,7 +278,7 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
                           borderRadius: BorderRadius.circular(13),
                           border: Border.all(
                             color: loc.cityName == city.displayName
-                                ? c.gold.withOpacity(0.40) : c.bd,
+                                ? c.gold.withValues(alpha: 0.40) : c.bd,
                           ),
                         ),
                         child: Row(children: [
@@ -291,7 +287,7 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
                             decoration: BoxDecoration(
                               color: c.goldSurface,
                               borderRadius: BorderRadius.circular(9),
-                              border: Border.all(color: c.gold.withOpacity(0.14)),
+                              border: Border.all(color: c.gold.withValues(alpha: 0.14)),
                             ),
                             child: Icon(Icons.location_city_outlined,
                                 color: c.gold, size: 15),
@@ -350,7 +346,7 @@ class _EyeRow extends StatelessWidget {
           height: 1,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [c.gold.withOpacity(0.2), Colors.transparent],
+              colors: [c.gold.withValues(alpha: 0.2), Colors.transparent],
             ),
           ),
         )),

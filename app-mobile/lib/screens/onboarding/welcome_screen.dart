@@ -175,7 +175,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             gradient: c.goldGradient,
             boxShadow: [
               BoxShadow(
-                color: c.gold.withOpacity(0.32),
+                color: c.gold.withValues(alpha: 0.32),
                 blurRadius: 36,
                 spreadRadius: 0,
                 offset: const Offset(0, 8),
@@ -210,7 +210,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           'بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم',
           style: GoogleFonts.notoNaskhArabic(
             fontSize: 16,
-            color: c.gold.withOpacity(0.70),
+            color: c.gold.withValues(alpha: 0.70),
             height: 1.6,
           ),
         ),
@@ -319,7 +319,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         Text(
           'By continuing, you agree to our Terms & Privacy Policy.',
           style: GoogleFonts.inter(
-            color: c.t3.withOpacity(0.55),
+            color: c.t3.withValues(alpha: 0.55),
             fontSize: 10.5,
           ),
           textAlign: TextAlign.center,
@@ -366,7 +366,7 @@ class _AuthButton extends StatelessWidget {
         deco = BoxDecoration(
           color: c.surf,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: c.gold.withOpacity(0.45), width: 1.2),
+          border: Border.all(color: c.gold.withValues(alpha: 0.45), width: 1.2),
         );
         textColor = c.t1;
         iconColor = null;
@@ -378,7 +378,7 @@ class _AuthButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: c.gold.withOpacity(0.30),
+              color: c.gold.withValues(alpha: 0.30),
               blurRadius: 20,
               offset: const Offset(0, 6),
             ),
@@ -473,7 +473,7 @@ class _GeomPainter extends CustomPainter {
     final maxR = size.width  / 2;
 
     final paint = Paint()
-      ..color       = c.gold.withOpacity(0.04)
+      ..color       = c.gold.withValues(alpha: 0.04)
       ..style       = PaintingStyle.stroke
       ..strokeWidth = 1.0;
 

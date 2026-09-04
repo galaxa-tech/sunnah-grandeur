@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/store_provider.dart';
@@ -163,10 +164,10 @@ class _PageHeader extends StatelessWidget {
             child: Container(
               width: 400, height: 200,
               decoration: BoxDecoration(
-                color:        _gold.withOpacity(0.05),
+                color:        _gold.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(200),
                 boxShadow: [
-                  BoxShadow(color: _gold.withOpacity(0.05), blurRadius: 80, spreadRadius: 40)
+                  BoxShadow(color: _gold.withValues(alpha: 0.05), blurRadius: 80, spreadRadius: 40)
                 ],
               ),
             ),
@@ -506,14 +507,14 @@ class _SidebarItem extends StatelessWidget {
         margin:  const EdgeInsets.symmetric(vertical: 1),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color:        isActive ? _gold.withOpacity(0.10) : Colors.transparent,
+          color:        isActive ? _gold.withValues(alpha: 0.10) : Colors.transparent,
           borderRadius: BorderRadius.circular(4),
         ),
         child: Row(
           children: [
             Icon(icon,
               size:  14,
-              color: isActive ? _gold : (accentColor?.withOpacity(0.50) ?? _t2)),
+              color: isActive ? _gold : (accentColor?.withValues(alpha: 0.50) ?? _t2)),
             const SizedBox(width: 8),
             Expanded(
               child: Text(label,
@@ -616,6 +617,7 @@ class _ProductGrid extends StatelessWidget {
 
   void _addToCart(BuildContext context, ProductModel p) {
     if (p.stockQuantity == 0) return;
+    HapticFeedback.lightImpact();
     cart.addToCart(p, 'Standard', 1);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -662,7 +664,7 @@ class _MobileDrawer extends StatelessWidget {
         GestureDetector(
           onTap: onClose,
           child: Container(
-            color: Colors.black.withOpacity(0.60),
+            color: Colors.black.withValues(alpha: 0.60),
           ),
         ),
         // Drawer panel
@@ -809,14 +811,14 @@ class _MobItem extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         margin:  const EdgeInsets.symmetric(vertical: 1),
         decoration: BoxDecoration(
-          color:        isActive ? _gold.withOpacity(0.10) : Colors.transparent,
+          color:        isActive ? _gold.withValues(alpha: 0.10) : Colors.transparent,
           borderRadius: BorderRadius.circular(4),
         ),
         child: Row(
           children: [
             Icon(icon,
               size: 16,
-              color: isActive ? _gold : (accentColor?.withOpacity(0.5) ?? _t2)),
+              color: isActive ? _gold : (accentColor?.withValues(alpha: 0.5) ?? _t2)),
             const SizedBox(width: 10),
             Expanded(
               child: Text(label,

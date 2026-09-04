@@ -5,6 +5,7 @@ import '../providers/auth_provider.dart';
 import '../theme/app_colors.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
+import 'app_snackbar.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AuthGate — wraps any widget that requires a real account.
@@ -71,14 +72,8 @@ class _AuthPromptScreenState extends State<_AuthPromptScreen> {
     if (mounted) {
       if (!ok) {
         setState(() => _googleLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(auth.error ?? 'Google sign-in failed.'),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
-          ),
-        );
+        showAppSnackbar(context, auth.error ?? 'Google sign-in failed.',
+            type: AppSnackbarType.error);
       }
       // On success, AuthProvider notifies → AuthGate rebuilds → shows child.
     }
@@ -105,7 +100,7 @@ class _AuthPromptScreenState extends State<_AuthPromptScreen> {
                     shape: BoxShape.circle,
                     color: c.goldSurface,
                     border: Border.all(
-                        color: c.gold.withOpacity(0.25)),
+                        color: c.gold.withValues(alpha: 0.25)),
                   ),
                   child: Icon(widget.icon, color: c.gold, size: 34),
                 ),
@@ -208,7 +203,7 @@ class _GoogleSignInButton extends StatelessWidget {
           border: Border.all(color: c.bd2),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(c.isDark ? 0.22 : 0.05),
+              color: Colors.black.withValues(alpha: c.isDark ? 0.22 : 0.05),
               blurRadius: 12,
               offset: const Offset(0, 3),
             ),
@@ -274,7 +269,7 @@ class _OutlineButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: c.gold.withOpacity(0.28),
+              color: c.gold.withValues(alpha: 0.28),
               blurRadius: 14,
               offset: const Offset(0, 4),
             ),

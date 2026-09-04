@@ -66,7 +66,7 @@ class OrderHistoryScreen extends StatelessWidget {
                         .snapshots(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
+                        return Center(child: CircularProgressIndicator(color: c.gold));
                       }
                       if (snapshot.hasError) {
                         return Center(child: Text('Error: ${snapshot.error}', style: AppTextStyles.body(c)));
@@ -78,7 +78,7 @@ class OrderHistoryScreen extends StatelessWidget {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.receipt_long_outlined, size: 64, color: c.t3.withOpacity(0.5)),
+                              Icon(Icons.receipt_long_outlined, size: 64, color: c.t3.withValues(alpha: 0.5)),
                               const SizedBox(height: 16),
                               Text('No orders yet', style: AppTextStyles.heading(c, fontSize: 18)),
                             ],
@@ -104,7 +104,7 @@ class OrderHistoryScreen extends StatelessWidget {
                             IconData statusIcon = Icons.local_shipping_outlined;
                             
                             if (status == 'DELIVERED') {
-                              statusColor = const Color(0xFF4CAF82);
+                              statusColor = c.green;
                               statusIcon = Icons.check_circle_outline_rounded;
                             } else if (status == 'CANCELLED') {
                               statusColor = c.red;
@@ -167,9 +167,9 @@ class _OrderCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.15),
+                  color: statusColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: statusColor.withOpacity(0.3)),
+                  border: Border.all(color: statusColor.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
@@ -218,7 +218,7 @@ class _EyeRow extends StatelessWidget {
         children: [
           Text(label.toUpperCase(), style: AppTextStyles.brandTag(c)),
           const SizedBox(width: 10),
-          Expanded(child: Container(height: 1, decoration: BoxDecoration(gradient: LinearGradient(colors: [c.gold.withOpacity(0.2), Colors.transparent])))),
+          Expanded(child: Container(height: 1, decoration: BoxDecoration(gradient: LinearGradient(colors: [c.gold.withValues(alpha: 0.2), Colors.transparent])))),
         ],
       ),
     );

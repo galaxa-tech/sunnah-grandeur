@@ -10,8 +10,11 @@ import 'providers/auth_provider.dart';
 import 'providers/store_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/media_provider.dart';
+import 'providers/quran_provider.dart';
 import 'providers/dawah_provider.dart';
 import 'providers/prayer_provider.dart';
+import 'providers/prayer_tracking_provider.dart';
+import 'providers/profile_stats_provider.dart';
 import 'providers/location_provider.dart';
 import 'providers/language_provider.dart';
 import 'providers/adhan_settings_provider.dart';
@@ -22,12 +25,11 @@ import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
 import 'screens/shell_screen.dart';
 import 'screens/onboarding/welcome_screen.dart';
-import 'screens/onboarding/language_onboarding_screen.dart';
-import 'screens/onboarding/location_onboarding_screen.dart';
-import 'screens/onboarding/alarm_onboarding_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
-import 'screens/profile/notifications_settings_screen.dart';
+import 'screens/prayer_tools/adhan_settings_screen.dart';
+import 'screens/prayer_tools/zakat_calculator_screen.dart';
+import 'screens/prayer_tools/hijri_calendar_screen.dart';
 import 'screens/profile/location_settings_screen.dart';
 
 // ── ThemeMode + text-scale notifier ──────────────────────────────────────────
@@ -108,6 +110,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => StoreProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => MediaProvider()),
+        ChangeNotifierProvider(create: (_) => QuranProvider()),
         ChangeNotifierProvider(create: (_) => DawahProvider()),
         ChangeNotifierProvider(create: (_) => LocationProvider()),
         ChangeNotifierProvider(create: (_) => AdhanSettingsProvider()),
@@ -122,6 +125,8 @@ void main() async {
           },
         ),
         ChangeNotifierProvider(create: (_) => MasjidProvider()),
+        ChangeNotifierProvider(create: (_) => PrayerTrackingProvider()),
+        ChangeNotifierProvider(create: (_) => ProfileStatsProvider()),
       ],
       child: SunnahGrandeurApp(firebaseError: firebaseError),
     ),
@@ -169,14 +174,13 @@ class SunnahGrandeurApp extends StatelessWidget {
           : const SplashScreen(),
       routes: {
         '/welcome':           (_) => const WelcomeScreen(),
-        '/onboard/language':  (_) => const LanguageOnboardingScreen(),
-        '/onboard/location':  (_) => const LocationOnboardingScreen(),
-        '/onboard/alarms':    (_) => const AlarmOnboardingScreen(),
         '/login':             (_) => const LoginScreen(),
         '/register':          (_) => const RegisterScreen(),
         '/main':              (_) => const ShellScreen(),
-        '/settings/notifications': (_) => const NotificationsSettingsScreen(),
+        '/settings/notifications': (_) => const AdhanSettingsScreen(),
         '/settings/location':      (_) => const LocationSettingsScreen(),
+        '/tools/zakat':            (_) => const ZakatCalculatorScreen(),
+        '/tools/hijri-calendar':   (_) => const HijriCalendarScreen(),
       },
     );
   }

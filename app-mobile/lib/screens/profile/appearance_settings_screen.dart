@@ -131,7 +131,7 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
                             child: Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: (!isDark && !useSystem) ? c.goldSurface : c.surf.withOpacity(0.7),
+                                color: (!isDark && !useSystem) ? c.goldSurface : c.surf.withValues(alpha: 0.7),
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(color: (!isDark && !useSystem) ? c.gold : c.bd, width: (!isDark && !useSystem) ? 1.5 : 1),
                               ),
@@ -195,7 +195,7 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
                             decoration: BoxDecoration(
                               color: c.goldSurface,
                               borderRadius: BorderRadius.circular(9),
-                              border: Border.all(color: c.gold.withOpacity(0.14)),
+                              border: Border.all(color: c.gold.withValues(alpha: 0.14)),
                             ),
                             child: Icon(Icons.settings_system_daydream_rounded, color: c.gold, size: 16),
                           ),
@@ -270,7 +270,7 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
                           onTap: () => setState(() => _appIcon = 'Dark Gold'),
                           mockIconBg: const LinearGradient(colors: [Color(0xFF1C1204), Color(0xFF0D0D0F)], begin: Alignment.topLeft, end: Alignment.bottomRight),
                           iconColor: c.gold,
-                          borderColor: c.gold.withOpacity(0.3),
+                          borderColor: c.gold.withValues(alpha: 0.3),
                           c: c,
                         ),
                         const SizedBox(width: 10),
@@ -290,7 +290,7 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
                           onTap: () => setState(() => _appIcon = 'Emerald'),
                           mockIconBg: const LinearGradient(colors: [Color(0xFF0D3520), Color(0xFF061510)], begin: Alignment.topLeft, end: Alignment.bottomRight),
                           iconColor: const Color(0xFF4CAF82),
-                          borderColor: const Color(0xFF4CAF82).withOpacity(0.2),
+                          borderColor: const Color(0xFF4CAF82).withValues(alpha: 0.2),
                           c: c,
                         ),
                       ],
@@ -328,9 +328,9 @@ class _AppIconCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: isEq ? c.goldSurface : c.surf.withOpacity(0.6),
+            color: isEq ? c.goldSurface : c.surf.withValues(alpha: 0.6),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: isEq ? c.gold.withOpacity(0.5) : c.bd, width: isEq ? 1.5 : 1),
+            border: Border.all(color: isEq ? c.gold.withValues(alpha: 0.5) : c.bd, width: isEq ? 1.5 : 1),
           ),
           child: Column(
             children: [
@@ -391,7 +391,7 @@ class _EyeRow extends StatelessWidget {
         children: [
           Text(label.toUpperCase(), style: AppTextStyles.brandTag(c)),
           const SizedBox(width: 10),
-          Expanded(child: Container(height: 1, decoration: BoxDecoration(gradient: LinearGradient(colors: [c.gold.withOpacity(0.2), Colors.transparent])))),
+          Expanded(child: Container(height: 1, decoration: BoxDecoration(gradient: LinearGradient(colors: [c.gold.withValues(alpha: 0.2), Colors.transparent])))),
         ],
       ),
     );

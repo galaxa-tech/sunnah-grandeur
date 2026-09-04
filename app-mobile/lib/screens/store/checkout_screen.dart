@@ -163,6 +163,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       // The webhook will also clear the Firestore cart, but we clear the
       // local copy immediately for a snappy UX.
       await cart.clearCart();
+      HapticFeedback.mediumImpact();
 
       if (!mounted) return;
       Navigator.pushReplacement(
@@ -472,7 +473,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           Container(
             width: 40, height: 40,
             decoration: BoxDecoration(
-              color: _gold.withOpacity(0.10),
+              color: _gold.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(Icons.credit_card_rounded, color: _gold, size: 20),
@@ -704,7 +705,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       child: Container(
         width: double.infinity, height: 52,
         decoration: BoxDecoration(
-          color: _isProcessing ? _gold.withOpacity(0.5) : _gold,
+          color: _isProcessing ? _gold.withValues(alpha: 0.5) : _gold,
           borderRadius: BorderRadius.circular(4),
         ),
         alignment: Alignment.center,
@@ -817,7 +818,7 @@ class _FormField extends StatelessWidget {
         labelText: label,
         hintText: hint,
         labelStyle: GoogleFonts.manrope(fontSize: 12, color: _t2),
-        hintStyle: GoogleFonts.manrope(fontSize: 13, color: _t2.withOpacity(0.5)),
+        hintStyle: GoogleFonts.manrope(fontSize: 13, color: _t2.withValues(alpha: 0.5)),
         prefixIcon: prefixIcon != null
             ? Icon(prefixIcon, color: _t2, size: 18)
             : null,

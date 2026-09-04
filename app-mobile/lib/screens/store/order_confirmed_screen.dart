@@ -76,7 +76,7 @@ class OrderConfirmedScreen extends StatelessWidget {
                           shape: BoxShape.circle,
                           color: c.goldSurface,
                           border: Border.all(
-                              color: c.gold.withOpacity(0.3), width: 2),
+                              color: c.gold.withValues(alpha: 0.3), width: 2),
                         ),
                         child: Center(
                           child: Icon(Icons.check_rounded,
@@ -170,7 +170,7 @@ class OrderConfirmedScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: c.gold.withOpacity(0.22),
+                              color: c.gold.withValues(alpha: 0.22),
                               blurRadius: 20,
                               offset: const Offset(0, 4),
                             ),

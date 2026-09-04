@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -9,7 +10,9 @@ import '../../theme/app_text_styles.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 // RegisterScreen — minimal 3-field signup (name, email, password).
 //
-// Phone removed to reduce friction. Google is the fastest path.
+// Phone removed to reduce friction. Google Sign-In is offered here only for
+// guests upgrading their account (isGuest branch) — normal registration is a
+// clean email/password form; new users pick Google from WelcomeScreen instead.
 // Navigation: all success paths use pushNamedAndRemoveUntil('/main', (_) => false).
 // ─────────────────────────────────────────────────────────────────────────────
 class RegisterScreen extends StatefulWidget {
@@ -57,6 +60,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (!mounted) return;
     if (success) {
+      HapticFeedback.lightImpact();
       Navigator.pushNamedAndRemoveUntil(context, '/main', (_) => false);
     } else {
       setState(() => _isLoading = false);
@@ -146,7 +150,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     decoration: BoxDecoration(
                       color: c.goldSurface,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: c.gold.withOpacity(0.22)),
+                      border: Border.all(color: c.gold.withValues(alpha: 0.22)),
                     ),
                     child: Row(
                       children: [
@@ -167,33 +171,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 28),
 
-                // ── Google — fastest path (text only, no logo) ────────────
-                _IconlessButton(
-                  label: 'Continue with Google',
-                  loading: _googleLoading,
-                  disabled: _anyLoading,
-                  onTap: _handleGoogle,
-                  isGold: false,
-                  c: c,
-                ),
+                // ── Google — guest-upgrade path only (text only, no logo) ──
+                // Normal registration is email/password only; new users pick
+                // Google from WelcomeScreen. Guests upgrading get it here too
+                // since it's the fastest way to save their progress.
+                if (isGuest) ...[
+                  _IconlessButton(
+                    label: 'Continue with Google',
+                    loading: _googleLoading,
+                    disabled: _anyLoading,
+                    onTap: _handleGoogle,
+                    isGold: false,
+                    c: c,
+                  ),
 
-                const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-                // ── Divider ────────────────────────────────────────────────
-                Row(
-                  children: [
-                    Expanded(child: Divider(color: c.bd2, thickness: 0.8)),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      child: Text('or create with email',
-                          style: GoogleFonts.inter(
-                              color: c.t3, fontSize: 11)),
-                    ),
-                    Expanded(child: Divider(color: c.bd2, thickness: 0.8)),
-                  ],
-                ),
+                  // ── Divider ──────────────────────────────────────────────
+                  Row(
+                    children: [
+                      Expanded(child: Divider(color: c.bd2, thickness: 0.8)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: Text('or create with email',
+                            style: GoogleFonts.inter(
+                                color: c.t3, fontSize: 11)),
+                      ),
+                      Expanded(child: Divider(color: c.bd2, thickness: 0.8)),
+                    ],
+                  ),
 
-                const SizedBox(height: 20),
+                  const SizedBox(height: 20),
+                ],
 
                 // ── Name ───────────────────────────────────────────────────
                 _RegField(
@@ -319,7 +328,7 @@ class _IconlessButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: c.gold.withOpacity(0.28),
+                color: c.gold.withValues(alpha: 0.28),
                 blurRadius: 16,
                 offset: const Offset(0, 4),
               ),
@@ -328,7 +337,7 @@ class _IconlessButton extends StatelessWidget {
         : BoxDecoration(
             color: c.surf,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: c.gold.withOpacity(0.45), width: 1.2),
+            border: Border.all(color: c.gold.withValues(alpha: 0.45), width: 1.2),
           );
 
     final textColor = isGold ? const Color(0xFF1A1200) : c.t1;

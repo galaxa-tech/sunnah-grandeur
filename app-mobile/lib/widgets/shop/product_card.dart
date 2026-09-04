@@ -112,7 +112,7 @@ class _ProductCardState extends State<ProductCard> {
                           gradient: LinearGradient(
                             begin: Alignment.bottomCenter,
                             end:   Alignment.topCenter,
-                            colors: [_bg.withOpacity(0.95), Colors.transparent],
+                            colors: [_bg.withValues(alpha: 0.95), Colors.transparent],
                           ),
                         ),
                         child: GestureDetector(
@@ -158,7 +158,7 @@ class _ProductCardState extends State<ProductCard> {
                         p.category.toUpperCase(),
                         style: GoogleFonts.manrope(
                           fontSize: 9, fontWeight: FontWeight.bold,
-                          color: _gold.withOpacity(0.60),
+                          color: _gold.withValues(alpha: 0.60),
                           letterSpacing: 1.5,
                         ),
                       ),
@@ -262,7 +262,7 @@ class _ProductCardState extends State<ProductCard> {
             p.category.toUpperCase(),
             style: GoogleFonts.manrope(
               fontSize: 9, fontWeight: FontWeight.bold,
-              color: _gold.withOpacity(0.40),
+              color: _gold.withValues(alpha: 0.40),
               letterSpacing: 1.5,
             ),
           ),

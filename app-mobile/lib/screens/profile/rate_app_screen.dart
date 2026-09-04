@@ -63,7 +63,7 @@ class _RateAppScreenState extends State<RateAppScreen> {
                       decoration: BoxDecoration(
                         color: c.goldSurface,
                         shape: BoxShape.circle,
-                        border: Border.all(color: c.gold.withOpacity(0.22)),
+                        border: Border.all(color: c.gold.withValues(alpha: 0.22)),
                       ),
                       child: Icon(Icons.star_outline_rounded, color: c.gold, size: 32),
                     ),
@@ -88,7 +88,7 @@ class _RateAppScreenState extends State<RateAppScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 5),
                             child: Icon(
                               isFilled ? Icons.star_rounded : Icons.star_border_rounded,
-                              color: isFilled ? c.gold : c.gold.withOpacity(0.4),
+                              color: isFilled ? c.gold : c.gold.withValues(alpha: 0.4),
                               size: 44,
                             ),
                           ),
@@ -118,7 +118,7 @@ class _RateAppScreenState extends State<RateAppScreen> {
                       decoration: BoxDecoration(
                         gradient: c.goldGradient,
                         borderRadius: BorderRadius.circular(16),
-                        boxShadow: [BoxShadow(color: c.gold.withOpacity(0.22), blurRadius: 20, offset: const Offset(0, 4))],
+                        boxShadow: [BoxShadow(color: c.gold.withValues(alpha: 0.22), blurRadius: 20, offset: const Offset(0, 4))],
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,

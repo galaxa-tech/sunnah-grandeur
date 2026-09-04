@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import 'sg_pill.dart';
@@ -13,12 +14,21 @@ class PrayerRow extends StatelessWidget {
     required this.time,
     this.state = PrayerRowState.upcoming,
     this.badge,
+    this.completed,
+    this.onToggle,
   });
 
   final String name;
   final String time;
   final PrayerRowState state;
   final String? badge;   // e.g. "Now", "optional"
+
+  /// When non-null, a tappable completion checkbox is shown reflecting
+  /// this value — the user's own "I prayed this" mark. It is deliberately
+  /// independent of [state], which is derived purely from whether the
+  /// prayer time has already passed.
+  final bool? completed;
+  final VoidCallback? onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -28,9 +38,13 @@ class PrayerRow extends StatelessWidget {
     final isOptional = state == PrayerRowState.optional;
 
     Color dotColor;
-    if (isActive)       dotColor = c.gold;
-    else if (isDone)    dotColor = c.green;
-    else                dotColor = c.bd2;
+    if (isActive) {
+      dotColor = c.gold;
+    } else if (isDone) {
+      dotColor = c.green;
+    } else {
+      dotColor = c.bd2;
+    }
 
     Color nameColor = isActive ? c.gold : (isOptional ? c.t3 : c.t1);
     Color timeColor = isActive ? c.gold2 : c.t3;
@@ -41,10 +55,10 @@ class PrayerRow extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 5),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color:        isActive ? c.gold.withOpacity(0.07) : Colors.transparent,
+          color:        isActive ? c.gold.withValues(alpha: 0.07) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border:       Border.all(
-            color: isActive ? c.gold.withOpacity(0.18) : Colors.transparent,
+            color: isActive ? c.gold.withValues(alpha: 0.18) : Colors.transparent,
           ),
         ),
         child: Row(children: [
@@ -73,7 +87,26 @@ class PrayerRow extends StatelessWidget {
           ],
           if (isOptional) ...[
             const SizedBox(width: 7),
-            SgPill(label: 'optional', variant: 'gold', fontSize: 7.5),
+            const SgPill(label: 'optional', variant: 'gold', fontSize: 7.5),
+          ],
+          if (completed != null) ...[
+            const SizedBox(width: 10),
+            GestureDetector(
+              onTap: onToggle == null
+                  ? null
+                  : () {
+                      HapticFeedback.lightImpact();
+                      onToggle!();
+                    },
+              behavior: HitTestBehavior.opaque,
+              child: Icon(
+                completed!
+                    ? Icons.check_circle_rounded
+                    : Icons.radio_button_unchecked_rounded,
+                color: completed! ? c.green : c.t3,
+                size: 20,
+              ),
+            ),
           ],
         ]),
       ),

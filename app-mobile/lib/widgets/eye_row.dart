@@ -31,7 +31,7 @@ class EyeRow extends StatelessWidget {
             height: 1,
             decoration: BoxDecoration(
               gradient: LinearGradient(colors: [
-                c.gold.withOpacity(0.20),
+                c.gold.withValues(alpha: 0.20),
                 Colors.transparent,
               ]),
             ),

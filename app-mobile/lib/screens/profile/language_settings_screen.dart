@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/language_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
+import '../../widgets/app_snackbar.dart';
 
 class LanguageSettingsScreen extends StatefulWidget {
   const LanguageSettingsScreen({super.key});
@@ -29,10 +30,12 @@ class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
   Future<void> _apply() async {
     await context.read<LanguageProvider>().setLanguage(_selectedCode);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(context.read<LanguageProvider>().tr('language_updated')),
+    showAppSnackbar(
+      context,
+      context.read<LanguageProvider>().tr('language_updated'),
+      type: AppSnackbarType.success,
       duration: const Duration(seconds: 1),
-    ));
+    );
   }
 
   @override
@@ -101,7 +104,7 @@ class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: isAct
-                                    ? c.gold.withOpacity(0.5)
+                                    ? c.gold.withValues(alpha: 0.5)
                                     : c.bd2,
                                 width: isAct ? 1.5 : 1,
                               ),
@@ -137,7 +140,7 @@ class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     color: isAct
-                                        ? const Color(0xFF4CAF82)
+                                        ? c.green
                                         : Colors.transparent,
                                     border: isAct
                                         ? null
@@ -208,7 +211,7 @@ class _EyeRow extends StatelessWidget {
               height: 1,
               decoration: BoxDecoration(
                 gradient: LinearGradient(colors: [
-                  c.gold.withOpacity(0.2),
+                  c.gold.withValues(alpha: 0.2),
                   Colors.transparent,
                 ]),
               ),

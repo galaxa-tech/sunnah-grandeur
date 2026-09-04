@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
+import '../../widgets/app_snackbar.dart';
 
 const _shareLink = 'https://sunnahgrandeur.com/invite';
 const _shareMsg  = 'Join me on Sunnah Grandeur — your Islamic lifestyle companion!\n$_shareLink';
@@ -60,7 +61,7 @@ class InviteFriendsScreen extends StatelessWidget {
                       padding: const EdgeInsets.all(24),
                       decoration: c.goldCardDecoration.copyWith(
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: c.gold.withOpacity(0.15)),
+                        border: Border.all(color: c.gold.withValues(alpha: 0.15)),
                       ),
                       child: Column(
                         children: [
@@ -104,10 +105,11 @@ class InviteFriendsScreen extends StatelessWidget {
                         const SizedBox(width: 8),
                         GestureDetector(
                           onTap: () {
+                            HapticFeedback.lightImpact();
                             Clipboard.setData(const ClipboardData(text: _shareLink));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Link copied!'), duration: Duration(seconds: 1)),
-                            );
+                            showAppSnackbar(context, 'Link copied!',
+                                type: AppSnackbarType.success,
+                                duration: const Duration(seconds: 1));
                           },
                           child: Container(
                             width: 44, height: 44,
@@ -236,7 +238,7 @@ class _EyeRow extends StatelessWidget {
         children: [
           Text(label.toUpperCase(), style: AppTextStyles.brandTag(c)),
           const SizedBox(width: 10),
-          Expanded(child: Container(height: 1, decoration: BoxDecoration(gradient: LinearGradient(colors: [c.gold.withOpacity(0.2), Colors.transparent])))),
+          Expanded(child: Container(height: 1, decoration: BoxDecoration(gradient: LinearGradient(colors: [c.gold.withValues(alpha: 0.2), Colors.transparent])))),
         ],
       ),
     );

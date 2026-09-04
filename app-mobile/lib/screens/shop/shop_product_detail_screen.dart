@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/cart_provider.dart';
@@ -7,7 +8,7 @@ import '../../models/product_model.dart';
 import 'shop_cart_screen.dart';
 
 // ─── Website colour tokens ────────────────────────────────────────────────────
-const _bg    = Color(0xFF070707);
+const _bg    = Color(0xFF0A0A0A);
 const _surf  = Color(0xFF141414);
 const _bd    = Color(0xFF1F1F1F);
 const _gold  = Color(0xFFC9A84C);
@@ -495,7 +496,10 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
                           _QtyBtn(
                             icon: Icons.remove_rounded,
                             onTap: () {
-                              if (_quantity > 1) setState(() => _quantity--);
+                              if (_quantity > 1) {
+                                HapticFeedback.selectionClick();
+                                setState(() => _quantity--);
+                              }
                             },
                           ),
                           SizedBox(
@@ -508,7 +512,10 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
                           _QtyBtn(
                             icon: Icons.add_rounded,
                             onTap: () {
-                              if (_quantity < 5) setState(() => _quantity++);
+                              if (_quantity < 5) {
+                                HapticFeedback.selectionClick();
+                                setState(() => _quantity++);
+                              }
                             },
                           ),
                         ],
@@ -638,7 +645,7 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
                 decoration: BoxDecoration(
                   color: _surf,
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: _bd.withOpacity(0.5)),
+                  border: Border.all(color: _bd.withValues(alpha: 0.5)),
                 ),
                 child: Column(
                   children: [
@@ -668,6 +675,7 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
 
   void _doAddToCart(CartProvider cart) {
     if (_isSoldOut) return;
+    HapticFeedback.lightImpact();
     cart.addToCart(widget.product, 'Standard', _quantity);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       backgroundColor: _surf,

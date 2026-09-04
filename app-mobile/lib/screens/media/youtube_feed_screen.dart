@@ -36,7 +36,7 @@ class YoutubeFeedScreen extends StatelessWidget {
 
           Expanded(
             child: media.isLoadingVideos
-              ? const Center(child: CircularProgressIndicator())
+              ? Center(child: CircularProgressIndicator(color: c.gold))
               : media.videos.isEmpty
                 ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                     Icon(Icons.play_circle_outline_rounded, color: c.t3, size: 48),
@@ -89,8 +89,8 @@ class _FeaturedVideoCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 18),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: c.gold.withOpacity(0.20)),
-        boxShadow: [BoxShadow(color: c.gold.withOpacity(0.12), blurRadius: 12)],
+        border: Border.all(color: c.gold.withValues(alpha: 0.20)),
+        boxShadow: [BoxShadow(color: c.gold.withValues(alpha: 0.12), blurRadius: 12)],
       ),
       clipBehavior: Clip.hardEdge,
       child: Column(children: [
@@ -108,8 +108,8 @@ class _FeaturedVideoCard extends StatelessWidget {
               width: 58, height: 40,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: Colors.red.withOpacity(0.85),
-                border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
+                color: Colors.red.withValues(alpha: 0.85),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
               ),
               child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 28),
             ),
@@ -119,7 +119,7 @@ class _FeaturedVideoCard extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
+                  color: Colors.black.withValues(alpha: 0.7),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(video.duration,
