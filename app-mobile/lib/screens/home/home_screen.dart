@@ -89,7 +89,13 @@ class HomeScreen extends StatelessWidget {
                 ),
                 dawah.isLoading
                   ? Center(child: Padding(padding: const EdgeInsets.all(20), child: CircularProgressIndicator(color: c.gold)))
-                  : _HadithDailyCard(c: c, hadith: dawah.dailyHadith, lang: lang),
+                  : _HadithDailyCard(
+                      c: c,
+                      hadith: dawah.dailyHadith,
+                      lang: lang,
+                      hasError: dawah.hasError,
+                      onRetry: () => context.read<DawahProvider>().fetchDailyHadith(),
+                    ),
 
                 // ── Sawm section ────────────────────────────────────────────────
                 EyeRow(
@@ -206,14 +212,47 @@ class _PrayerHeroCardState extends State<_PrayerHeroCard> {
 
 // ── Hadith Daily Card ────────────────────────────────────────────────────────
 class _HadithDailyCard extends StatelessWidget {
-  const _HadithDailyCard({required this.c, this.hadith, required this.lang});
+  const _HadithDailyCard({
+    required this.c,
+    this.hadith,
+    required this.lang,
+    this.hasError = false,
+    this.onRetry,
+  });
   final AppColors c;
   final dynamic hadith;
   final LanguageProvider lang;
+  final bool hasError;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
-    if (hadith == null) return const SizedBox.shrink();
+    if (hadith == null && !hasError) return const SizedBox.shrink();
+
+    if (hadith == null && hasError) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 18),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: c.isDark ? c.surf : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: c.bd),
+        ),
+        child: Row(children: [
+          Icon(Icons.error_outline_rounded, color: c.t3, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text("Couldn't load today's hadith.",
+                style: TextStyle(fontSize: 12.5, color: c.t3)),
+          ),
+          GestureDetector(
+            onTap: onRetry,
+            child: Text('Retry',
+                style: TextStyle(fontSize: 12.5, color: c.gold, fontWeight: FontWeight.w600)),
+          ),
+        ]),
+      );
+    }
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 18),

@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
-import { collection, getDocs, doc, addDoc, updateDoc, deleteDoc, serverTimestamp, onSnapshot, query, orderBy } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { collection, doc, addDoc, updateDoc, deleteDoc, serverTimestamp, onSnapshot, query, orderBy } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
+import { db, functions } from "@/lib/firebase";
 
 interface Product {
   id: string;
@@ -19,6 +20,7 @@ interface Product {
   tag?: string;
   isSoldOut?: boolean;
   isActive: boolean;
+  stockQuantity?: number;
 }
 
 export default function ShopManagementPage() {
@@ -27,7 +29,6 @@ export default function ShopManagementPage() {
   const [ordersList, setOrdersList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [seeding, setSeeding] = useState(false);
 
   // Form states
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -38,6 +39,7 @@ export default function ShopManagementPage() {
   const [price, setPrice] = useState("");
   const [originalPrice, setOriginalPrice] = useState("");
   const [image, setImage] = useState("");
+  const [stockQuantity, setStockQuantity] = useState("");
 
   useEffect(() => {
     setLoading(true);
@@ -79,70 +81,16 @@ export default function ShopManagementPage() {
 
   const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
-      await updateDoc(doc(db, "orders", orderId), { status: newStatus });
+      // Firestore rules block direct client writes to /orders — this must go
+      // through the admin-only updateOrderStatus Cloud Function.
+      const updateOrderStatus = httpsCallable(functions, "updateOrderStatus");
+      await updateOrderStatus({ orderId, status: newStatus });
       setOrdersList(ordersList.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
     } catch (e) {
       console.error("Error updating order status:", e);
+      alert("Failed to update order status. Check console for details.");
     }
   };
-
-  const handleSeedDatabase = async () => {
-    if (!window.confirm("Seed initial luxury catalog into Firestore?")) return;
-    setSeeding(true);
-    const seeds = [
-      {
-        name: "Oud Al-Majd Parfum",
-        category: "Fragrance",
-        categoryId: "fragrance",
-        type: "perfume",
-        price: 1850,
-        originalPrice: 2200,
-        description: "Extrait de Parfum featuring rich Cambodian agarwood, dark rose, and golden amber notes.",
-        tag: "Bestseller",
-        isActive: true,
-        image: "https://lh3.googleusercontent.com/aida/ADBb0uhEEleu7KmJZIDy9o-R0e1n7ajgAMkENyQ4eHjdI4eQF3vTywhBkToaiHR9Wri96NN64i7sdHclPPVpRNUdvoSXdF59d4qSzwG1w_XHiLUvh838-UE1Woog14E6V3-19LDckStk_xuTsJvqDFf8BImFbh4GEmcgYt0syVIceAwHl2ugiPShK_VRzf64WhUtYCrvcfSypyUI1y-s1uKaTV92l8YhScZsofow7Y4QZLUxOOnthfZ42XzihYkrDRq3yIq2VB1P14_jsNs"
-      },
-      {
-        name: "Misbaha - Black Onyx",
-        category: "Salah & Worship",
-        categoryId: "salah",
-        type: "other",
-        price: 1200,
-        originalPrice: 1500,
-        description: "Hand-strung 99-bead natural black onyx tasbih with sterling silver tassel.",
-        tag: "Premium",
-        isActive: true,
-        image: "https://lh3.googleusercontent.com/aida/ADBb0uhsU8VEnWQ1uBQTs_keaDDehAZQcdpIeUxWBS5oK64jU-SKUjoSVsafpJ_sgbzSLDQZ9fc9foE4Qx90LwDtrZxRPaQ_GptANfkOMTQyowXQrmOxL8rPdbd446pAZLymnr5qbrAfNKYatrYHFQsDluDaWaSNICpEeVukO0ZafXKi4tzDm40sA9Awp18xY6mhzxruAg53cGKkiUy6hXoCDvg-JJg9NHAhaPpT61MOTrp8BP7GyKeGKgys1YS1BLQQ7XqxEhe9FyX2Whw"
-      },
-      {
-        name: "Olive Khimar & Abaya Set",
-        category: "Women",
-        categoryId: "women",
-        type: "other",
-        price: 3200,
-        originalPrice: 3800,
-        description: "Breathable crepe silk modest khimar and matching abaya set.",
-        tag: "New",
-        isActive: true,
-        image: "https://lh3.googleusercontent.com/aida/ADBb0ui2-SjL6bK2Z500i8m-R91_1X4mH0l48XqE1KkZ3Kj5_n9A1n4gZ83w3Z82m0m"
-      }
-    ];
-
-    try {
-      for (const item of seeds) {
-        await addDoc(collection(db, "products"), {
-          ...item,
-          createdAt: serverTimestamp()
-        });
-      }
-      alert("Successfully seeded catalog into Firestore!");
-    } catch (e) {
-      console.error("Error seeding products:", e);
-    } finally {
-      setSeeding(false);
-    }
-  };
-
 
   const openAddModal = () => {
     setEditingProduct(null);
@@ -153,6 +101,7 @@ export default function ShopManagementPage() {
     setPrice("");
     setOriginalPrice("");
     setImage("");
+    setStockQuantity("");
     setIsModalOpen(true);
   };
 
@@ -165,6 +114,7 @@ export default function ShopManagementPage() {
     setPrice(product.price.toString());
     setOriginalPrice(product.originalPrice ? product.originalPrice.toString() : "");
     setImage(product.image || "");
+    setStockQuantity((product.stockQuantity ?? 0).toString());
     setIsModalOpen(true);
   };
 
@@ -223,6 +173,7 @@ export default function ShopManagementPage() {
       price: parseFloat(price) || 0,
       originalPrice: originalPrice ? parseFloat(originalPrice) : null,
       image: image || "/products/PhotoshopExtension_Image_1.png", // default fallback
+      stockQuantity: parseInt(stockQuantity, 10) || 0,
       isActive: true,
       updatedAt: serverTimestamp()
     };
@@ -281,33 +232,7 @@ export default function ShopManagementPage() {
                 <div className="p-6 border-b border-border-subtle flex justify-between items-center">
                   <h3 className="font-headline-md text-headline-md text-on-background text-xl">Product Catalog</h3>
                   <div className="flex gap-4">
-                    <button 
-                      onClick={async () => {
-                        if (!window.confirm("Are you sure you want to PURGE ALL DUMMY PRODUCTS from Firestore?")) return;
-                        try {
-                          const snap = await getDocs(collection(db, "products"));
-                          for (const d of snap.docs) {
-                            await deleteDoc(doc(db, "products", d.id));
-                          }
-                          alert("All dummy products purged successfully!");
-                        } catch (err: any) {
-                          alert("Error purging catalog: " + err.message);
-                        }
-                      }}
-                      className="flex items-center gap-2 border border-red-500/40 bg-red-500/10 text-red-400 px-4 py-2 rounded font-label-accent text-[10px] hover:bg-red-500/20 transition-all"
-                    >
-                      <span className="material-symbols-outlined text-sm">delete_forever</span>
-                      PURGE DUMMY DATA
-                    </button>
-                    <button 
-                      onClick={handleSeedDatabase}
-                      disabled={seeding}
-                      className="flex items-center gap-2 border border-primary/40 bg-primary/10 text-primary px-4 py-2 rounded font-label-accent text-[10px] hover:bg-primary/20 transition-all disabled:opacity-50"
-                    >
-                      <span className="material-symbols-outlined text-sm">database</span>
-                      {seeding ? "SEEDING..." : "SEED CATALOG"}
-                    </button>
-                    <button 
+                    <button
                       onClick={() => {}}
                       className="flex items-center gap-2 border border-outline-variant px-4 py-2 rounded font-label-accent text-[10px] text-on-background hover:bg-surface-container-high transition-all opacity-50 cursor-not-allowed"
                       title="Auto-refreshing via real-time sync"
@@ -345,6 +270,7 @@ export default function ShopManagementPage() {
                           <th className="px-6 py-4 font-label-accent text-[10px] text-primary uppercase tracking-widest">Name</th>
                           <th className="px-6 py-4 font-label-accent text-[10px] text-primary uppercase tracking-widest">Category</th>
                           <th className="px-6 py-4 font-label-accent text-[10px] text-primary uppercase tracking-widest">Price (BDT)</th>
+                          <th className="px-6 py-4 font-label-accent text-[10px] text-primary uppercase tracking-widest">Stock</th>
                           <th className="px-6 py-4 font-label-accent text-[10px] text-primary uppercase tracking-widest">Tag</th>
                           <th className="px-6 py-4 font-label-accent text-[10px] text-primary uppercase tracking-widest text-center">Active</th>
                           <th className="px-6 py-4 font-label-accent text-[10px] text-primary uppercase tracking-widest text-right">Actions</th>
@@ -366,6 +292,17 @@ export default function ShopManagementPage() {
                               <span className="font-label-accent text-[10px] border border-primary/30 text-primary px-3 py-1 rounded-full">{product.category}</span>
                             </td>
                             <td className="px-6 py-4 font-body-lg text-sm text-on-surface">৳{product.price.toFixed(0)}</td>
+                            <td className="px-6 py-4">
+                              <span className={`font-body-md text-xs ${
+                                (product.stockQuantity ?? 0) === 0
+                                  ? "text-status-cancelled"
+                                  : (product.stockQuantity ?? 0) < 10
+                                  ? "text-amber-400"
+                                  : "text-on-surface-variant"
+                              }`}>
+                                {product.stockQuantity ?? 0} units
+                              </span>
+                            </td>
                             <td className="px-6 py-4">
                               <span className="font-body-md text-xs text-on-surface-variant">{product.tag || "None"}</span>
                             </td>
@@ -410,17 +347,22 @@ export default function ShopManagementPage() {
                 <h3 className="font-headline-md text-xl text-on-background">Product Categories</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {[
-                    { name: "Fragrances", count: "12 Items", desc: "Pure non-alcoholic attars and extraits" },
-                    { name: "Salah & Worship", count: "8 Items", desc: "Prayer mats, misbaha, and qubba items" },
-                    { name: "Women", count: "15 Items", desc: "Modest khimar sets and accessories" },
-                    { name: "Home & Decor", count: "6 Items", desc: "Islamic arch wall art and incense burners" },
-                  ].map((cat) => (
-                    <div key={cat.name} className="p-6 bg-surface-container rounded-xl border border-border-subtle hover:border-primary/50 transition-colors">
-                      <h4 className="font-bold text-primary text-base">{cat.name}</h4>
-                      <p className="text-xs text-on-surface-variant mt-1">{cat.desc}</p>
-                      <span className="inline-block mt-4 text-[10px] font-label-accent text-primary bg-primary/10 px-3 py-1 rounded-full">{cat.count}</span>
-                    </div>
-                  ))}
+                    { name: "Fragrance", desc: "Pure non-alcoholic attars and extraits" },
+                    { name: "Salah & Worship", desc: "Prayer mats, misbaha, and qubba items" },
+                    { name: "Women", desc: "Modest khimar sets and accessories" },
+                    { name: "Home & Decor", desc: "Islamic arch wall art and incense burners" },
+                  ].map((cat) => {
+                    const count = products.filter((p) => p.category === cat.name).length;
+                    return (
+                      <div key={cat.name} className="p-6 bg-surface-container rounded-xl border border-border-subtle hover:border-primary/50 transition-colors">
+                        <h4 className="font-bold text-primary text-base">{cat.name}</h4>
+                        <p className="text-xs text-on-surface-variant mt-1">{cat.desc}</p>
+                        <span className="inline-block mt-4 text-[10px] font-label-accent text-primary bg-primary/10 px-3 py-1 rounded-full">
+                          {count} {count === 1 ? "Item" : "Items"}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -461,14 +403,17 @@ export default function ShopManagementPage() {
                             {order.trackingCode || `#${order.id.substring(0, 8)}`}
                           </td>
                           <td className="px-6 py-4">
-                            <p className="font-semibold text-on-surface">{order.customer?.fullName || order.customerName || "Customer"}</p>
-                            <p className="text-xs text-on-surface-variant">{order.customer?.phone || order.phone}</p>
+                            <p className="font-semibold text-on-surface">{order.shipping?.name || order.customer?.fullName || order.customerName || "Customer"}</p>
+                            <p className="text-xs text-on-surface-variant">{order.shipping?.phone || order.customer?.phone || order.phone}</p>
+                            {(order.shipping?.email || order.customer?.email) && (
+                              <p className="text-xs text-on-surface-variant">{order.shipping?.email || order.customer?.email}</p>
+                            )}
                           </td>
                           <td className="px-6 py-4 text-xs text-on-surface-variant">
                             {order.items ? `${order.items.length} item(s)` : "1 item"}
                           </td>
                           <td className="px-6 py-4 font-semibold text-primary">
-                            ৳{(order.total || order.amount || 0).toLocaleString()}
+                            ৳{(order.totalInCents != null ? order.totalInCents / 100 : (order.total || order.amount || 0)).toLocaleString()}
                           </td>
                           <td className="px-6 py-4">
                             <select
@@ -497,15 +442,21 @@ export default function ShopManagementPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="p-6 bg-surface-container rounded-xl border border-border-subtle">
                     <p className="text-xs text-on-surface-variant font-label-accent uppercase">Total Stock</p>
-                    <p className="text-3xl font-bold text-primary mt-2">1,450 Units</p>
+                    <p className="text-3xl font-bold text-primary mt-2">
+                      {products.reduce((sum, p) => sum + (p.stockQuantity ?? 0), 0).toLocaleString()} Units
+                    </p>
                   </div>
                   <div className="p-6 bg-surface-container rounded-xl border border-border-subtle">
                     <p className="text-xs text-on-surface-variant font-label-accent uppercase">Low Stock Alerts</p>
-                    <p className="text-3xl font-bold text-amber-400 mt-2">3 Items</p>
+                    <p className="text-3xl font-bold text-amber-400 mt-2">
+                      {products.filter((p) => (p.stockQuantity ?? 0) > 0 && (p.stockQuantity ?? 0) < 10).length} Items
+                    </p>
                   </div>
                   <div className="p-6 bg-surface-container rounded-xl border border-border-subtle">
                     <p className="text-xs text-on-surface-variant font-label-accent uppercase">Out of Stock</p>
-                    <p className="text-3xl font-bold text-emerald-400 mt-2">0 Items</p>
+                    <p className="text-3xl font-bold text-emerald-400 mt-2">
+                      {products.filter((p) => (p.stockQuantity ?? 0) === 0).length} Items
+                    </p>
                   </div>
                 </div>
               </div>
@@ -613,13 +564,27 @@ export default function ShopManagementPage() {
 
                   <div className="space-y-2">
                     <label className="block font-label-accent text-[10px] text-primary tracking-widest uppercase">Image URL / Path</label>
-                    <input 
-                      value={image} 
+                    <input
+                      value={image}
                       onChange={(e) => setImage(e.target.value)}
-                      className="w-full bg-[#1A1A1A] border border-outline-variant rounded px-4 py-3 text-sm focus:outline-none focus:border-primary transition-all" 
-                      placeholder="e.g. /products/p 1.png" 
-                      type="text" 
+                      className="w-full bg-[#1A1A1A] border border-outline-variant rounded px-4 py-3 text-sm focus:outline-none focus:border-primary transition-all"
+                      placeholder="e.g. /products/p 1.png"
+                      type="text"
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block font-label-accent text-[10px] text-primary tracking-widest uppercase">Stock Quantity</label>
+                    <input
+                      value={stockQuantity}
+                      onChange={(e) => setStockQuantity(e.target.value)}
+                      className="w-full bg-[#1A1A1A] border border-outline-variant rounded px-4 py-3 focus:outline-none focus:border-primary transition-all"
+                      placeholder="0"
+                      required
+                      min={0}
+                      type="number"
+                    />
+                    <p className="text-[10px] text-on-surface-variant">Used for checkout stock checks and the Inventory tab.</p>
                   </div>
                 </div>
                 

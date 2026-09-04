@@ -69,6 +69,14 @@
         { "fieldPath": "isActive",     "order": "ASCENDING" },
         { "fieldPath": "displayOrder", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "hadith",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "book",        "order": "ASCENDING" },
+        { "fieldPath": "globalIndex", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

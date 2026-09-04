@@ -2,7 +2,7 @@
 // PlacesService — wraps Google Places API (Legacy) for mosque discovery.
 //
 // Requires the following APIs enabled in Google Cloud Console
-// for AIzaSyCL5BbPVeuzkFx_wiu1PTAUgDSVXicgE6A :
+// for the configured PLACES_API_KEY (see config/api_config.dart):
 //   • Places API
 //   • Maps JavaScript API (optional — handled by Maps SDK natively)
 //
@@ -47,33 +47,29 @@ class PlacesService {
       '&key=$_apiKey',
     );
 
-    try {
-      final res = await http.get(uri).timeout(const Duration(seconds: 12));
-      if (res.statusCode != 200) {
-        debugPrint('[PlacesService] nearbyMosques HTTP ${res.statusCode}');
-        return [];
-      }
-
-      final body   = jsonDecode(res.body) as Map<String, dynamic>;
-      final status = body['status'] as String?;
-
-      if (status == 'REQUEST_DENIED') {
-        debugPrint('[PlacesService] REQUEST_DENIED — check Places API is enabled '
-            'for key $_apiKey | ${body['error_message']}');
-        return [];
-      }
-      if (status != 'OK' && status != 'ZERO_RESULTS') {
-        debugPrint('[PlacesService] nearbyMosques status: $status');
-        return [];
-      }
-
-      final results = _parseResults(body['results'] as List<dynamic>? ?? [], lat, lng);
-      debugPrint('[PlacesService] nearby: ${results.length} mosques');
-      return results;
-    } catch (e) {
-      debugPrint('[PlacesService] nearbyMosques error: $e');
-      return [];
+    // Deliberately does NOT swallow errors to an empty list — a config or
+    // network failure must not be indistinguishable from "0 mosques nearby".
+    // MasjidProvider._loadNearby() catches and surfaces this as a real error.
+    final res = await http.get(uri).timeout(const Duration(seconds: 12));
+    if (res.statusCode != 200) {
+      throw Exception('Places API HTTP ${res.statusCode}');
     }
+
+    final body   = jsonDecode(res.body) as Map<String, dynamic>;
+    final status = body['status'] as String?;
+
+    if (status == 'REQUEST_DENIED') {
+      debugPrint('[PlacesService] REQUEST_DENIED — check Places API is enabled '
+          'for the configured key | ${body['error_message']}');
+      throw Exception('Places API request denied: ${body['error_message'] ?? 'REQUEST_DENIED'}');
+    }
+    if (status != 'OK' && status != 'ZERO_RESULTS') {
+      throw Exception('Places API status: $status');
+    }
+
+    final results = _parseResults(body['results'] as List<dynamic>? ?? [], lat, lng);
+    debugPrint('[PlacesService] nearby: ${results.length} mosques');
+    return results;
   }
 
   // ── Text search ───────────────────────────────────────────────────────────
@@ -93,25 +89,21 @@ class PlacesService {
       '&key=$_apiKey',
     );
 
-    try {
-      final res = await http.get(uri).timeout(const Duration(seconds: 12));
-      if (res.statusCode != 200) return [];
-
-      final body   = jsonDecode(res.body) as Map<String, dynamic>;
-      final status = body['status'] as String?;
-
-      if (status != 'OK' && status != 'ZERO_RESULTS') {
-        debugPrint('[PlacesService] searchMosques status: $status');
-        return [];
-      }
-
-      final results = _parseResults(body['results'] as List<dynamic>? ?? [], lat, lng);
-      debugPrint('[PlacesService] search "$query": ${results.length} results');
-      return results;
-    } catch (e) {
-      debugPrint('[PlacesService] searchMosques error: $e');
-      return [];
+    final res = await http.get(uri).timeout(const Duration(seconds: 12));
+    if (res.statusCode != 200) {
+      throw Exception('Places API HTTP ${res.statusCode}');
     }
+
+    final body   = jsonDecode(res.body) as Map<String, dynamic>;
+    final status = body['status'] as String?;
+
+    if (status != 'OK' && status != 'ZERO_RESULTS') {
+      throw Exception('Places API status: $status');
+    }
+
+    final results = _parseResults(body['results'] as List<dynamic>? ?? [], lat, lng);
+    debugPrint('[PlacesService] search "$query": ${results.length} results');
+    return results;
   }
 
   // ── Photo URL ─────────────────────────────────────────────────────────────

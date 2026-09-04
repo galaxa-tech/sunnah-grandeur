@@ -69,6 +69,46 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ── /categories/{categoryId} ─────────────────────────────────────────────
+    match /categories/{categoryId} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // ── /banners/{bannerId} ───────────────────────────────────────────────────
+    match /banners/{bannerId} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // ── /carts/{uid}/items/{itemId} ───────────────────────────────────────────
+    // Client-managed shopping cart. Private to its owner.
+    match /carts/{uid} {
+      allow read, write: if isOwner(uid);
+      match /items/{itemId} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // ── /favorites/{uid}/items/{itemId} ───────────────────────────────────────
+    match /favorites/{uid} {
+      allow read, write: if isOwner(uid) || isAdmin();
+      match /items/{itemId} {
+        allow read, write: if isOwner(uid) || isAdmin();
+      }
+    }
+
+    // ── /hadith/{hadithId}, /hadith_posts/{postId} ────────────────────────────
+    // Rotating daily-hadith pool + legacy fallback feed. Public read.
+    match /hadith/{hadithId} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+    match /hadith_posts/{postId} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
     // ── /media/{mediaId} ─────────────────────────────────────────────────────
     match /media/{mediaId} {
       allow read:  if resource == null || resource.data.isActive == true || isAdmin();
@@ -102,26 +142,6 @@ service cloud.firestore {
     match /contactMessages/{docId} {
       allow create: if true;
       allow read, update, delete: if isAdmin();
-    }
-
-    // ── /categories/{categoryId} ─────────────────────────────────────────────
-    match /categories/{categoryId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // ── /banners/{bannerId} ──────────────────────────────────────────────────
-    match /banners/{bannerId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // ── /favorites/{userId} ──────────────────────────────────────────────────
-    match /favorites/{userId} {
-      allow read, write: if isOwner(userId) || isAdmin();
-      match /items/{itemId} {
-        allow read, write: if isOwner(userId) || isAdmin();
-      }
     }
 
     // ── Catch-all deny ────────────────────────────────────────────────────────

@@ -115,7 +115,10 @@ class CartProvider extends ChangeNotifier {
   ///
   /// If the user cancels at step 3, the order stays in "pending" state and
   /// the cart is untouched — the user can retry or abandon safely.
-  Future<OrderResult?> createOrderOnly(ShippingInput shipping) async {
+  Future<OrderResult?> createOrderOnly(
+    ShippingInput shipping, {
+    String paymentMethod = 'card',
+  }) async {
     if (_items.isEmpty) return null;
     try {
       return await OrderService.createOrder(
@@ -124,6 +127,7 @@ class CartProvider extends ChangeNotifier {
           quantity: i.quantity,
         )).toList(),
         shipping: shipping,
+        paymentMethod: paymentMethod,
       );
     } catch (e) {
       debugPrint('[CartProvider] createOrderOnly: $e');

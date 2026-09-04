@@ -75,8 +75,10 @@ class AdhanService {
   }
 
   /// Preview a sound in the settings screen (uses separate player).
-  Future<void> previewSound(String soundKey, {double volume = 1.0}) async {
-    if (kIsWeb) return;
+  /// Returns false when the audio asset is missing, so the caller can tell
+  /// the user why nothing played instead of leaving it a silent mystery.
+  Future<bool> previewSound(String soundKey, {double volume = 1.0}) async {
+    if (kIsWeb) return false;
     final sound = soundByKey(soundKey);
     try {
       await rootBundle.load(sound.assetPath);
@@ -86,10 +88,12 @@ class AdhanService {
       // Play only first 6 seconds for preview
       await _preview.play();
       Future.delayed(const Duration(seconds: 6), stopPreview);
+      return true;
     } catch (e) {
       debugPrint('[AdhanService] previewSound "${sound.assetPath}" '
           'not found — file missing from assets/audio/');
       HapticFeedback.heavyImpact();
+      return false;
     }
   }
 

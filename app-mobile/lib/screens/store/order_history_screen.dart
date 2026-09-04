@@ -97,8 +97,11 @@ class OrderHistoryScreen extends StatelessWidget {
                                 ? DateFormat('MMM dd, yyyy').format(timestamp.toDate())
                                 : 'Pending';
                             final status = (data['status'] as String? ?? 'pending').toUpperCase();
-                            final total = data['total'] as num? ?? 0.0;
-                            final itemsList = (data['items'] as List? ?? []).map((i) => i['title']).join(', ');
+                            final totalInCents = data['totalInCents'] as num? ?? 0;
+                            final total = totalInCents / 100;
+                            final itemsList = (data['items'] as List? ?? [])
+                                .map((i) => (i as Map<String, dynamic>)['name'])
+                                .join(', ');
                             
                             Color statusColor = c.gold;
                             IconData statusIcon = Icons.local_shipping_outlined;

@@ -2,19 +2,26 @@
 
 const { onCall, HttpsError }       = require("firebase-functions/v2/https");
 const { getFirestore, FieldValue } = require("firebase-admin/firestore");
-const { requireAuth }              = require("../../middleware/auth");
+const { requireAuth, requireAdmin } = require("../../middleware/auth");
 const { validate }                 = require("../../middleware/validate");
 const { db, COL }                  = require("../../lib/db");
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
 
 const createOrderSchema = {
-  items:    { required: true, type: "array", min: 1, max: 50 },
-  shipping: { required: true, type: "object" },
+  items:         { required: true, type: "array", min: 1, max: 50 },
+  shipping:      { required: true, type: "object" },
+  paymentMethod: { required: false, type: "string", enum: ["cod", "card"] },
 };
+
+// Order lifecycle. "pending_payment" is a card-only transient state before the
+// Stripe webhook confirms payment; COD orders skip it and start "Processing".
+const ORDER_STATUSES = ["pending_payment", "Processing", "Shipped", "Delivered", "Cancelled"];
 
 const shippingSchema = {
   name:       { required: true,  type: "string", min: 1, max: 100 },
+  phone:      { required: false, type: "string", max: 30 },
+  email:      { required: false, type: "string", max: 200 },
   line1:      { required: true,  type: "string", min: 1, max: 200 },
   city:       { required: true,  type: "string", min: 1, max: 100 },
   state:      { required: false, type: "string", max: 100 },
@@ -37,7 +44,8 @@ const createOrder = onCall({ region: "us-central1" }, async (request) => {
   validate(request.data, createOrderSchema);
   validate(request.data.shipping, shippingSchema);
 
-  const { items, shipping } = request.data;
+  const { items, shipping, paymentMethod = "card" } = request.data;
+  const initialStatus = paymentMethod === "cod" ? "Processing" : "pending_payment";
 
   // Validate each item shape before the transaction
   for (const [i, item] of items.entries()) {
@@ -125,10 +133,13 @@ const createOrder = onCall({ region: "us-central1" }, async (request) => {
         taxInCents,
         shippingInCents,
         totalInCents,
-        status:           "pending_payment",
+        status:           initialStatus,
+        paymentMethod,
         paymentIntentId:  null,
         shipping: {
           name:       shipping.name,
+          phone:      shipping.phone ?? "",
+          email:      shipping.email ?? "",
           line1:      shipping.line1,
           city:       shipping.city,
           state:      shipping.state ?? "",
@@ -149,7 +160,7 @@ const createOrder = onCall({ region: "us-central1" }, async (request) => {
     taxInCents,
     shippingInCents,
     totalInCents,
-    status:           "pending_payment",
+    status:           initialStatus,
   };
 });
 
@@ -183,4 +194,34 @@ const getOrdersByUser = onCall({ region: "us-central1" }, async (request) => {
   };
 });
 
-module.exports = { createOrder, getOrdersByUser };
+// ── updateOrderStatus ─────────────────────────────────────────────────────────
+// Admin-only. Firestore rules block direct client writes to /orders — this is
+// the one sanctioned path for changing an order's fulfillment status.
+
+const updateOrderStatus = onCall({ region: "us-central1" }, async (request) => {
+  requireAdmin(request);
+
+  const { orderId, status } = request.data || {};
+
+  if (!orderId || typeof orderId !== "string") {
+    throw new HttpsError("invalid-argument", "'orderId' is required.");
+  }
+  if (!ORDER_STATUSES.includes(status)) {
+    throw new HttpsError("invalid-argument", `'status' must be one of: ${ORDER_STATUSES.join(", ")}.`);
+  }
+
+  const orderRef = db.collection(COL.ORDERS).doc(orderId);
+  const orderDoc = await orderRef.get();
+  if (!orderDoc.exists) {
+    throw new HttpsError("not-found", `Order '${orderId}' does not exist.`);
+  }
+
+  await orderRef.update({
+    status,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  return { success: true, orderId, status };
+});
+
+module.exports = { createOrder, getOrdersByUser, updateOrderStatus };

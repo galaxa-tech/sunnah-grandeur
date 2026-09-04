@@ -1,0 +1,82 @@
+name: Deploy Frontend Preview to GitHub Pages
+
+# Temporary preview hosting for the storefront, admin panel, and mobile
+# web app while Firebase Hosting is blocked on billing + login. Firestore
+# data, Auth, and Cloud Functions calls will NOT work here (this repo's
+# Firebase project isn't deployed) — this is a UI/design preview only.
+# See ARCHITECTURE.md for what's actually canonical for production.
+
+on:
+  push:
+    branches: [ main, claude/firebase-mobile-dev-setup-sm6a31 ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      # ── Storefront → served at the Pages root ──────────────────────────
+      - name: Build storefront (app-web)
+        working-directory: ./app-web
+        run: |
+          npm ci
+          npm run build
+
+      # ── Admin panel → served at /admin ──────────────────────────────────
+      - name: Build admin panel (admin-panel)
+        working-directory: ./admin-panel
+        env:
+          GH_PAGES_BASE_PATH: /admin
+        run: |
+          npm ci
+          npm run build
+
+      # ── Mobile web app → served at /app ─────────────────────────────────
+      - name: Build mobile web app (app-mobile)
+        working-directory: ./app-mobile
+        run: |
+          flutter pub get
+          flutter build web --release --base-href /app/
+
+      - name: Assemble combined site
+        run: |
+          mkdir -p _site
+          cp -r app-web/out/. _site/
+          mkdir -p _site/admin
+          cp -r admin-panel/out/. _site/admin/
+          mkdir -p _site/app
+          cp -r app-mobile/build/web/. _site/app/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

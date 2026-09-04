@@ -13,14 +13,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (!currentUser) {
-        // Redirection for demo/testing mode vs production:
-        // Check if bypass key or mock admin mode is active in local storage for local testing
-        const demoAdmin = typeof window !== 'undefined' ? localStorage.getItem("demoAdmin") : null;
-        if (!demoAdmin) {
-          router.push("/login");
-          setLoading(false);
-          return;
-        }
+        router.push("/login");
+        setLoading(false);
+        return;
       }
       setUser(currentUser);
       setLoading(false);
