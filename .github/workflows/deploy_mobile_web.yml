@@ -1,0 +1,42 @@
+name: Deploy Mobile Web App to Firebase Hosting
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Build & Deploy Flutter Web
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+        working-directory: ./app-mobile
+
+      - name: Run Static Code Analysis
+        run: flutter analyze
+        working-directory: ./app-mobile
+
+      - name: Build Flutter Web (Release)
+        run: flutter build web --release
+        working-directory: ./app-mobile
+
+      - name: Deploy to Firebase Hosting (app target, live channel)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_SUNNAH_GRANDEUR }}'
+          projectId: sunnah-grandeur
+          target: app
+          channelId: live
