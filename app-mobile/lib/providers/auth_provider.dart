@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show PlatformException;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -6,10 +7,16 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../models/user_model.dart';
 import '../services/functions/user_service.dart';
 
+// Web requires an explicit OAuth client ID; native platforms read it from
+// google-services.json / GoogleService-Info.plist instead.
+const _webGoogleClientId =
+    '6748865044-5b0sbthk9abobn9t4not9e02sv91g209.apps.googleusercontent.com';
+
 class AuthProvider extends ChangeNotifier {
   final FirebaseAuth      _auth   = FirebaseAuth.instance;
   final FirebaseFirestore _db     = FirebaseFirestore.instance;
-  final GoogleSignIn      _google = GoogleSignIn();
+  final GoogleSignIn      _google =
+      GoogleSignIn(clientId: kIsWeb ? _webGoogleClientId : null);
 
   User?      _firebaseUser;
   UserModel? _userData;
