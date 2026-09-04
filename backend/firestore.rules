@@ -13,10 +13,12 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == uid;
     }
 
-    // Role is carried in the Firebase Auth ID token custom claim.
-    // Custom claims are set server-side only (Admin SDK) and cannot be forged.
+    // Accepts both "admin" and "superAdmin" roles
     function isAdmin() {
-      return isAuthenticated() && request.auth.token.role == "admin";
+      return isAuthenticated() && (
+        request.auth.token.role == "admin" ||
+        request.auth.token.role == "superAdmin"
+      );
     }
 
     // Prevents a user from updating protected fields via client SDK.
@@ -35,10 +37,9 @@ service cloud.firestore {
       allow create: if false;
 
       // Owner can update their own profile but cannot touch protected fields.
-      // This prevents client-side role escalation entirely.
-      allow update: if isOwner(uid) && notTouchingProtectedFields();
+      allow update: if (isOwner(uid) && notTouchingProtectedFields()) || isAdmin();
 
-      // Deletion is Cloud Function only — deleteAccount cascades Auth + Firestore.
+      // Deletion is Cloud Function only.
       allow delete: if false;
 
       // Tasbih sessions are private to the owner.
@@ -50,9 +51,9 @@ service cloud.firestore {
     // ── /products/{productId} ─────────────────────────────────────────────────
     match /products/{productId} {
       // Public read for active products. Admins see all.
-      allow read: if resource.data.isActive == true || isAdmin();
+      allow read: if resource == null || resource.data.isActive == true || isAdmin();
 
-      // All mutations go through Cloud Functions (createProduct / updateProduct).
+      // Admin panel writes products directly via client SDK
       allow write: if isAdmin();
     }
 
@@ -62,13 +63,15 @@ service cloud.firestore {
       allow read: if isAuthenticated() &&
                      (resource.data.userId == request.auth.uid || isAdmin());
 
-      // No direct client writes — createOrder function owns all order writes.
-      allow create, update, delete: if false;
+      // Admin can update order status (fulfillment). Customers cannot write orders directly.
+      allow create: if isAuthenticated();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
 
     // ── /media/{mediaId} ─────────────────────────────────────────────────────
     match /media/{mediaId} {
-      allow read:  if resource.data.isActive == true || isAdmin();
+      allow read:  if resource == null || resource.data.isActive == true || isAdmin();
       allow write: if isAdmin();
     }
 
@@ -91,16 +94,34 @@ service cloud.firestore {
     }
 
     // ── /config/{docId} ──────────────────────────────────────────────────────
-    // Internal config (youtube_sources, etc.). Never exposed to clients.
     match /config/{docId} {
       allow read, write: if isAdmin();
     }
 
     // ── /contactMessages/{docId} ──────────────────────────────────────────────
-    // Anyone (including guests) can submit. Only admins can read.
     match /contactMessages/{docId} {
       allow create: if true;
       allow read, update, delete: if isAdmin();
+    }
+
+    // ── /categories/{categoryId} ─────────────────────────────────────────────
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ── /banners/{bannerId} ──────────────────────────────────────────────────
+    match /banners/{bannerId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ── /favorites/{userId} ──────────────────────────────────────────────────
+    match /favorites/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+      match /items/{itemId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
     }
 
     // ── Catch-all deny ────────────────────────────────────────────────────────

@@ -96,7 +96,7 @@ void main() async {
   // ── Background services (only when Firebase is healthy) ───────────────────
   if (firebaseError == null) {
     AdhanService.instance.init().ignore();
-    NotificationService.instance.init().ignore();
+    if (!kIsWeb) NotificationService.instance.init().ignore();
   }
 
   runApp(

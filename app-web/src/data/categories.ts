@@ -20,6 +20,7 @@ export const categories: Category[] = [
     icon: 'person',
     gradient: 'linear-gradient(135deg, #1a1206 0%, #2d1f08 50%, #1a1206 100%)',
     accentColor: '#C9A84C',
+    featuredImage: '/products/p 1.png',
     subcategories: [
       { name: 'Thobes / Jubba', href: '/shop?cat=men' },
       { name: 'Panjabi / Kurtas', href: '/shop?cat=men' },
@@ -33,6 +34,7 @@ export const categories: Category[] = [
     icon: 'woman',
     gradient: 'linear-gradient(135deg, #0f1a0f 0%, #1a2d1a 50%, #0f1a0f 100%)',
     accentColor: '#8BC38B',
+    featuredImage: '/products/p 2.png',
     subcategories: [
       { name: 'Hijabs', href: '/shop?cat=women' },
       { name: 'Abayas', href: '/shop?cat=women' },
@@ -59,6 +61,7 @@ export const categories: Category[] = [
     icon: 'mosque',
     gradient: 'linear-gradient(135deg, #1a0f1a 0%, #2d1a2d 50%, #1a0f1a 100%)',
     accentColor: '#C9A84C',
+    featuredImage: '/products/p 3.png',
     subcategories: [
       { name: 'Prayer Mats', href: '/shop?cat=salah' },
       { name: 'Tasbih', href: '/shop?cat=salah' },
@@ -99,6 +102,7 @@ export const categories: Category[] = [
     icon: 'home',
     gradient: 'linear-gradient(135deg, #0a0f1a 0%, #101825 50%, #0a0f1a 100%)',
     accentColor: '#6BB5D4',
+    featuredImage: '/products/p 5.png',
     subcategories: [
       { name: 'Islamic Wall Art', href: '/shop?cat=home' },
       { name: 'Lighting & Lamps', href: '/shop?cat=home' },

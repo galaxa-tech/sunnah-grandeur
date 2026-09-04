@@ -1,14 +1,23 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    // Products images: public read, admin write
     match /products/{allPaths=**} {
       allow read: if true;
-      allow write: if false;
+      allow write: if request.auth != null && (
+        request.auth.token.role == "admin" ||
+        request.auth.token.role == "superAdmin"
+      );
     }
+    // Media library: public read, admin write
     match /media/{allPaths=**} {
       allow read: if true;
-      allow write: if false;
+      allow write: if request.auth != null && (
+        request.auth.token.role == "admin" ||
+        request.auth.token.role == "superAdmin"
+      );
     }
+    // Fallback deny
     match /{allPaths=**} {
       allow read, write: if false;
     }

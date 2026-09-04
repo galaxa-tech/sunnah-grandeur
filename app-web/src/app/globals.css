@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600&family=Noto+Serif:wght@400;700&family=Space+Grotesk:wght@600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
 @tailwind base;
@@ -6,11 +6,14 @@
 @tailwind utilities;
 
 :root {
-  --color-bg-primary: #0A0A0A;
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #A0A0A0;
-  --color-surface-card: #141414;
-  --color-border-subtle: #1F1F1F;
+  --color-bg-primary: #070707;
+  --color-text-primary: #FAF6EE;
+  --color-text-secondary: #9E9789;
+  --color-surface-card: #0F0E0C;
+  --color-border-subtle: #242018;
+  --gold-primary: #E6C364;
+  --gold-secondary: #C9A84C;
+  --gold-accent: #F5E1AE;
 }
 
 [data-theme="light"] {
@@ -23,14 +26,83 @@
 
 @layer base {
   body {
-    @apply bg-bg-primary text-text-primary font-body-md text-body-md antialiased selection:bg-primary-container selection:text-bg-primary min-h-screen flex flex-col;
+    @apply bg-bg-primary text-text-primary antialiased min-h-screen flex flex-col;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  h1, h2, h3, .font-serif-luxury {
+    font-family: 'Cormorant Garamond', serif;
+  }
+
+  .font-cinzel {
+    font-family: 'Cinzel', serif;
   }
 }
 
 @layer utilities {
-  .geometric-bg {
-    background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M50 0L100 50L50 100L0 50Z" fill="none" stroke="%23c9a84c" stroke-width="0.5" stroke-opacity="0.1"/></svg>');
-    background-size: 50px 50px;
+  /* Crisp Luxury Gold Foil Gradient Text */
+  .text-gold-gradient {
+    background: linear-gradient(135deg, #FFE8A3 0%, #E6C364 35%, #9E7922 70%, #F5E1AE 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Subtle Gold Border Gradient */
+  .border-gold-gradient {
+    border-image: linear-gradient(135deg, rgba(230, 195, 100, 0.4) 0%, rgba(201, 168, 76, 0.1) 50%, rgba(245, 225, 174, 0.3) 100%) 1;
+  }
+
+  /* Glassmorphism Luxury Surface */
+  .glass-card {
+    background: rgba(15, 14, 12, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(201, 168, 76, 0.15);
+  }
+
+  .glass-card-hover {
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .glass-card-hover:hover {
+    background: rgba(22, 20, 16, 0.85);
+    border-color: rgba(230, 195, 100, 0.45);
+    box-shadow: 0 12px 36px -8px rgba(201, 168, 76, 0.15), 0 0 20px 1px rgba(201, 168, 76, 0.05);
+    transform: translateY(-3px);
+  }
+
+  /* Subtle Gold Spotlight */
+  .spotlight-gold {
+    background: radial-gradient(circle at 50% 50%, rgba(201, 168, 76, 0.15) 0%, rgba(10, 10, 10, 0) 70%);
+  }
+
+  /* Shimmering Gold Accent Animation */
+  @keyframes goldShimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .animate-shimmer-gold {
+    background: linear-gradient(90deg, rgba(230,195,100,0) 0%, rgba(245,225,174,0.3) 50%, rgba(230,195,100,0) 100%);
+    background-size: 200% 100%;
+    animation: goldShimmer 3s infinite;
+  }
+
+  /* Subtle Floating Particles / Shimmer Dust */
+  @keyframes floatSlow {
+    0%, 100% { transform: translateY(0) scale(1); opacity: 0.6; }
+    50% { transform: translateY(-10px) scale(1.05); opacity: 0.9; }
+  }
+
+  .animate-float-slow {
+    animation: floatSlow 6s ease-in-out infinite;
+  }
+
+  .islamic-geometric-grid {
+    background-image: 
+      radial-gradient(rgba(201, 168, 76, 0.08) 1px, transparent 1px),
+      linear-gradient(to right, rgba(201, 168, 76, 0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(201, 168, 76, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px, 80px 80px, 80px 80px;
   }
 }
