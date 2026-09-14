@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useCartStore } from '@/store/useCartStore';
 import { httpsCallable } from 'firebase/functions';
-import { signInAnonymously } from 'firebase/auth';
+import { signInAnonymously, updateProfile } from 'firebase/auth';
 import { auth, functions } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
 import { formatUsd, formatUsdFromCents } from '@/lib/currency';
@@ -18,7 +18,7 @@ const US_STATES = [
 
 export default function CheckoutPage() {
   const { items, getSubtotal, clearCart } = useCartStore();
-  const { user } = useAuth();
+  const { user, linkGuestAccount } = useAuth();
 
   // Estimate shown before the order is placed. The Cloud Function computes
   // the authoritative total server-side from real settings — this estimate
@@ -38,6 +38,11 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [orderConfirmed, setOrderConfirmed] = useState<{ id: string; trackingCode: string; totalInCents: number } | null>(null);
+  const [wasGuest, setWasGuest] = useState(false);
+  const [upgradePassword, setUpgradePassword] = useState('');
+  const [upgradeError, setUpgradeError] = useState('');
+  const [upgradeSuccess, setUpgradeSuccess] = useState(false);
+  const [upgrading, setUpgrading] = useState(false);
 
   // A signed-in customer shouldn't have to retype what we already know.
   // Anonymous/guest users (auth.currentUser but no real email) get no prefill.
@@ -63,6 +68,13 @@ export default function CheckoutPage() {
       // write the document.
       if (!auth.currentUser) {
         await signInAnonymously(auth);
+      }
+      setWasGuest(!!auth.currentUser?.isAnonymous);
+      // Populate the session's display name from the checkout form so
+      // "Signed in as" and the Profile tab aren't blank for guest orders —
+      // anonymous users can have a displayName, just not an email/password.
+      if (auth.currentUser?.isAnonymous && fullName) {
+        await updateProfile(auth.currentUser, { displayName: fullName });
       }
 
       const createOrder = httpsCallable(functions, 'createOrder');
@@ -122,6 +134,64 @@ export default function CheckoutPage() {
             <span className="text-primary-container font-bold text-sm">{formatUsdFromCents(orderConfirmed.totalInCents)}</span>
           </div>
         </div>
+
+        {wasGuest && (
+          <div className="p-6 bg-surface-card border border-primary-container/30 rounded-xl text-left space-y-3">
+            {upgradeSuccess ? (
+              <p className="text-emerald-400 text-sm font-semibold text-center">
+                ✓ Account created! You can now sign in with {email} anytime to track this order.
+              </p>
+            ) : (
+              <>
+                <h3 className="text-text-primary font-bold text-sm">Create an account to track this order anywhere</h3>
+                <p className="text-text-secondary text-xs">
+                  We&apos;ll use <span className="text-text-primary font-semibold">{email || 'the email you provided'}</span>.
+                  Just set a password below — no need to retype anything.
+                </p>
+                {upgradeError && <p className="text-red-400 text-xs">{upgradeError}</p>}
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!email) {
+                      setUpgradeError('Please provide an email above before creating an account.');
+                      return;
+                    }
+                    setUpgrading(true);
+                    setUpgradeError('');
+                    try {
+                      await linkGuestAccount(email, upgradePassword, fullName);
+                      setUpgradeSuccess(true);
+                    } catch (err: any) {
+                      setUpgradeError(err?.code?.includes('email-already-in-use')
+                        ? 'An account with this email already exists — sign in from the account menu instead.'
+                        : 'Could not create your account right now. Please try again.');
+                    } finally {
+                      setUpgrading(false);
+                    }
+                  }}
+                  className="flex flex-col sm:flex-row gap-2"
+                >
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    value={upgradePassword}
+                    onChange={(e) => setUpgradePassword(e.target.value)}
+                    placeholder="Set a password"
+                    className="flex-1 bg-bg-primary border border-border-subtle rounded px-3 py-2.5 text-sm text-text-primary focus:border-primary-container focus:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    disabled={upgrading}
+                    className="bg-primary-container text-bg-primary font-bold text-xs uppercase tracking-widest px-5 py-2.5 rounded hover:bg-[#e6c364] transition-colors disabled:opacity-50 whitespace-nowrap"
+                  >
+                    {upgrading ? 'Creating...' : 'Create Account'}
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+        )}
 
         <div className="pt-4">
           <Link

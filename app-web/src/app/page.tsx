@@ -88,19 +88,19 @@ export default function HomePage() {
             <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-surface-card border border-primary/30 shadow-[0_0_15px_rgba(201,168,76,0.15)]">
               <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
               <span className="font-mono text-[10px] sm:text-xs text-primary font-bold uppercase tracking-[0.25em]">
-                Bespoke Artisanal Collection 2026
+                {t.home.tagline}
               </span>
             </div>
 
             {/* Main Headline */}
             <h1 className="font-serif-luxury text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-text-primary tracking-tight leading-[1.08]">
-              The Pure Essence of <br />
-              <span className="text-gold-gradient italic font-normal">Royal Agarwood & Musk</span>
+              {t.home.heroTitle1} <br />
+              <span className="text-gold-gradient italic font-normal">{t.home.heroTitle2}</span>
             </h1>
 
             {/* Subtext */}
             <p className="text-text-secondary text-sm sm:text-base md:text-lg max-w-xl leading-relaxed font-light">
-              Crafted in reverence to tradition. 100% alcohol-free pure extrait de parfum, aged Cambodian agarwood, and museum-grade Islamic lifestyle artifacts.
+              {t.home.heroSubtitle}
             </p>
 
             {/* Call to Actions */}
@@ -109,15 +109,15 @@ export default function HomePage() {
                 href="/shop"
                 className="group relative inline-flex items-center justify-center gap-3 bg-gradient-to-r from-[#E6C364] via-[#C9A84C] to-[#E6C364] text-black font-cinzel font-bold px-8 py-3.5 rounded-lg text-xs uppercase tracking-widest hover:shadow-[0_0_30px_rgba(201,168,76,0.5)] hover:brightness-110 transition-all duration-300"
               >
-                <span>Explore Catalog</span>
+                <span>{t.home.exploreCatalog}</span>
                 <span className="material-symbols-outlined text-base group-hover:translate-x-1 transition-transform">arrow_forward</span>
               </Link>
-              
+
               <Link
                 href="/about"
                 className="inline-flex items-center justify-center gap-2 border border-primary/40 bg-surface-card/60 backdrop-blur-md text-primary font-cinzel px-8 py-3.5 rounded-lg text-xs uppercase tracking-widest hover:bg-primary/10 hover:border-primary transition-all duration-300"
               >
-                <span>Our Heritage</span>
+                <span>{t.home.ourHeritage}</span>
               </Link>
             </div>
 
@@ -125,17 +125,17 @@ export default function HomePage() {
             <div className="pt-4 flex items-center gap-6 flex-wrap border-t border-primary/15 w-full">
               <div className="flex items-center gap-2 text-text-secondary text-xs">
                 <span className="material-symbols-outlined text-primary text-base">verified</span>
-                <span className="font-mono text-[11px] uppercase tracking-wider text-text-primary font-semibold">100% Halal Pure</span>
+                <span className="font-mono text-[11px] uppercase tracking-wider text-text-primary font-semibold">{t.home.badgeHalal}</span>
               </div>
               <div className="w-[1px] h-3 bg-border-subtle" />
               <div className="flex items-center gap-2 text-text-secondary text-xs">
                 <span className="material-symbols-outlined text-primary text-base">water_drop</span>
-                <span className="font-mono text-[11px] uppercase tracking-wider text-text-primary font-semibold">0% Alcohol</span>
+                <span className="font-mono text-[11px] uppercase tracking-wider text-text-primary font-semibold">{t.home.badgeAlcohol}</span>
               </div>
               <div className="w-[1px] h-3 bg-border-subtle" />
               <div className="flex items-center gap-2 text-text-secondary text-xs">
                 <span className="material-symbols-outlined text-primary text-base">local_shipping</span>
-                <span className="font-mono text-[11px] uppercase tracking-wider text-text-primary font-semibold">Fast US Delivery</span>
+                <span className="font-mono text-[11px] uppercase tracking-wider text-text-primary font-semibold">{t.home.badgeDelivery}</span>
               </div>
             </div>
           </div>
@@ -198,17 +198,17 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
             <div>
               <span className="text-primary font-mono text-[10px] uppercase tracking-[0.3em] font-bold block mb-1">
-                Explore Collections
+                {t.home.exploreCollections}
               </span>
               <h2 className="font-serif-luxury text-3xl sm:text-4xl font-bold text-text-primary">
-                Browse All Categories
+                {t.home.browseCategories}
               </h2>
             </div>
             <Link
               href="/shop"
               className="inline-flex items-center gap-2 text-primary font-mono text-xs uppercase tracking-widest font-bold hover:text-[#FFE8A3] transition-colors"
             >
-              <span>View Full Boutique</span>
+              <span>{t.home.viewFullBoutique}</span>
               <span className="material-symbols-outlined text-sm">arrow_forward</span>
             </Link>
           </div>
@@ -260,21 +260,21 @@ export default function HomePage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6 border-b border-border-subtle pb-6">
           <div>
             <span className="text-primary font-mono text-xs uppercase tracking-[0.25em] font-bold block mb-2">
-              Curated Artisanal Goods
+              {t.home.curatedGoods}
             </span>
             <h2 className="font-serif-luxury text-3xl sm:text-4xl font-bold text-text-primary">
-              Signature Creations
+              {t.home.signatureCreations}
             </h2>
           </div>
 
           {/* Filter Pills */}
           <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
             {[
-              { id: 'all', label: 'All Artifacts' },
-              { id: 'fragrance', label: 'Royal Attars' },
-              { id: 'salah', label: 'Salah & Tasbih' },
-              { id: 'women', label: 'Apparel' },
-              { id: 'home', label: 'Home Decor' }
+              { id: 'all', label: t.home.filterAll },
+              { id: 'fragrance', label: t.home.filterFragrance },
+              { id: 'salah', label: t.home.filterSalah },
+              { id: 'women', label: t.home.filterWomen },
+              { id: 'home', label: t.home.filterHome }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -415,7 +415,7 @@ export default function HomePage() {
             href="/shop"
             className="inline-flex items-center gap-2 border border-primary/50 text-primary hover:bg-primary hover:text-black font-cinzel font-bold px-8 py-3.5 rounded-lg text-xs uppercase tracking-widest transition-all duration-300"
           >
-            <span>View Complete Boutique Catalog</span>
+            <span>{t.home.viewCompleteCatalog}</span>
             <span className="material-symbols-outlined text-base">arrow_forward</span>
           </Link>
         </div>
@@ -425,10 +425,10 @@ export default function HomePage() {
       <section className="border-y border-border-subtle bg-surface-card py-12">
         <div className="max-w-container-max mx-auto px-gutter grid grid-cols-2 md:grid-cols-4 gap-8">
           {[
-            { icon: "local_shipping", title: "Express Dispatch", desc: "Reliable doorstep delivery across the USA" },
-            { icon: "verified", title: "100% Halal Verified", desc: "Pure formulations without alcohol" },
-            { icon: "workspace_premium", title: "Artisanal Distillation", desc: "Aged agarwood & natural oils" },
-            { icon: "support_agent", title: "Dedicated Concierge", desc: "Personal styling & assistance" }
+            { icon: "local_shipping", title: t.home.pillar1Title, desc: t.home.pillar1Desc },
+            { icon: "verified", title: t.home.pillar2Title, desc: t.home.pillar2Desc },
+            { icon: "workspace_premium", title: t.home.pillar3Title, desc: t.home.pillar3Desc },
+            { icon: "support_agent", title: t.home.pillar4Title, desc: t.home.pillar4Desc }
           ].map((item, idx) => (
             <div key={idx} className="flex flex-col items-center text-center space-y-2 group">
               <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-110 group-hover:bg-primary group-hover:text-black transition-all duration-300">

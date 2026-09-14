@@ -1,11 +1,22 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
+
+const DISMISSED_KEY = 'sunnah-app-banner-dismissed';
 
 export default function AppDownloadBanner() {
+  const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    let dismissed = false;
+    try {
+      dismissed = localStorage.getItem(DISMISSED_KEY) === '1';
+    } catch {
+      // localStorage unavailable (private mode, etc.) — fall back to showing it
+    }
+    if (dismissed) return;
     // Show banner after a slight delay
     const timer = setTimeout(() => {
       setIsVisible(true);
@@ -13,13 +24,27 @@ export default function AppDownloadBanner() {
     return () => clearTimeout(timer);
   }, []);
 
+  const handleDismiss = () => {
+    setIsVisible(false);
+    try {
+      localStorage.setItem(DISMISSED_KEY, '1');
+    } catch {
+      // ignore — worst case it reappears next visit
+    }
+  };
+
   if (!isVisible) return null;
 
+  // The cart page's sticky order summary (with its Proceed to Checkout CTA)
+  // sits in the same bottom-right area, so shift the banner up there to avoid
+  // covering it.
+  const cartOffset = pathname === '/cart' ? 'md:bottom-32' : '';
+
   return (
-    <div className="fixed bottom-4 right-4 md:bottom-8 md:right-8 z-50 animate-in slide-in-from-bottom-5">
+    <div className={`fixed bottom-4 right-4 md:bottom-8 md:right-8 ${cartOffset} z-40 animate-in slide-in-from-bottom-5`}>
       <div className="bg-surface-card border border-primary-container shadow-[0_8px_30px_rgb(0,0,0,0.4)] rounded-xl p-4 flex items-center gap-4 max-w-sm relative">
-        <button 
-          onClick={() => setIsVisible(false)}
+        <button
+          onClick={handleDismiss}
           className="absolute -top-2 -right-2 bg-surface-card border border-border-subtle rounded-full p-1 text-text-secondary hover:text-text-primary transition-colors"
         >
           <span className="material-symbols-outlined text-sm">close</span>

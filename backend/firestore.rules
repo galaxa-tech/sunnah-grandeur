@@ -144,6 +144,31 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    // ── /app_feedback/{docId} ─────────────────────────────────────────────────
+    // In-app star rating + review from the Rate the App screen.
+    match /app_feedback/{docId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ── /subscribers/{docId} ──────────────────────────────────────────────────
+    // Storefront footer newsletter signup.
+    match /subscribers/{docId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ── /reviews/{reviewId} ───────────────────────────────────────────────────
+    // Product reviews. Public read; only signed-in (non-anonymous) users can
+    // post, and only as themselves. Editing/removal is admin-moderated.
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isAuthenticated() &&
+                       request.auth.token.firebase.sign_in_provider != "anonymous" &&
+                       request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
     // ── Catch-all deny ────────────────────────────────────────────────────────
     match /{document=**} {
       allow read, write: if false;

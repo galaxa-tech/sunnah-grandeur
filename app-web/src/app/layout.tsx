@@ -3,6 +3,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ThemeInitializer from "@/components/ThemeInitializer";
+import LanguageInitializer from "@/components/LanguageInitializer";
 import AppDownloadBanner from "@/components/AppDownloadBanner";
 import { AuthProvider } from "@/context/AuthContext";
 
@@ -32,6 +33,7 @@ export default function RootLayout({
       <body className="min-h-screen flex flex-col bg-bg-primary text-text-primary antialiased">
         <AuthProvider>
           <ThemeInitializer />
+          <LanguageInitializer />
           <Navbar />
           <main className="flex-grow">
             {children}

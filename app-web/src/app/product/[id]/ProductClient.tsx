@@ -4,11 +4,20 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useLanguageStore } from '@/store/useLanguageStore';
 import { useCartStore } from '@/store/useCartStore';
+import { useAuth } from '@/context/AuthContext';
 import { translations } from '@/translations';
 import { products, Product } from '@/data/products';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { formatUsd } from '@/lib/currency';
+
+interface Review {
+  id: string;
+  rating: number;
+  comment: string;
+  authorName: string;
+  createdAt?: { toDate: () => Date };
+}
 
 export default function ProductClient() {
   const params = useParams();
@@ -16,6 +25,7 @@ export default function ProductClient() {
   const id = params.id as string;
   const { language } = useLanguageStore();
   const { addItem } = useCartStore();
+  const { user } = useAuth();
   const t = translations[language];
 
   const [product, setProduct] = useState<Product | null>(null);
@@ -25,6 +35,11 @@ export default function ProductClient() {
   const [activeThumb, setActiveThumb] = useState(0);
   const [activeTab, setActiveTab] = useState<'description' | 'specs' | 'reviews'>('description');
   const [addedNotification, setAddedNotification] = useState(false);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
     async function loadProduct() {
@@ -47,6 +62,37 @@ export default function ProductClient() {
     }
     loadProduct();
   }, [id]);
+
+  useEffect(() => {
+    const q = query(collection(db, 'reviews'), where('productId', '==', id), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setReviews(snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Review)));
+    }, (error) => console.error('Error loading reviews:', error));
+    return () => unsubscribe();
+  }, [id]);
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !reviewComment.trim()) return;
+    setSubmittingReview(true);
+    try {
+      await addDoc(collection(db, 'reviews'), {
+        productId: id,
+        rating: reviewRating,
+        comment: reviewComment.trim(),
+        authorName: user.displayName || 'Verified Buyer',
+        userId: user.uid,
+        createdAt: serverTimestamp(),
+      });
+      setReviewComment('');
+      setReviewRating(5);
+      setShowReviewForm(false);
+    } catch (err) {
+      console.error('Error submitting review:', err);
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -95,32 +141,41 @@ export default function ProductClient() {
           {/* LEFT: Image Gallery */}
           <div className="space-y-3">
             <div className="aspect-square bg-surface-card rounded-lg border border-border-subtle overflow-hidden">
-              <img
-                src={product.image}
-                alt={product.name}
-                className={`w-full h-full object-cover transition-transform duration-500 hover:scale-105 ${
-                  product.isSoldOut ? 'grayscale opacity-50' : ''
-                }`}
-              />
-            </div>
-            <div className="flex gap-2">
-              {thumbs.map((src, i) => (
-                <button
-                  key={i}
-                  onClick={() => setActiveThumb(i)}
-                  className={`w-16 h-16 rounded border-2 overflow-hidden flex-shrink-0 transition-colors ${
-                    activeThumb === i
-                      ? 'border-primary-container'
-                      : 'border-border-subtle hover:border-primary-container/50'
+              {product.image ? (
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className={`w-full h-full object-cover transition-transform duration-500 hover:scale-105 ${
+                    product.isSoldOut ? 'grayscale opacity-50' : ''
                   }`}
+                />
+              ) : (
+                <div
+                  className="w-full h-full flex flex-col items-center justify-center gap-2"
+                  style={{ background: product.bgGradient ?? 'linear-gradient(145deg,#16120b,#281c09)' }}
                 >
-                  <img src={src} alt="" className="w-full h-full object-cover" />
-                </button>
-              ))}
-              <button className="w-16 h-16 rounded border border-border-subtle hover:border-primary-container/50 flex items-center justify-center flex-shrink-0 bg-surface-card transition-colors">
-                <span className="text-text-secondary text-[10px] font-medium text-center leading-tight">360°<br />View</span>
-              </button>
+                  <span className="material-symbols-outlined text-primary-container text-6xl opacity-70">{product.bgIcon || 'spa'}</span>
+                  <span className="text-xs font-mono uppercase tracking-widest text-text-secondary">Photo coming soon</span>
+                </div>
+              )}
             </div>
+            {product.image && (
+              <div className="flex gap-2">
+                {thumbs.map((src, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveThumb(i)}
+                    className={`w-16 h-16 rounded border-2 overflow-hidden flex-shrink-0 transition-colors ${
+                      activeThumb === i
+                        ? 'border-primary-container'
+                        : 'border-border-subtle hover:border-primary-container/50'
+                    }`}
+                  >
+                    <img src={src} alt="" className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* CENTER: Product Details */}
@@ -163,12 +218,12 @@ export default function ProductClient() {
 
             <hr className="border-border-subtle" />
 
-            <p className="text-base text-on-surface-variant leading-relaxed">{product.description}</p>
+            <p className="text-base text-text-secondary leading-relaxed">{product.description}</p>
 
             {/* Delivery & Support */}
             <div>
               <h3 className="text-sm font-semibold text-text-primary uppercase tracking-widest mb-1">
-                Delivery &amp; Support
+                {t.pdp.deliverySupport}
               </h3>
               <p className="text-xs text-text-secondary mb-3">Select to learn more</p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -206,7 +261,7 @@ export default function ProductClient() {
             <div className="bg-surface-card rounded-lg border border-border-subtle p-5 space-y-4">
 
               <div>
-                <p className="text-xs text-text-secondary mb-0.5">Buy New</p>
+                <p className="text-xs text-text-secondary mb-0.5">{t.pdp.buyNew}</p>
                 <p className="text-2xl font-bold text-text-primary">{formatUsd(product.price)}</p>
               </div>
 
@@ -229,18 +284,18 @@ export default function ProductClient() {
               )}
 
               {product.isSoldOut ? (
-                <p className="text-red-400 font-semibold text-sm">Currently Unavailable</p>
+                <p className="text-red-400 font-semibold text-sm">{t.pdp.unavailable}</p>
               ) : (
-                <p className="text-green-400 font-semibold text-sm">In Stock</p>
+                <p className="text-green-400 font-semibold text-sm">{t.pdp.inStock}</p>
               )}
 
               {!product.isSoldOut && (
                 <div className="flex items-center gap-3">
-                  <label className="text-xs text-text-secondary">Quantity:</label>
+                  <label className="text-xs text-text-secondary">{t.pdp.quantity}:</label>
                   <select
                     value={quantity}
                     onChange={e => setQuantity(Number(e.target.value))}
-                    className="bg-[#1a1a1a] border border-border-subtle text-text-primary rounded px-3 py-1.5 text-sm focus:border-primary-container focus:outline-none cursor-pointer"
+                    className="bg-surface-card border border-primary/30 text-text-primary text-sm font-mono font-bold outline-none min-w-[72px] px-3.5 py-2 rounded-lg cursor-pointer hover:border-primary/60 transition-colors"
                   >
                     {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
                   </select>
@@ -290,13 +345,13 @@ export default function ProductClient() {
                     }}
                     className="w-full bg-[#f0a500] text-[#0d0900] py-3 rounded text-sm font-semibold hover:bg-[#e09400] transition-colors"
                   >
-                    Buy Now
+                    {t.pdp.buyNow}
                   </button>
 
                   {addedNotification && (
                     <div className="bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-xs p-2.5 rounded text-center animate-in fade-in flex items-center justify-center gap-1.5">
                       <span className="material-symbols-outlined text-sm">check_circle</span>
-                      Added {quantity} item(s) to your cart!
+                      Added {quantity} {quantity === 1 ? 'item' : 'items'} to your cart!
                     </div>
                   )}
                 </div>
@@ -345,9 +400,9 @@ export default function ProductClient() {
         <div className="mt-16 bg-surface-card rounded-xl border border-border-subtle p-6 sm:p-8">
           <div className="flex border-b border-border-subtle gap-8">
             {[
-              { id: 'description', label: 'Description' },
-              { id: 'specs', label: 'Specifications' },
-              { id: 'reviews', label: 'Reviews' },
+              { id: 'description', label: t.pdp.description },
+              { id: 'specs', label: t.pdp.specifications },
+              { id: 'reviews', label: t.pdp.reviews },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -396,9 +451,88 @@ export default function ProductClient() {
             )}
 
             {activeTab === 'reviews' && (
-              <div className="text-center py-10">
-                <p className="text-text-secondary text-sm">No reviews yet for this product.</p>
-                <p className="text-text-secondary text-xs mt-1">Be the first to share your experience.</p>
+              <div className="space-y-6">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <p className="text-text-primary text-sm font-semibold">
+                    {reviews.length === 0
+                      ? t.pdp.noReviews
+                      : `${reviews.length} review${reviews.length === 1 ? '' : 's'}`}
+                  </p>
+                  {user && !user.isAnonymous ? (
+                    <button
+                      onClick={() => setShowReviewForm((v) => !v)}
+                      className="text-xs font-mono font-bold uppercase tracking-widest text-primary-container border border-primary-container/40 rounded-lg px-4 py-2 hover:bg-primary-container/10 transition-colors"
+                    >
+                      {showReviewForm ? 'Cancel' : 'Write a Review'}
+                    </button>
+                  ) : (
+                    <p className="text-xs text-text-secondary">
+                      <Link href="/account" className="text-primary-container hover:underline">Sign in</Link> to write a review.
+                    </p>
+                  )}
+                </div>
+
+                {showReviewForm && user && (
+                  <form onSubmit={handleSubmitReview} className="p-4 rounded-lg border border-border-subtle bg-surface-card space-y-3">
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <button
+                          type="button"
+                          key={n}
+                          onClick={() => setReviewRating(n)}
+                          className="text-2xl leading-none"
+                          aria-label={`${n} star${n === 1 ? '' : 's'}`}
+                        >
+                          <span
+                            className="material-symbols-outlined text-2xl"
+                            style={{ fontVariationSettings: n <= reviewRating ? "'FILL' 1" : "'FILL' 0", color: '#E6C364' }}
+                          >
+                            star
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                    <textarea
+                      value={reviewComment}
+                      onChange={(e) => setReviewComment(e.target.value)}
+                      required
+                      rows={3}
+                      placeholder="Share your experience with this product..."
+                      className="w-full bg-bg-primary border border-border-subtle rounded px-3 py-2.5 text-sm text-text-primary focus:border-primary-container focus:outline-none resize-none"
+                    />
+                    <button
+                      type="submit"
+                      disabled={submittingReview}
+                      className="bg-primary-container text-bg-primary text-xs font-bold uppercase tracking-widest px-5 py-2.5 rounded hover:bg-[#e6c364] transition-colors disabled:opacity-50"
+                    >
+                      {submittingReview ? 'Submitting...' : 'Submit Review'}
+                    </button>
+                  </form>
+                )}
+
+                {reviews.length > 0 && (
+                  <div className="space-y-4">
+                    {reviews.map((review) => (
+                      <div key={review.id} className="p-4 rounded-lg border border-border-subtle">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <div className="flex">
+                            {[1, 2, 3, 4, 5].map((n) => (
+                              <span
+                                key={n}
+                                className="material-symbols-outlined text-sm"
+                                style={{ fontVariationSettings: n <= review.rating ? "'FILL' 1" : "'FILL' 0", color: '#E6C364' }}
+                              >
+                                star
+                              </span>
+                            ))}
+                          </div>
+                          <span className="text-xs font-semibold text-text-primary">{review.authorName}</span>
+                        </div>
+                        <p className="text-sm text-text-secondary leading-relaxed">{review.comment}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

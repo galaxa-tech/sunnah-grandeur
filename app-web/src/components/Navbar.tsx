@@ -49,13 +49,6 @@ export default function Navbar() {
   }, [items, getTotalItems]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      document.documentElement.dir = language === 'AR' ? 'rtl' : 'ltr';
-      document.documentElement.lang = language.toLowerCase();
-    }
-  }, [language]);
-
-  useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
 
@@ -231,7 +224,7 @@ export default function Navbar() {
                     className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-text-primary hover:bg-primary/10 hover:text-primary transition-colors"
                   >
                     <span className="material-symbols-outlined text-sm">manage_accounts</span>
-                    MY PROFILE
+                    {t.account.myProfile.toUpperCase()}
                   </Link>
                   <Link
                     href="/account?tab=orders"
@@ -239,7 +232,7 @@ export default function Navbar() {
                     className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-text-primary hover:bg-primary/10 hover:text-primary transition-colors"
                   >
                     <span className="material-symbols-outlined text-sm">receipt_long</span>
-                    MY ORDERS
+                    {t.account.myOrders.toUpperCase()}
                   </Link>
                   <button
                     onClick={() => { toggleTheme(); setIsUserOpen(false); }}
@@ -248,7 +241,7 @@ export default function Navbar() {
                     <span className="material-symbols-outlined text-sm">
                       {theme === 'dark' ? 'light_mode' : 'dark_mode'}
                     </span>
-                    {theme === 'dark' ? 'LIGHT MODE' : 'DARK MODE'}
+                    {(theme === 'dark' ? t.account.lightMode : t.account.darkMode).toUpperCase()}
                   </button>
                   <div className="border-t border-border-subtle my-1"></div>
                   <button
@@ -256,7 +249,7 @@ export default function Navbar() {
                     className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors text-left"
                   >
                     <span className="material-symbols-outlined text-sm">logout</span>
-                    LOG OUT
+                    {t.account.logOut.toUpperCase()}
                   </button>
                 </div>
               )}
@@ -362,7 +355,7 @@ export default function Navbar() {
                 autoFocus
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search rare attars, velvet sajadah, misbaha, thobes..."
+                placeholder={t.search.placeholder}
                 className="w-full bg-transparent text-text-primary placeholder:text-text-secondary text-sm sm:text-base focus:outline-none"
               />
               {searchQuery && (
@@ -370,7 +363,7 @@ export default function Navbar() {
                   onClick={() => setSearchQuery('')}
                   className="text-text-secondary hover:text-text-primary text-[10px] uppercase font-bold font-mono px-2 py-1"
                 >
-                  Clear
+                  {t.search.clear}
                 </button>
               )}
               <button
@@ -385,7 +378,7 @@ export default function Navbar() {
             <div className="p-5 overflow-y-auto space-y-3 flex-grow">
               {searchQuery.trim() === '' ? (
                 <div className="text-center py-10 text-text-secondary text-xs">
-                  <p className="font-bold text-text-primary mb-2 uppercase tracking-widest font-mono">Popular Searches</p>
+                  <p className="font-bold text-text-primary mb-2 uppercase tracking-widest font-mono">{t.search.popularSearches}</p>
                   <div className="flex flex-wrap justify-center gap-2 mt-4">
                     {['Oud Al-Majd', 'Amber Attar', 'Gold Velvet Sajadah', 'Black Onyx Misbaha', 'Royal Musk'].map((keyword) => (
                       <button
@@ -409,7 +402,7 @@ export default function Navbar() {
                   if (filtered.length === 0) {
                     return (
                       <div className="text-center py-10 text-text-secondary text-xs">
-                        No artisanal products match &ldquo;{searchQuery}&rdquo;.
+                        {t.search.noResults} &ldquo;{searchQuery}&rdquo;.
                       </div>
                     );
                   }
