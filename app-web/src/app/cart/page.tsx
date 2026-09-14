@@ -23,7 +23,7 @@ export default function CartPage() {
       <div className="mb-12 flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-headline-xl font-headline-xl text-primary mb-2">Your Cart</h1>
-          <p className="text-body-lg font-body-lg text-on-surface-variant">
+          <p className="text-body-lg font-body-lg text-text-secondary">
             Review your selections before completing your purchase.
           </p>
         </div>
@@ -60,7 +60,7 @@ export default function CartPage() {
                 className="bg-surface-card rounded-lg border border-border-subtle p-6 flex flex-col sm:flex-row gap-6 relative group hover:border-primary/50 transition-colors duration-300"
               >
                 {/* Image */}
-                <div className="w-full sm:w-32 h-32 flex-shrink-0 bg-surface rounded overflow-hidden border border-border-subtle flex items-center justify-center">
+                <div className="w-full sm:w-32 h-32 flex-shrink-0 bg-bg-primary rounded overflow-hidden border border-border-subtle flex items-center justify-center">
                   {item.image ? (
                     <img
                       alt={item.name}
@@ -79,7 +79,7 @@ export default function CartPage() {
                       <h3 className="text-body-lg font-body-lg font-medium text-on-surface mb-1">
                         {item.name}
                       </h3>
-                      <p className="text-body-md font-body-md text-on-surface-variant mb-2">
+                      <p className="text-body-md font-body-md text-text-secondary mb-2">
                         {item.size || item.category}
                       </p>
                       {item.giftWrap && (
@@ -92,7 +92,7 @@ export default function CartPage() {
                     <button
                       onClick={() => removeItem(item.id)}
                       aria-label="Remove item"
-                      className="text-on-surface-variant hover:text-error transition-colors"
+                      className="text-text-secondary hover:text-error transition-colors"
                     >
                       <span className="material-symbols-outlined">delete</span>
                     </button>
@@ -100,10 +100,10 @@ export default function CartPage() {
 
                   <div className="flex justify-between items-end mt-4">
                     {/* Quantity Controls */}
-                    <div className="flex items-center border border-border-subtle rounded-DEFAULT bg-surface">
+                    <div className="flex items-center border border-border-subtle rounded-DEFAULT bg-bg-primary">
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors"
+                        className="w-8 h-8 flex items-center justify-center text-text-secondary hover:text-primary transition-colors"
                       >
                         <span className="material-symbols-outlined text-sm">remove</span>
                       </button>
@@ -112,7 +112,7 @@ export default function CartPage() {
                       </span>
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors"
+                        className="w-8 h-8 flex items-center justify-center text-text-secondary hover:text-primary transition-colors"
                       >
                         <span className="material-symbols-outlined text-sm">add</span>
                       </button>
@@ -136,18 +136,18 @@ export default function CartPage() {
               </h2>
               <div className="space-y-4 text-body-md font-body-md">
                 <div className="flex justify-between">
-                  <span className="text-on-surface-variant">Subtotal</span>
+                  <span className="text-text-secondary">Subtotal</span>
                   <span className="text-on-surface">{formatUsd(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-on-surface-variant">Shipping</span>
+                  <span className="text-text-secondary">Shipping</span>
                   {qualifiesForFreeShipping ? (
                     <span className="text-green-400 font-medium">Free (Standard)</span>
                   ) : (
                     <span className="text-on-surface">{formatUsdRaw(shippingUsd)}</span>
                   )}
                 </div>
-                <p className="text-[11px] text-on-surface-variant/70">Tax is calculated when your order is confirmed.</p>
+                <p className="text-[11px] text-text-secondary/70">Tax is calculated when your order is confirmed.</p>
               </div>
               <div className="border-t border-border-subtle mt-6 pt-6 flex justify-between items-end">
                 <span className="text-body-lg font-body-lg text-on-surface">Estimated Total</span>
@@ -163,7 +163,7 @@ export default function CartPage() {
                 <span className="material-symbols-outlined text-sm">arrow_forward</span>
               </Link>
 
-              <div className="mt-6 flex justify-center items-center gap-4 text-on-surface-variant/50">
+              <div className="mt-6 flex justify-center items-center gap-4 text-text-secondary/50">
                 <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
                   lock
                 </span>

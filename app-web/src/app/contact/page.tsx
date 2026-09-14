@@ -40,7 +40,7 @@ export default function ContactPage() {
         <div className="max-w-container-max mx-auto px-gutter">
           <div className="text-center mb-16">
             <h1 className="font-headline-xl text-headline-xl text-primary mb-4">{t.contact.title}</h1>
-            <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto">
+            <p className="font-body-lg text-body-lg text-text-secondary max-w-2xl mx-auto">
               {t.contact.subtitle}
             </p>
           </div>
@@ -58,15 +58,15 @@ export default function ContactPage() {
               <form className="space-y-6" onSubmit={handleSubmit}>
                 <div>
                   <label className="block font-label-accent text-label-accent text-primary mb-2 uppercase tracking-widest" htmlFor="name">{t.contact.name}</label>
-                  <input className="w-full bg-background border border-border-subtle rounded text-text-primary px-4 py-3 focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-colors duration-300 font-body-md text-body-md" id="name" name="name" placeholder={t.contact.namePlaceholder} type="text" required value={formData.name} onChange={handleChange} />
+                  <input className="w-full bg-bg-primary border border-border-subtle rounded text-text-primary px-4 py-3 focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-colors duration-300 font-body-md text-body-md" id="name" name="name" placeholder={t.contact.namePlaceholder} type="text" required value={formData.name} onChange={handleChange} />
                 </div>
                 <div>
                   <label className="block font-label-accent text-label-accent text-primary mb-2 uppercase tracking-widest" htmlFor="email">{t.contact.email}</label>
-                  <input className="w-full bg-background border border-border-subtle rounded text-text-primary px-4 py-3 focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-colors duration-300 font-body-md text-body-md" id="email" name="email" placeholder={t.contact.emailPlaceholder} type="email" required value={formData.email} onChange={handleChange} />
+                  <input className="w-full bg-bg-primary border border-border-subtle rounded text-text-primary px-4 py-3 focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-colors duration-300 font-body-md text-body-md" id="email" name="email" placeholder={t.contact.emailPlaceholder} type="email" required value={formData.email} onChange={handleChange} />
                 </div>
                 <div>
                   <label className="block font-label-accent text-label-accent text-primary mb-2 uppercase tracking-widest" htmlFor="subject">{t.contact.subject}</label>
-                  <select className="w-full bg-background border border-border-subtle rounded text-text-primary px-4 py-3 focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-colors duration-300 font-body-md text-body-md appearance-none" id="subject" name="subject" required value={formData.subject} onChange={handleChange}>
+                  <select className="w-full bg-bg-primary border border-border-subtle rounded text-text-primary px-4 py-3 focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-colors duration-300 font-body-md text-body-md appearance-none" id="subject" name="subject" required value={formData.subject} onChange={handleChange}>
                     <option disabled value="">{t.contact.subjectPlaceholder}</option>
                     <option value="order">Order Support</option>
                     <option value="product">Product Information</option>
@@ -76,7 +76,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <label className="block font-label-accent text-label-accent text-primary mb-2 uppercase tracking-widest" htmlFor="message">{t.contact.message}</label>
-                  <textarea className="w-full bg-background border border-border-subtle rounded text-text-primary px-4 py-3 focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-colors duration-300 font-body-md text-body-md resize-none" id="message" name="message" placeholder={t.contact.messagePlaceholder} rows={5} required value={formData.message} onChange={handleChange}></textarea>
+                  <textarea className="w-full bg-bg-primary border border-border-subtle rounded text-text-primary px-4 py-3 focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-colors duration-300 font-body-md text-body-md resize-none" id="message" name="message" placeholder={t.contact.messagePlaceholder} rows={5} required value={formData.message} onChange={handleChange}></textarea>
                 </div>
                 {status === 'error' && (
                   <p className="text-xs text-red-400 text-center">Something went wrong. Please try emailing us at <a href="mailto:info@sunnahgrandeur.com" className="underline">info@sunnahgrandeur.com</a>.</p>
@@ -104,17 +104,17 @@ export default function ContactPage() {
                 <div className="bg-surface-card p-6 rounded-lg border border-border-subtle hover:border-primary-container transition-colors duration-300">
                   <span className="material-symbols-outlined text-primary text-3xl mb-4 block" style={{ fontVariationSettings: "'FILL' 1" }}>location_on</span>
                   <h3 className="font-headline-md text-headline-md text-primary mb-2">{t.contact.boutique}</h3>
-                  <p className="font-body-md text-body-md text-on-surface-variant whitespace-pre-line">
+                  <p className="font-body-md text-body-md text-text-secondary whitespace-pre-line">
                     {t.contact.boutiqueAddress}
                   </p>
                 </div>
                 <div className="bg-surface-card p-6 rounded-lg border border-border-subtle hover:border-primary-container transition-colors duration-300">
                   <span className="material-symbols-outlined text-primary text-3xl mb-4 block" style={{ fontVariationSettings: "'FILL' 1" }}>mail</span>
                   <h3 className="font-headline-md text-headline-md text-primary mb-2">{t.contact.directContact}</h3>
-                  <p className="font-body-md text-body-md text-on-surface-variant mb-2">
+                  <p className="font-body-md text-body-md text-text-secondary mb-2">
                     <a className="hover:text-primary transition-colors" href="mailto:info@sunnahgrandeur.com">info@sunnahgrandeur.com</a>
                   </p>
-                  <p className="font-body-md text-body-md text-on-surface-variant flex items-center gap-1.5 mt-4">
+                  <p className="font-body-md text-body-md text-text-secondary flex items-center gap-1.5 mt-4">
                     <span className="material-symbols-outlined text-sm">public</span>
                     <a className="hover:text-primary transition-colors" href="https://www.facebook.com/sunnahgrandeurnyc" target="_blank" rel="noopener noreferrer">Facebook Page</a>
                   </p>

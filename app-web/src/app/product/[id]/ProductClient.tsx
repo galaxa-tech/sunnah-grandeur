@@ -431,19 +431,19 @@ export default function ProductClient() {
 
             {activeTab === 'specs' && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
-                <div className="p-3 bg-surface rounded border border-border-subtle flex justify-between">
+                <div className="p-3 bg-bg-primary rounded border border-border-subtle flex justify-between">
                   <span className="text-text-secondary">Category</span>
                   <span className="font-semibold text-text-primary">{product.category}</span>
                 </div>
-                <div className="p-3 bg-surface rounded border border-border-subtle flex justify-between">
+                <div className="p-3 bg-bg-primary rounded border border-border-subtle flex justify-between">
                   <span className="text-text-secondary">Origin</span>
                   <span className="font-semibold text-text-primary">Artisanal Workshop</span>
                 </div>
-                <div className="p-3 bg-surface rounded border border-border-subtle flex justify-between">
+                <div className="p-3 bg-bg-primary rounded border border-border-subtle flex justify-between">
                   <span className="text-text-secondary">Certification</span>
                   <span className="font-semibold text-primary-container">Halal Certified</span>
                 </div>
-                <div className="p-3 bg-surface rounded border border-border-subtle flex justify-between">
+                <div className="p-3 bg-bg-primary rounded border border-border-subtle flex justify-between">
                   <span className="text-text-secondary">Alcohol Content</span>
                   <span className="font-semibold text-text-primary">0% (Pure Oil / Natural)</span>
                 </div>

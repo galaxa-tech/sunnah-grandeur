@@ -35,7 +35,7 @@ export default function AboutPage() {
       </section>
 
       {/* Values Section */}
-      <section className="py-section-padding bg-surface-container-lowest border-y border-outline-variant/20">
+      <section className="py-section-padding bg-surface-card border-y border-border-subtle/20">
         <div className="max-w-container-max mx-auto px-gutter text-center mb-16">
           <h2 className="text-headline-lg font-headline-lg text-primary mb-4">{t.about.pillarsTitle}</h2>
           <p className="text-body-md font-body-md text-text-secondary max-w-2xl mx-auto">{t.about.pillarsSubtitle}</p>
