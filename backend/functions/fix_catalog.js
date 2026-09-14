@@ -47,7 +47,7 @@ const NEW_PRODUCTS = [
   },
   {
     name: "Olive Khimar & Abaya Set", category: "Women", categoryId: "women", type: "other",
-    price: 2400, originalPrice: 2900, image: "/products/p 2.png",
+    price: 2400, originalPrice: 2900, image: "/products/p2.png",
     description: "Two-layer olive green khimar paired with a flowing matching abaya in premium nida fabric. Modest, elegant, breathable.",
     tag: "Bestseller", isActive: true, isFeatured: true, stockQuantity: 60, sku: "WOM-001",
   },

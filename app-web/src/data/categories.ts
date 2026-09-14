@@ -34,7 +34,7 @@ export const categories: Category[] = [
     icon: 'woman',
     gradient: 'linear-gradient(135deg, #0f1a0f 0%, #1a2d1a 50%, #0f1a0f 100%)',
     accentColor: '#8BC38B',
-    featuredImage: '/products/p 2.png',
+    featuredImage: '/products/p2.png',
     subcategories: [
       { name: 'Hijabs', href: '/shop?cat=women' },
       { name: 'Abayas', href: '/shop?cat=women' },
