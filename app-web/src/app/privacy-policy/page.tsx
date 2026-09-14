@@ -18,7 +18,7 @@ export default function PrivacyPolicyPage() {
 
           {/* Header */}
           <div className="border-b border-border-subtle pb-8 mb-10">
-            <h1 className="font-serif text-3xl md:text-5xl font-bold text-white mb-4">Privacy Policy</h1>
+            <h1 className="font-serif text-3xl md:text-5xl font-bold text-text-primary mb-4">Privacy Policy</h1>
             <p className="text-text-secondary text-sm">Last Updated: August 2, 2026</p>
           </div>
 
@@ -29,7 +29,7 @@ export default function PrivacyPolicyPage() {
             </p>
 
             <section className="space-y-4">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">1. Information We Collect</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">1. Information We Collect</h2>
               <p>
                 When you visit our site or attempt to place an order, we may collect the following personal information:
               </p>
@@ -41,7 +41,7 @@ export default function PrivacyPolicyPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">2. How We Use Your Information</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">2. How We Use Your Information</h2>
               <p>
                 We use the personal information we collect generally to:
               </p>
@@ -55,7 +55,7 @@ export default function PrivacyPolicyPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">3. Selling and Sharing Information</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">3. Selling and Sharing Information</h2>
               <p>
                 <strong>We do not sell your personal information.</strong>
               </p>
@@ -70,14 +70,14 @@ export default function PrivacyPolicyPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">4. Cookies and Local Storage</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">4. Cookies and Local Storage</h2>
               <p>
                 Our website does not use advertising tracking cookies or third-party marketing trackers (such as Meta Pixels or Google Analytics) to track your behavior. We only utilize standard browser <strong>localStorage</strong> to store user preferences, such as your dark/light theme selection, to ensure a seamless visual experience.
               </p>
             </section>
 
             <section className="space-y-4 border-t border-border-subtle pt-8">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">5. Contact Us</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">5. Contact Us</h2>
               <p>
                 If you have questions about our privacy practices, please contact us via email at <a href="mailto:info@sunnahgrandeur.com" className="text-primary-container hover:underline">info@sunnahgrandeur.com</a>.
               </p>

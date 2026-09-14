@@ -28,7 +28,7 @@ export default function PaymentInfoPage() {
 
           {/* Header */}
           <div className="border-b border-border-subtle pb-8 mb-10">
-            <h1 className="font-serif text-3xl md:text-5xl font-bold text-white mb-4">Payment Information</h1>
+            <h1 className="font-serif text-3xl md:text-5xl font-bold text-text-primary mb-4">Payment Information</h1>
             <p className="text-text-secondary text-sm">Last Updated: August 2, 2026</p>
           </div>
 
@@ -39,7 +39,7 @@ export default function PaymentInfoPage() {
             </p>
 
             <section className="space-y-4">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">Accepted Payment Methods</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">Accepted Payment Methods</h2>
               <p>
                 We accept a wide range of popular payment options:
               </p>
@@ -54,7 +54,7 @@ export default function PaymentInfoPage() {
             </section>
 
             <section className="space-y-4 pt-4 border-t border-border-subtle">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">Security & Transaction Processing</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">Security & Transaction Processing</h2>
               <p>
                 To protect your financial transactions, all payments are securely encrypted using standard Secure Socket Layer (SSL) technology and processed via external compliant payment gateways. 
               </p>

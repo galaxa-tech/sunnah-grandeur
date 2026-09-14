@@ -8,14 +8,8 @@ import { categories } from '@/data/categories';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useCartStore } from '@/store/useCartStore';
+import { formatUsd } from '@/lib/currency';
 import CartDrawer from '@/components/CartDrawer';
-
-const LIVE_TOAST_MESSAGES = [
-  { text: "✨ Someone in Dhaka just purchased Royal Amber Oudh", time: "3m ago" },
-  { text: "📦 Same-Day Express Gift Packaging Active across BD", time: "Live" },
-  { text: "🌿 New Batch: Aged Cambodian Agarwood Extrait Distilled", time: "Fresh" },
-  { text: "🕌 Over 1,200+ Ummah members trust Sunnah Grandeur", time: "Verified" }
-];
 
 export default function HomePage() {
   const { language } = useLanguageStore();
@@ -25,8 +19,6 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [activeCategoryTab, setActiveCategoryTab] = useState<string>('all');
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [toastIndex, setToastIndex] = useState(0);
-  const [showToast, setShowToast] = useState(true);
 
   const { addItem } = useCartStore();
 
@@ -47,17 +39,6 @@ export default function HomePage() {
     return () => unsubscribe();
   }, []);
 
-  // Cycle live social proof toast
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setShowToast(false);
-      setTimeout(() => {
-        setToastIndex((prev) => (prev + 1) % LIVE_TOAST_MESSAGES.length);
-        setShowToast(true);
-      }, 500);
-    }, 8000);
-    return () => clearInterval(interval);
-  }, []);
 
   const handleQuickAdd = (product: Product) => {
     addItem({
@@ -87,7 +68,7 @@ export default function HomePage() {
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
       {/* ── High-Fashion Editorial Hero Section ─────────────────────────────── */}
-      <section className="relative min-h-[70vh] md:min-h-[75vh] flex items-center justify-center overflow-hidden bg-[#070605] pt-20 pb-12 islamic-geometric-grid">
+      <section className="relative min-h-[70vh] md:min-h-[75vh] flex items-center justify-center overflow-hidden bg-bg-primary pt-20 pb-12 islamic-geometric-grid">
         {/* Ambient Volumetric Lighting Glows */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/3 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full bg-[#E6C364]/10 blur-[150px] animate-pulse" />
@@ -104,7 +85,7 @@ export default function HomePage() {
           <div className="lg:col-span-7 flex flex-col items-start space-y-6">
             
             {/* Pill Tagline */}
-            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#16130D] border border-primary/30 shadow-[0_0_15px_rgba(201,168,76,0.15)]">
+            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-surface-card border border-primary/30 shadow-[0_0_15px_rgba(201,168,76,0.15)]">
               <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
               <span className="font-mono text-[10px] sm:text-xs text-primary font-bold uppercase tracking-[0.25em]">
                 Bespoke Artisanal Collection 2026
@@ -134,7 +115,7 @@ export default function HomePage() {
               
               <Link
                 href="/about"
-                className="inline-flex items-center justify-center gap-2 border border-primary/40 bg-[#12100C]/60 backdrop-blur-md text-primary font-cinzel px-8 py-3.5 rounded-lg text-xs uppercase tracking-widest hover:bg-primary/10 hover:border-primary transition-all duration-300"
+                className="inline-flex items-center justify-center gap-2 border border-primary/40 bg-surface-card/60 backdrop-blur-md text-primary font-cinzel px-8 py-3.5 rounded-lg text-xs uppercase tracking-widest hover:bg-primary/10 hover:border-primary transition-all duration-300"
               >
                 <span>Our Heritage</span>
               </Link>
@@ -154,7 +135,7 @@ export default function HomePage() {
               <div className="w-[1px] h-3 bg-border-subtle" />
               <div className="flex items-center gap-2 text-text-secondary text-xs">
                 <span className="material-symbols-outlined text-primary text-base">local_shipping</span>
-                <span className="font-mono text-[11px] uppercase tracking-wider text-text-primary font-semibold">Fast BD Delivery</span>
+                <span className="font-mono text-[11px] uppercase tracking-wider text-text-primary font-semibold">Fast US Delivery</span>
               </div>
             </div>
           </div>
@@ -175,7 +156,7 @@ export default function HomePage() {
               <div className="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-primary/50" />
 
               {/* Floating Badge Top */}
-              <div className="absolute top-6 px-4 py-1 rounded-full bg-[#1A160F] border border-primary/40 text-primary font-mono text-[10px] uppercase tracking-widest font-bold z-20">
+              <div className="absolute top-6 px-4 py-1 rounded-full bg-surface-card border border-primary/40 text-primary font-mono text-[10px] uppercase tracking-widest font-bold z-20">
                 Flagship Extrait • 50 ML
               </div>
 
@@ -189,13 +170,13 @@ export default function HomePage() {
               </div>
 
               {/* Floating Bottom Card */}
-              <div className="relative z-20 w-full bg-[#12100C]/90 border border-primary/30 p-3.5 rounded-xl backdrop-blur-xl flex items-center justify-between mt-auto">
+              <div className="relative z-20 w-full bg-surface-card/90 border border-primary/30 p-3.5 rounded-xl backdrop-blur-xl flex items-center justify-between mt-auto">
                 <div>
                   <span className="text-[9px] font-mono text-primary uppercase tracking-widest font-bold block">Signature Release</span>
                   <h4 className="text-sm font-serif-luxury font-bold text-text-primary">Oud Al-Majd Extrait</h4>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs font-mono font-bold text-primary block">৳1,850 BDT</span>
+                  <span className="text-xs font-mono font-bold text-primary block">{formatUsd(1850)}</span>
                   <span className="text-[9px] text-emerald-400 font-mono">In Stock • 50ml</span>
                 </div>
               </div>
@@ -210,7 +191,7 @@ export default function HomePage() {
       </section>
 
       {/* ── All Categories Grid Section (Directly after Hero) ──────────────── */}
-      <section className="py-16 bg-[#0B0A08]/90 border-y border-primary/15 relative overflow-hidden">
+      <section className="py-16 bg-surface-card/90 border-y border-primary/15 relative overflow-hidden">
         <div className="max-w-container-max mx-auto px-gutter relative z-10">
           
           {/* Header */}
@@ -262,7 +243,7 @@ export default function HomePage() {
                     {cat.name}
                   </h3>
                   <span className="text-[9px] font-mono text-text-secondary/80 mt-0.5 block">
-                    {cat.subcategories.length} Styles
+                    {dbProducts.filter((p) => p.categoryId === cat.id).length} Products
                   </span>
                 </div>
               </Link>
@@ -301,7 +282,7 @@ export default function HomePage() {
                 className={`px-4 py-2 rounded-full font-mono text-xs uppercase tracking-wider transition-all duration-300 flex-shrink-0 ${
                   activeCategoryTab === tab.id
                     ? 'bg-primary text-black font-bold shadow-[0_0_15px_rgba(201,168,76,0.3)]'
-                    : 'bg-[#12100C] text-text-secondary border border-border-subtle hover:border-primary/50 hover:text-text-primary'
+                    : 'bg-surface-card text-text-secondary border border-border-subtle hover:border-primary/50 hover:text-text-primary'
                 }`}
               >
                 {tab.label}
@@ -314,7 +295,7 @@ export default function HomePage() {
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-96 rounded-xl bg-[#12100C] border border-border-subtle animate-pulse" />
+              <div key={i} className="h-96 rounded-xl bg-surface-card border border-border-subtle animate-pulse" />
             ))}
           </div>
         ) : filteredProducts.length === 0 ? (
@@ -337,7 +318,7 @@ export default function HomePage() {
                 className="group relative rounded-2xl glass-card glass-card-hover overflow-hidden flex flex-col justify-between"
               >
                 {/* Image Container with Ambient Spotlight */}
-                <div className="relative aspect-[4/5] bg-[#0A0907] overflow-hidden">
+                <div className="relative aspect-[4/5] bg-surface-card overflow-hidden">
                   <div className="absolute inset-0 spotlight-gold opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
                   
                   {/* Badges */}
@@ -351,7 +332,7 @@ export default function HomePage() {
 
                   {product.originalPrice && product.originalPrice > product.price && (
                     <span className="absolute top-3.5 right-3.5 z-10 bg-red-500/90 backdrop-blur-md text-white font-mono px-2.5 py-0.5 text-[9px] font-bold rounded-full">
-                      ৳{(product.originalPrice - product.price).toFixed(0)} OFF
+                      {formatUsd(product.originalPrice - product.price)} OFF
                     </span>
                   )}
 
@@ -364,8 +345,12 @@ export default function HomePage() {
                         className="max-h-full max-w-full object-contain group-hover:scale-108 transition-transform duration-500 drop-shadow-[0_15px_30px_rgba(0,0,0,0.8)]"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-primary/30">
-                        <span className="material-symbols-outlined text-6xl">spa</span>
+                      <div
+                        className="w-full h-full flex flex-col items-center justify-center text-primary/70 gap-2"
+                        style={product.bgGradient ? { background: product.bgGradient } : undefined}
+                      >
+                        <span className="material-symbols-outlined text-5xl">{product.bgIcon || 'spa'}</span>
+                        <span className="text-[9px] font-mono uppercase tracking-widest text-text-secondary">Photo coming soon</span>
                       </div>
                     )}
                   </Link>
@@ -376,13 +361,13 @@ export default function HomePage() {
                       onClick={() => handleQuickAdd(product)}
                       className="w-full bg-gradient-to-r from-[#E6C364] to-[#C9A84C] text-black font-cinzel font-bold py-2.5 px-4 rounded-lg text-xs uppercase tracking-widest hover:brightness-110 shadow-lg transition-all"
                     >
-                      Quick Add • ৳{product.price.toLocaleString()}
+                      Quick Add • {formatUsd(product.price)}
                     </button>
                   </div>
                 </div>
 
                 {/* Product Meta Info */}
-                <div className="p-5 flex flex-col justify-between flex-grow bg-[#0D0C0A]/60">
+                <div className="p-5 flex flex-col justify-between flex-grow bg-surface-card/60">
                   <div className="space-y-1.5">
                     <span className="text-[9px] font-mono text-primary/80 uppercase tracking-widest font-bold block">
                       {product.category || "Luxury Islamic Lifestyle"}
@@ -401,11 +386,11 @@ export default function HomePage() {
                   <div className="mt-4 pt-3 border-t border-border-subtle flex items-center justify-between">
                     <div>
                       <span className="font-mono text-base font-bold text-primary">
-                        ৳{product.price.toLocaleString()}
+                        {formatUsd(product.price)}
                       </span>
                       {product.originalPrice && (
                         <span className="font-mono text-xs text-text-secondary line-through ml-2">
-                          ৳{product.originalPrice.toLocaleString()}
+                          {formatUsd(product.originalPrice)}
                         </span>
                       )}
                     </div>
@@ -437,10 +422,10 @@ export default function HomePage() {
       </section>
 
       {/* ── 4 Pillars of Excellence ─────────────────────────────── */}
-      <section className="border-y border-border-subtle bg-[#0B0A08] py-12">
+      <section className="border-y border-border-subtle bg-surface-card py-12">
         <div className="max-w-container-max mx-auto px-gutter grid grid-cols-2 md:grid-cols-4 gap-8">
           {[
-            { icon: "local_shipping", title: "Express Dispatch", desc: "Reliable doorstep delivery in BD" },
+            { icon: "local_shipping", title: "Express Dispatch", desc: "Reliable doorstep delivery across the USA" },
             { icon: "verified", title: "100% Halal Verified", desc: "Pure formulations without alcohol" },
             { icon: "workspace_premium", title: "Artisanal Distillation", desc: "Aged agarwood & natural oils" },
             { icon: "support_agent", title: "Dedicated Concierge", desc: "Personal styling & assistance" }
@@ -456,22 +441,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Live Brand Social Proof Toast (Bottom-Left) ────────────────── */}
-      {showToast && (
-        <div className="fixed bottom-6 left-6 z-40 max-w-sm bg-[#12100C]/95 border border-primary/40 rounded-xl p-3.5 shadow-2xl backdrop-blur-xl animate-fadeIn hidden sm:flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary flex-shrink-0">
-            <span className="material-symbols-outlined text-lg">auto_awesome</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs text-text-primary font-medium line-clamp-1">
-              {LIVE_TOAST_MESSAGES[toastIndex].text}
-            </p>
-            <span className="text-[9px] font-mono text-primary uppercase font-bold tracking-wider">
-              {LIVE_TOAST_MESSAGES[toastIndex].time}
-            </span>
-          </div>
-        </div>
-      )}
     </>
   );
 }

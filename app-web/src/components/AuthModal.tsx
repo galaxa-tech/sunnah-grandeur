@@ -1,8 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { httpsCallable } from "firebase/functions";
+import { updateProfile } from "firebase/auth";
+import { functions } from "@/lib/firebase";
 
 type Mode = "signIn" | "signUp" | "reset";
 
@@ -22,6 +23,14 @@ export default function AuthModal({ onClose }: Props) {
 
   const clearMessages = () => { setError(""); setInfo(""); };
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearMessages();
@@ -32,16 +41,15 @@ export default function AuthModal({ onClose }: Props) {
         onClose();
       } else if (mode === "signUp") {
         const user = await signUp(email, password);
-        // Create Firestore profile via direct write (Cloud Function also handles this
-        // but may have cold-start delay on first registration)
-        await setDoc(doc(db, "users", user.uid), {
-          uid: user.uid,
-          name: name.trim(),
-          email: user.email,
-          role: "user",
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        }, { merge: true });
+        // The Account page reads/writes the name via Firebase Auth's own
+        // displayName (not Firestore) — without this, a real name is saved
+        // to Firestore but the account page shows a blank field forever.
+        await updateProfile(user, { displayName: name.trim() });
+        // Firestore rules block direct client writes to /users/{uid} (creation
+        // is Cloud-Function-only, so role can't be client-set) — this is the
+        // real, only path that creates the user's profile document.
+        const createUserMetadata = httpsCallable(functions, "createUserMetadata");
+        await createUserMetadata({ name: name.trim(), email });
         onClose();
       } else {
         await resetPassword(email);
@@ -122,7 +130,7 @@ export default function AuthModal({ onClose }: Props) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Your name"
-                className="w-full bg-[#141414] border border-border-subtle rounded px-3 py-2.5 text-sm text-text-primary focus:border-primary-container focus:outline-none transition-colors"
+                className="w-full bg-bg-primary border border-border-subtle rounded px-3 py-2.5 text-sm text-text-primary focus:border-primary-container focus:outline-none transition-colors"
               />
             </div>
           )}
@@ -135,7 +143,7 @@ export default function AuthModal({ onClose }: Props) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full bg-[#141414] border border-border-subtle rounded px-3 py-2.5 text-sm text-text-primary focus:border-primary-container focus:outline-none transition-colors"
+              className="w-full bg-bg-primary border border-border-subtle rounded px-3 py-2.5 text-sm text-text-primary focus:border-primary-container focus:outline-none transition-colors"
             />
           </div>
 
@@ -148,7 +156,7 @@ export default function AuthModal({ onClose }: Props) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-[#141414] border border-border-subtle rounded px-3 py-2.5 text-sm text-text-primary focus:border-primary-container focus:outline-none transition-colors"
+                className="w-full bg-bg-primary border border-border-subtle rounded px-3 py-2.5 text-sm text-text-primary focus:border-primary-container focus:outline-none transition-colors"
               />
             </div>
           )}

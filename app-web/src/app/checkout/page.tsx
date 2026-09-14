@@ -1,29 +1,51 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useCartStore } from '@/store/useCartStore';
 import { httpsCallable } from 'firebase/functions';
 import { signInAnonymously } from 'firebase/auth';
 import { auth, functions } from '@/lib/firebase';
+import { useAuth } from '@/context/AuthContext';
+import { formatUsd, formatUsdFromCents } from '@/lib/currency';
+
+const US_STATES = [
+  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA',
+  'KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
+  'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT',
+  'VA','WA','WV','WI','WY','DC',
+];
 
 export default function CheckoutPage() {
   const { items, getSubtotal, clearCart } = useCartStore();
+  const { user } = useAuth();
 
+  // Estimate shown before the order is placed. The Cloud Function computes
+  // the authoritative total server-side from real settings — this estimate
+  // is replaced by that authoritative figure the moment the order confirms.
   const subtotal = getSubtotal();
-  const vat = Math.round(subtotal * 0.05);
-  const total = subtotal + vat;
+  const estimatedTax = Math.round(subtotal * 0.0 /* no live per-state tax engine yet */);
+  const total = subtotal + estimatedTax;
 
   // Form state
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
-  const [city, setCity] = useState('Dhaka');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('NY');
   const [postalCode, setPostalCode] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [orderConfirmed, setOrderConfirmed] = useState<{ id: string; trackingCode: string } | null>(null);
+  const [orderConfirmed, setOrderConfirmed] = useState<{ id: string; trackingCode: string; totalInCents: number } | null>(null);
+
+  // A signed-in customer shouldn't have to retype what we already know.
+  // Anonymous/guest users (auth.currentUser but no real email) get no prefill.
+  useEffect(() => {
+    if (!user || user.isAnonymous) return;
+    if (user.email) setEmail((prev) => prev || user.email!);
+    if (user.displayName) setFullName((prev) => prev || user.displayName!);
+  }, [user]);
 
   // Cash on Delivery — the only payment method wired up right now. Card
   // checkout is deferred until live Stripe keys are available.
@@ -52,15 +74,16 @@ export default function CheckoutPage() {
           email: email || '',
           line1: address,
           city,
-          postalCode: postalCode || '0000',
-          country: 'BD',
+          state,
+          postalCode: postalCode || '00000',
+          country: 'US',
           method: 'standard',
         },
         paymentMethod: 'cod',
       });
 
-      const { orderId } = result.data as { orderId: string };
-      setOrderConfirmed({ id: orderId, trackingCode: orderId });
+      const { orderId, totalInCents } = result.data as { orderId: string; totalInCents: number };
+      setOrderConfirmed({ id: orderId, trackingCode: orderId, totalInCents });
       clearCart();
     } catch (error: any) {
       console.error('Error placing order:', error);
@@ -96,7 +119,7 @@ export default function CheckoutPage() {
           </div>
           <div className="flex justify-between">
             <span className="text-text-secondary">Total Amount</span>
-            <span className="text-primary-container font-bold text-sm">৳{total.toLocaleString()}</span>
+            <span className="text-primary-container font-bold text-sm">{formatUsdFromCents(orderConfirmed.totalInCents)}</span>
           </div>
         </div>
 
@@ -148,7 +171,7 @@ export default function CheckoutPage() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Ahmed Al-Mansour"
-                    className="w-full bg-[#141414] border border-border-subtle rounded px-3 py-2.5 text-text-primary focus:border-primary-container focus:outline-none"
+                    className="w-full bg-bg-primary border border-border-subtle rounded px-3 py-2.5 text-text-primary focus:border-primary-container focus:outline-none"
                   />
                 </div>
                 <div>
@@ -158,8 +181,8 @@ export default function CheckoutPage() {
                     required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+880 1700 000000"
-                    className="w-full bg-[#141414] border border-border-subtle rounded px-3 py-2.5 text-text-primary focus:border-primary-container focus:outline-none"
+                    placeholder="+1 (212) 555-0100"
+                    className="w-full bg-bg-primary border border-border-subtle rounded px-3 py-2.5 text-text-primary focus:border-primary-container focus:outline-none"
                   />
                 </div>
                 <div className="sm:col-span-2">
@@ -169,32 +192,42 @@ export default function CheckoutPage() {
                     required
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    placeholder="House #12, Road #4, Gulshan-2"
-                    className="w-full bg-[#141414] border border-border-subtle rounded px-3 py-2.5 text-text-primary focus:border-primary-container focus:outline-none"
+                    placeholder="3715 73rd St, Suite 205"
+                    className="w-full bg-bg-primary border border-border-subtle rounded px-3 py-2.5 text-text-primary focus:border-primary-container focus:outline-none"
                   />
                 </div>
                 <div>
                   <label className="text-text-secondary uppercase font-bold text-[10px] block mb-1">City *</label>
-                  <select
+                  <input
+                    type="text"
+                    required
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    className="w-full bg-[#141414] border border-border-subtle rounded px-3 py-2.5 text-text-primary focus:border-primary-container focus:outline-none"
+                    placeholder="Jackson Heights"
+                    className="w-full bg-bg-primary border border-border-subtle rounded px-3 py-2.5 text-text-primary focus:border-primary-container focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-text-secondary uppercase font-bold text-[10px] block mb-1">State *</label>
+                  <select
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                    className="w-full bg-bg-primary border border-border-subtle rounded px-3 py-2.5 text-text-primary focus:border-primary-container focus:outline-none"
                   >
-                    <option value="Dhaka">Dhaka</option>
-                    <option value="Chittagong">Chittagong</option>
-                    <option value="Sylhet">Sylhet</option>
-                    <option value="International">International Shipping</option>
+                    {US_STATES.map((abbr) => (
+                      <option key={abbr} value={abbr}>{abbr}</option>
+                    ))}
                   </select>
                 </div>
                 <div>
-                  <label className="text-text-secondary uppercase font-bold text-[10px] block mb-1">Postal / ZIP Code *</label>
+                  <label className="text-text-secondary uppercase font-bold text-[10px] block mb-1">ZIP Code *</label>
                   <input
                     type="text"
                     required
                     value={postalCode}
                     onChange={(e) => setPostalCode(e.target.value)}
-                    placeholder="1212"
-                    className="w-full bg-[#141414] border border-border-subtle rounded px-3 py-2.5 text-text-primary focus:border-primary-container focus:outline-none"
+                    placeholder="11372"
+                    className="w-full bg-bg-primary border border-border-subtle rounded px-3 py-2.5 text-text-primary focus:border-primary-container focus:outline-none"
                   />
                 </div>
                 <div>
@@ -203,8 +236,8 @@ export default function CheckoutPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="ahmed@example.com"
-                    className="w-full bg-[#141414] border border-border-subtle rounded px-3 py-2.5 text-text-primary focus:border-primary-container focus:outline-none"
+                    placeholder="you@example.com"
+                    className="w-full bg-bg-primary border border-border-subtle rounded px-3 py-2.5 text-text-primary focus:border-primary-container focus:outline-none"
                   />
                 </div>
               </div>
@@ -254,7 +287,7 @@ export default function CheckoutPage() {
                       <p className="font-bold text-text-primary">{i.name}</p>
                       <p className="text-[10px] text-text-secondary">Qty: {i.quantity}</p>
                     </div>
-                    <span className="font-mono font-semibold text-primary-container">৳{(i.price * i.quantity).toLocaleString()}</span>
+                    <span className="font-mono font-semibold text-primary-container">{formatUsd(i.price * i.quantity)}</span>
                   </div>
                 ))}
               </div>
@@ -262,15 +295,12 @@ export default function CheckoutPage() {
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between">
                   <span className="text-text-secondary">Subtotal</span>
-                  <span className="text-text-primary font-semibold">৳{subtotal.toLocaleString()}</span>
+                  <span className="text-text-primary font-semibold">{formatUsd(subtotal)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-text-secondary">VAT (5%)</span>
-                  <span className="text-text-primary font-semibold">৳{vat.toLocaleString()}</span>
-                </div>
+                <p className="text-[10px] text-text-secondary/70 -mt-1">Tax and any shipping fee are calculated at checkout confirmation.</p>
                 <div className="flex justify-between text-sm font-bold pt-2 border-t border-border-subtle">
-                  <span className="text-text-primary">Total Amount</span>
-                  <span className="text-primary-container">৳{total.toLocaleString()}</span>
+                  <span className="text-text-primary">Estimated Total</span>
+                  <span className="text-primary-container">{formatUsd(total)}</span>
                 </div>
               </div>
 

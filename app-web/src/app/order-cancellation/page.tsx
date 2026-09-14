@@ -18,7 +18,7 @@ export default function OrderCancellationPage() {
 
           {/* Header */}
           <div className="border-b border-border-subtle pb-8 mb-10">
-            <h1 className="font-serif text-3xl md:text-5xl font-bold text-white mb-4">Order Cancellation</h1>
+            <h1 className="font-serif text-3xl md:text-5xl font-bold text-text-primary mb-4">Order Cancellation</h1>
             <p className="text-text-secondary text-sm">Last Updated: August 2, 2026</p>
           </div>
 
@@ -29,7 +29,7 @@ export default function OrderCancellationPage() {
             </p>
 
             <section className="space-y-4">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">Cancellation Policy</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">Cancellation Policy</h2>
               <p>
                 Orders can be cancelled <strong>before shipment only</strong>. 
               </p>
@@ -39,7 +39,7 @@ export default function OrderCancellationPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">How to Request a Cancellation</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">How to Request a Cancellation</h2>
               <p>
                 To cancel your order, please contact our support team immediately:
               </p>

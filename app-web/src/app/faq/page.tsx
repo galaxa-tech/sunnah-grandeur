@@ -24,7 +24,7 @@ export default function FAQPage() {
     },
     {
       q: "What payment methods are accepted?",
-      a: "We accept Visa, Mastercard, American Express, Apple Pay, Google Pay, PayPal, and Shop Pay."
+      a: "We currently accept Cash on Delivery (COD) on all U.S. orders — you pay when your package arrives. Card payments (Visa, Mastercard, American Express) are coming soon."
     },
     {
       q: "Can I cancel my order?",
@@ -60,7 +60,7 @@ export default function FAQPage() {
 
           {/* Header */}
           <div className="border-b border-border-subtle pb-8 mb-12 text-center sm:text-left">
-            <h1 className="font-serif text-3xl md:text-5xl font-bold text-white mb-4">Frequently Asked Questions</h1>
+            <h1 className="font-serif text-3xl md:text-5xl font-bold text-text-primary mb-4">Frequently Asked Questions</h1>
             <p className="text-text-secondary text-sm md:text-base max-w-xl">
               Find quick answers to common questions about shipping, delivery, payments, exchanges, and cancellations.
             </p>
@@ -86,7 +86,7 @@ export default function FAQPage() {
                   </button>
                   
                   {isOpen && (
-                    <div className="p-5 pt-0 text-text-secondary text-xs md:text-sm leading-relaxed border-t border-border-subtle/50 bg-[#161616]/30">
+                    <div className="p-5 pt-0 text-text-secondary text-xs md:text-sm leading-relaxed border-t border-border-subtle/50 bg-bg-primary/30">
                       {faq.a}
                     </div>
                   )}

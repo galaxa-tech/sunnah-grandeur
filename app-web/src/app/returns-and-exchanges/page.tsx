@@ -18,7 +18,7 @@ export default function ReturnsAndExchangesPage() {
 
           {/* Header */}
           <div className="border-b border-border-subtle pb-8 mb-10">
-            <h1 className="font-serif text-3xl md:text-5xl font-bold text-white mb-4">Exchange & Damage Policy</h1>
+            <h1 className="font-serif text-3xl md:text-5xl font-bold text-text-primary mb-4">Exchange & Damage Policy</h1>
             <p className="text-text-secondary text-sm">Last Updated: August 2, 2026</p>
           </div>
 
@@ -29,7 +29,7 @@ export default function ReturnsAndExchangesPage() {
             </p>
 
             <section className="space-y-4">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">1. Damaged or Incorrect Items</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">1. Damaged or Incorrect Items</h2>
               <p>
                 In the rare event that you receive a damaged product or an incorrect item, please notify our customer support team within <strong>48 hours of delivery</strong>.
               </p>
@@ -47,7 +47,7 @@ export default function ReturnsAndExchangesPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">2. Exchange Policy</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">2. Exchange Policy</h2>
               <p>
                 All exchange requests are handled directly from our main office.
               </p>
@@ -63,7 +63,7 @@ export default function ReturnsAndExchangesPage() {
             </section>
 
             <section className="space-y-4 border-t border-border-subtle pt-8">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">3. Returns & Refunds</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">3. Returns & Refunds</h2>
               <p>
                 For questions regarding returns or refunds, please contact our support team at <a href="mailto:info@sunnahgrandeur.com" className="text-primary-container hover:underline font-semibold">info@sunnahgrandeur.com</a>.
               </p>

@@ -6,10 +6,13 @@ import { useLanguageStore } from '@/store/useLanguageStore';
 import { useThemeStore } from '@/store/useThemeStore';
 import { translations, Lang } from '@/translations';
 import { useCartStore } from '@/store/useCartStore';
-import { products } from '@/data/products';
+import { Product } from '@/data/products';
+import { formatUsd } from '@/lib/currency';
 import { useAuth } from '@/context/AuthContext';
 import AuthModal from '@/components/AuthModal';
 import CartDrawer from '@/components/CartDrawer';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -22,6 +25,15 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [totalCartCount, setTotalCartCount] = useState(0);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [dbProducts, setDbProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    const q = query(collection(db, 'products'), where('isActive', '==', true));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setDbProducts(snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Product)));
+    }, (error) => console.error('Navbar: error listening to products:', error));
+    return () => unsubscribe();
+  }, []);
 
   const langRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
@@ -64,6 +76,16 @@ export default function Navbar() {
     setIsMobileOpen(false);
   }, [pathname]);
 
+  // Escape closes the search modal
+  useEffect(() => {
+    if (!isSearchOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setIsSearchOpen(false); setSearchQuery(''); }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isSearchOpen]);
+
   const navLinks = [
     { name: t.nav.home, href: '/' },
     { name: t.nav.shop, href: '/shop' },
@@ -84,9 +106,9 @@ export default function Navbar() {
     <>
       <nav 
         className={`fixed top-0 w-full z-50 transition-all duration-500 ${
-          isScrolled 
-            ? 'bg-[#080706]/90 backdrop-blur-xl border-b border-primary/20 shadow-[0_8px_32px_rgba(0,0,0,0.8)] py-3.5' 
-            : 'bg-gradient-to-b from-black/80 via-black/40 to-transparent py-5'
+          isScrolled
+            ? 'bg-surface-card/90 backdrop-blur-xl border-b border-primary/20 shadow-[0_8px_32px_rgba(0,0,0,0.4)] py-3.5'
+            : 'bg-gradient-to-b from-bg-primary/80 via-bg-primary/40 to-transparent py-5'
         }`}
       >
         <div className="max-w-container-max mx-auto px-gutter flex justify-between items-center">
@@ -111,7 +133,7 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8 bg-[#12100C]/70 px-6 py-2 rounded-full border border-primary/15 backdrop-blur-md">
+          <div className="hidden md:flex items-center space-x-8 bg-surface-card/70 px-6 py-2 rounded-full border border-primary/15 backdrop-blur-md">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -150,7 +172,7 @@ export default function Navbar() {
                 <span className="text-[10px] font-bold uppercase font-mono">{language}</span>
               </button>
               {isLangOpen && (
-                <div className="absolute right-0 mt-3 w-44 bg-[#0F0E0C] border border-primary/20 rounded-lg shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 z-50 backdrop-blur-xl">
+                <div className="absolute right-0 mt-3 w-44 bg-surface-card border border-primary/20 rounded-lg shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 z-50 backdrop-blur-xl">
                   {languages.map(({ code, label, flag }) => (
                     <button
                       key={code}
@@ -198,7 +220,7 @@ export default function Navbar() {
                 )}
               </button>
               {isUserOpen && user && (
-                <div className="absolute right-0 mt-3 w-56 bg-[#0F0E0C] border border-primary/20 rounded-lg shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 z-50 backdrop-blur-xl">
+                <div className="absolute right-0 mt-3 w-56 bg-surface-card border border-primary/20 rounded-lg shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 z-50 backdrop-blur-xl">
                   <div className="px-4 py-3 border-b border-border-subtle">
                     <p className="text-xs font-bold text-text-primary truncate">{user.displayName || 'My Account'}</p>
                     <p className="text-[10px] text-text-secondary truncate font-mono">{user.email}</p>
@@ -270,17 +292,11 @@ export default function Navbar() {
       )}
 
       {/* Mobile Drawer */}
-      <div className={`fixed top-0 left-0 h-full w-[280px] bg-[#0A0907] border-r border-primary/20 z-50 md:hidden transform transition-transform duration-300 ease-in-out ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div className={`fixed top-0 right-0 h-full w-[280px] bg-surface-card border-l border-primary/20 z-50 md:hidden transform transition-transform duration-300 ease-in-out ${isMobileOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="flex flex-col h-full overflow-y-auto">
           {/* Drawer Header */}
-          <div className="flex items-center justify-between p-6 border-b border-border-subtle">
+          <div className="flex items-center p-6 border-b border-border-subtle">
             <span className="font-cinzel text-base font-bold text-gold-gradient">Sunnah Grandeur</span>
-            <button
-              onClick={() => setIsMobileOpen(false)}
-              className="text-text-secondary hover:text-text-primary transition-colors"
-            >
-              <span className="material-symbols-outlined">close</span>
-            </button>
           </div>
 
           {/* Nav Links */}
@@ -292,7 +308,7 @@ export default function Navbar() {
                 className={`px-4 py-3 text-xs font-mono font-bold uppercase tracking-widest rounded-lg transition-colors ${
                   isActive(link.href)
                     ? 'bg-primary/15 text-primary border border-primary/30'
-                    : 'text-text-primary hover:bg-[#14120E] hover:text-primary'
+                    : 'text-text-primary hover:bg-primary/10 hover:text-primary'
                 }`}
               >
                 {link.name}
@@ -310,7 +326,7 @@ export default function Navbar() {
                 className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold rounded-lg transition-colors text-left ${
                   language === code
                     ? 'bg-primary/15 text-primary'
-                    : 'text-text-primary hover:bg-[#14120E]'
+                    : 'text-text-primary hover:bg-primary/10'
                 }`}
               >
                 <span>{flag}</span>
@@ -322,7 +338,7 @@ export default function Navbar() {
             <div className="border-t border-border-subtle pt-2 mt-2">
               <button
                 onClick={() => { toggleTheme(); setIsMobileOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-text-primary hover:bg-[#14120E] rounded-lg transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-text-primary hover:bg-primary/10 rounded-lg transition-colors"
               >
                 <span className="material-symbols-outlined text-sm text-primary">
                   {theme === 'dark' ? 'light_mode' : 'dark_mode'}
@@ -337,9 +353,9 @@ export default function Navbar() {
       {/* Global Product Search Modal */}
       {isSearchOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-start justify-center pt-20 px-4 animate-in fade-in duration-200">
-          <div className="bg-[#0F0E0C] border border-primary/30 w-full max-w-2xl rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col max-h-[80vh]">
+          <div className="bg-surface-card border border-primary/30 w-full max-w-2xl rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col max-h-[80vh]">
             {/* Search Input Bar */}
-            <div className="p-5 border-b border-border-subtle flex items-center gap-3.5 bg-[#14120E]">
+            <div className="p-5 border-b border-border-subtle flex items-center gap-3.5">
               <span className="material-symbols-outlined text-primary text-2xl">search</span>
               <input
                 type="text"
@@ -375,7 +391,7 @@ export default function Navbar() {
                       <button
                         key={keyword}
                         onClick={() => setSearchQuery(keyword)}
-                        className="bg-[#181510] border border-border-subtle hover:border-primary/60 text-xs px-3.5 py-1.5 rounded-full text-text-secondary hover:text-primary transition-all"
+                        className="bg-bg-primary border border-border-subtle hover:border-primary/60 text-xs px-3.5 py-1.5 rounded-full text-text-secondary hover:text-primary transition-all"
                       >
                         {keyword}
                       </button>
@@ -384,7 +400,7 @@ export default function Navbar() {
                 </div>
               ) : (
                 (() => {
-                  const filtered = products.filter(
+                  const filtered = dbProducts.filter(
                     (p) =>
                       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                       p.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -404,18 +420,27 @@ export default function Navbar() {
                       onClick={() => { setIsSearchOpen(false); setSearchQuery(''); }}
                       className="flex items-center gap-4 p-3 rounded-xl hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all group"
                     >
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-14 h-14 object-cover rounded-lg bg-[#14120E] border border-border-subtle group-hover:scale-105 transition-transform"
-                      />
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-14 h-14 object-cover rounded-lg bg-bg-primary border border-border-subtle group-hover:scale-105 transition-transform"
+                        />
+                      ) : (
+                        <div
+                          className="w-14 h-14 rounded-lg border border-border-subtle flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform"
+                          style={{ background: product.bgGradient ?? 'linear-gradient(145deg,#16120b,#281c09)' }}
+                        >
+                          <span className="material-symbols-outlined text-primary/70 text-lg">{product.bgIcon || 'spa'}</span>
+                        </div>
+                      )}
                       <div className="flex-grow min-w-0">
                         <span className="text-[9px] text-primary/70 uppercase tracking-widest font-mono font-bold block">{product.category}</span>
                         <h4 className="text-sm font-bold text-text-primary group-hover:text-primary transition-colors truncate">{product.name}</h4>
                         <p className="text-xs text-text-secondary line-clamp-1">{product.description}</p>
                       </div>
                       <div className="text-sm font-bold font-mono text-primary">
-                        ৳{product.price.toLocaleString()}
+                        {formatUsd(product.price)}
                       </div>
                     </Link>
                   ));

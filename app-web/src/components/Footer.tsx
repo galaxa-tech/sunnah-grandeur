@@ -4,17 +4,23 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useLanguageStore } from '@/store/useLanguageStore';
+import { translations } from '@/translations';
 
 export default function Footer() {
+  const { language } = useLanguageStore();
+  const t = translations[language];
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
+  const [subscribeError, setSubscribeError] = useState('');
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
 
     setLoading(true);
+    setSubscribeError('');
     try {
       await addDoc(collection(db, 'subscribers'), {
         email,
@@ -24,16 +30,14 @@ export default function Footer() {
       setEmail('');
     } catch (err) {
       console.error('Error subscribing email:', err);
-      // Fallback UI
-      setSubscribed(true);
-      setEmail('');
+      setSubscribeError('Could not subscribe right now. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <footer className="w-full pt-16 pb-8 bg-surface-container-lowest border-t border-outline-variant/20">
+    <footer className="w-full pt-16 pb-8 bg-surface-card border-t border-border-subtle">
       <div className="max-w-container-max mx-auto px-gutter grid grid-cols-1 md:grid-cols-4 gap-card-gap">
         <div className="md:col-span-1 mb-8 md:mb-0 space-y-4">
           <Link className="text-headline-md font-headline-md text-primary block font-serif font-bold" href="/">
@@ -70,23 +74,23 @@ export default function Footer() {
 
         <div className="flex flex-col space-y-3">
           <h4 className="text-label-accent font-label-accent text-text-primary uppercase mb-2 font-bold">Company</h4>
-          <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/about">About Us</Link>
-          <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/shop">Our Collection</Link>
-          <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/contact">Contact Us</Link>
-          <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/support">Customer Support</Link>
-          <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/faq">FAQ</Link>
+          <Link className="text-text-secondary hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/about">About Us</Link>
+          <Link className="text-text-secondary hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/shop">Our Collection</Link>
+          <Link className="text-text-secondary hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/contact">Contact Us</Link>
+          <Link className="text-text-secondary hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/support">Customer Support</Link>
+          <Link className="text-text-secondary hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/faq">FAQ</Link>
         </div>
 
         <div className="flex flex-col space-y-3">
           <h4 className="text-label-accent font-label-accent text-text-primary uppercase mb-2 font-bold">Legal &amp; Policies</h4>
-          <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/privacy-policy">Privacy Policy</Link>
-          <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/terms-of-service">Terms &amp; Conditions</Link>
-          <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/disclaimer">Disclaimer</Link>
-          <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/cookie-policy">Cookie Policy</Link>
-          <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/shipping-info">Shipping &amp; Delivery</Link>
-          <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/payment-info">Payment Information</Link>
-          <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/order-cancellation">Order Cancellation</Link>
-          <Link className="text-on-surface-variant hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/returns-and-exchanges">Exchange Policy</Link>
+          <Link className="text-text-secondary hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/privacy-policy">Privacy Policy</Link>
+          <Link className="text-text-secondary hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/terms-of-service">Terms &amp; Conditions</Link>
+          <Link className="text-text-secondary hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/disclaimer">Disclaimer</Link>
+          <Link className="text-text-secondary hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/cookie-policy">Cookie Policy</Link>
+          <Link className="text-text-secondary hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/shipping-info">Shipping &amp; Delivery</Link>
+          <Link className="text-text-secondary hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/payment-info">Payment Information</Link>
+          <Link className="text-text-secondary hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/order-cancellation">Order Cancellation</Link>
+          <Link className="text-text-secondary hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/returns-and-exchanges">Exchange Policy</Link>
         </div>
 
         <div className="flex flex-col">
@@ -109,8 +113,8 @@ export default function Footer() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={loading}
                 className="bg-primary-container text-bg-primary px-4 py-2 text-label-accent font-label-accent uppercase rounded-r-DEFAULT hover:bg-[#e6c364] transition-colors font-bold text-xs shrink-0 disabled:opacity-50"
               >
@@ -118,11 +122,14 @@ export default function Footer() {
               </button>
             </form>
           )}
+          {subscribeError && (
+            <p className="text-red-400 text-xs mt-2">{subscribeError}</p>
+          )}
         </div>
       </div>
       <div className="max-w-container-max mx-auto px-gutter mt-16 pt-8 border-t border-border-subtle flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
         <p className="text-body-md text-text-secondary text-xs">
-          © {new Date().getFullYear()} Sunnah Grandeur. All rights reserved.
+          {t.footer.rights}
         </p>
         <a 
           href="https://sunnah-grandeur-admin.web.app" 

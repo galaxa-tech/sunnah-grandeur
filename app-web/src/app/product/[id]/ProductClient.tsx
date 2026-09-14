@@ -8,6 +8,7 @@ import { translations } from '@/translations';
 import { products, Product } from '@/data/products';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { formatUsd } from '@/lib/currency';
 
 export default function ProductClient() {
   const params = useParams();
@@ -49,7 +50,7 @@ export default function ProductClient() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#070707] flex items-center justify-center">
+      <div className="min-h-screen bg-bg-primary flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-container"></div>
       </div>
     );
@@ -57,7 +58,7 @@ export default function ProductClient() {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-[#070707] flex flex-col items-center justify-center gap-4 text-center px-4">
+      <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center gap-4 text-center px-4">
         <p className="text-text-primary text-lg font-semibold">Product not found</p>
         <p className="text-text-secondary text-sm">This product may have been removed or is no longer available.</p>
         <Link href="/shop" className="text-primary-container font-bold hover:underline text-xs uppercase tracking-widest">
@@ -74,7 +75,7 @@ export default function ProductClient() {
   const thumbs = [product.image, product.image, product.image];
 
   return (
-    <div className="min-h-screen bg-[#070707] pt-[88px] pb-16">
+    <div className="min-h-screen bg-bg-primary pt-[88px] pb-16">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Breadcrumb */}
@@ -146,15 +147,15 @@ export default function ProductClient() {
                   <span className="text-red-400 text-xl font-bold">-{discount}%</span>
                 )}
                 <span className="text-3xl font-bold text-text-primary">
-                  ৳{product.price.toLocaleString()}
+                  {formatUsd(product.price)}
                 </span>
               </div>
               {product.originalPrice && !product.isSoldOut && (
                 <p className="text-sm text-text-secondary">
                   List Price:{' '}
-                  <span className="line-through">৳{product.originalPrice.toLocaleString()}</span>
+                  <span className="line-through">{formatUsd(product.originalPrice)}</span>
                   <span className="text-green-400 ml-2">
-                    You save ৳{savings.toLocaleString()} ({discount}%)
+                    You save {formatUsd(savings)} ({discount}%)
                   </span>
                 </p>
               )}
@@ -206,7 +207,7 @@ export default function ProductClient() {
 
               <div>
                 <p className="text-xs text-text-secondary mb-0.5">Buy New</p>
-                <p className="text-2xl font-bold text-text-primary">৳{product.price.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-text-primary">{formatUsd(product.price)}</p>
               </div>
 
               {!product.isSoldOut && (
@@ -220,7 +221,7 @@ export default function ProductClient() {
                       <span className="text-text-secondary"> scheduled delivery</span>
                     </p>
                     <p className="text-text-secondary text-xs mt-0.5">
-                      Delivering to Dhaka —{' '}
+                      Delivering across the USA —{' '}
                       <span className="text-primary-container cursor-pointer hover:underline">Update location</span>
                     </p>
                   </div>
@@ -249,7 +250,7 @@ export default function ProductClient() {
               {product.isSoldOut ? (
                 <button
                   disabled
-                  className="w-full bg-[#1f1f1f] text-text-secondary py-3 rounded text-sm font-semibold uppercase tracking-wider cursor-not-allowed"
+                  className="w-full bg-border-subtle text-text-secondary py-3 rounded text-sm font-semibold uppercase tracking-wider cursor-not-allowed"
                 >
                   {t.cart.outOfStock}
                 </button>
@@ -318,23 +319,6 @@ export default function ProductClient() {
                 ))}
               </div>
 
-              {!product.isSoldOut && (
-                <>
-                  <hr className="border-border-subtle" />
-                  <label className="flex items-start gap-2 cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      checked={giftWrap}
-                      onChange={e => setGiftWrap(e.target.checked)}
-                      className="mt-0.5 accent-amber-500 cursor-pointer"
-                    />
-                    <span className="text-xs text-text-secondary group-hover:text-text-primary transition-colors">
-                      Add premium gift wrapping for{' '}
-                      <span className="text-primary-container">৳50</span>
-                    </span>
-                  </label>
-                </>
-              )}
             </div>
 
             {/* Trust badges */}

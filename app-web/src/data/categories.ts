@@ -113,7 +113,7 @@ export const categories: Category[] = [
   {
     id: 'ramadan',
     name: 'Ramadan & Eid',
-    icon: 'crescent_moon',
+    icon: 'bedtime',
     gradient: 'linear-gradient(135deg, #1a0a0a 0%, #2d1010 50%, #1a0a0a 100%)',
     accentColor: '#E87D7D',
     subcategories: [

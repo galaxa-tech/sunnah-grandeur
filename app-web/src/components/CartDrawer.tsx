@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { useCartStore } from '@/store/useCartStore';
+import { formatUsd, toDisplayUsd } from '@/lib/currency';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -13,10 +14,11 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const subtotal = getSubtotal();
   const totalCount = getTotalItems();
 
-  // Free shipping & gift threshold: 2500 BDT
-  const FREE_SHIPPING_THRESHOLD = 2500;
-  const remainingForFree = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
-  const progressPercent = Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100);
+  // Free shipping & gift threshold — mirrors settings/app_config.freeShippingThreshold ($50).
+  const FREE_SHIPPING_THRESHOLD_USD = 50;
+  const subtotalUsd = toDisplayUsd(subtotal);
+  const remainingForFreeUsd = Math.max(0, FREE_SHIPPING_THRESHOLD_USD - subtotalUsd);
+  const progressPercent = Math.min(100, (subtotalUsd / FREE_SHIPPING_THRESHOLD_USD) * 100);
 
   // Close on Escape key
   useEffect(() => {
@@ -46,12 +48,12 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
       />
 
       {/* Drawer Container */}
-      <div className="relative w-full max-w-md bg-[#0D0C0A] border-l border-primary/20 shadow-2xl flex flex-col h-full z-10 animate-slideLeft overflow-hidden">
+      <div className="relative w-full max-w-md bg-surface-card border-l border-primary/20 shadow-2xl flex flex-col h-full z-10 animate-slideLeft overflow-hidden">
         {/* Top Gold Accent Bar */}
         <div className="h-1 w-full bg-gradient-to-r from-transparent via-[#E6C364] to-transparent" />
 
         {/* Drawer Header */}
-        <div className="p-6 border-b border-border-subtle flex items-center justify-between bg-[#12100C]/80 backdrop-blur-md">
+        <div className="p-6 border-b border-border-subtle flex items-center justify-between bg-surface-card/80 backdrop-blur-md">
           <div className="flex items-center gap-2.5">
             <span className="material-symbols-outlined text-primary text-2xl">shopping_bag</span>
             <h3 className="font-cinzel text-lg font-bold tracking-wider text-text-primary">
@@ -68,19 +70,19 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         </div>
 
         {/* Free Shipping & Gift Progress */}
-        <div className="p-4 bg-[#16130D] border-b border-border-subtle">
+        <div className="p-4 bg-surface-card border-b border-border-subtle">
           <div className="flex justify-between items-center text-xs mb-2">
             <span className="text-text-secondary flex items-center gap-1.5">
               <span className="material-symbols-outlined text-primary text-sm">redeem</span>
-              {remainingForFree === 0 ? (
+              {remainingForFreeUsd === 0 ? (
                 <span className="text-emerald-400 font-semibold">✨ Free Velvet Gift Box & Express Delivery Unlocked!</span>
               ) : (
-                <span>Add <strong className="text-primary font-bold">৳{remainingForFree.toFixed(0)}</strong> for Free Express Delivery</span>
+                <span>Add <strong className="text-primary font-bold">${remainingForFreeUsd.toFixed(2)}</strong> for Free Express Delivery</span>
               )}
             </span>
             <span className="text-[10px] text-text-secondary font-mono">{progressPercent.toFixed(0)}%</span>
           </div>
-          <div className="w-full h-1.5 bg-[#070707] rounded-full overflow-hidden border border-border-subtle">
+          <div className="w-full h-1.5 bg-bg-primary rounded-full overflow-hidden border border-border-subtle">
             <div 
               className="h-full bg-gradient-to-r from-[#C9A84C] to-[#FFE8A3] transition-all duration-500 rounded-full"
               style={{ width: `${progressPercent}%` }}
@@ -110,10 +112,10 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             items.map((item) => (
               <div 
                 key={item.id} 
-                className="flex gap-4 p-3.5 rounded-lg bg-[#14120E] border border-border-subtle hover:border-primary/30 transition-colors relative group"
+                className="flex gap-4 p-3.5 rounded-lg bg-bg-primary border border-border-subtle hover:border-primary/30 transition-colors relative group"
               >
                 {/* Product Thumbnail */}
-                <div className="w-20 h-20 rounded bg-[#090806] border border-border-subtle overflow-hidden flex-shrink-0 relative">
+                <div className="w-20 h-20 rounded bg-surface-card border border-border-subtle overflow-hidden flex-shrink-0 relative">
                   {item.image ? (
                     <img 
                       src={item.image} 
@@ -141,7 +143,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
                   <div className="flex items-center justify-between mt-2">
                     {/* Quantity Selector */}
-                    <div className="flex items-center border border-border-subtle rounded bg-[#0A0907]">
+                    <div className="flex items-center border border-border-subtle rounded bg-surface-card">
                       <button 
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
                         className="w-6 h-6 flex items-center justify-center text-text-secondary hover:text-primary transition-colors text-xs"
@@ -161,7 +163,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
                     {/* Price */}
                     <span className="font-mono font-bold text-sm text-primary">
-                      ৳{(item.price * item.quantity).toLocaleString()}
+                      {formatUsd(item.price * item.quantity)}
                     </span>
                   </div>
                 </div>
@@ -181,21 +183,21 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
         {/* Footer Checkout Section */}
         {items.length > 0 && (
-          <div className="p-6 border-t border-border-subtle bg-[#12100C]/90 backdrop-blur-md space-y-4">
+          <div className="p-6 border-t border-border-subtle bg-surface-card/90 backdrop-blur-md space-y-4">
             <div className="space-y-1.5 text-xs">
               <div className="flex justify-between text-text-secondary">
                 <span>Subtotal</span>
-                <span className="font-mono text-text-primary">৳{subtotal.toLocaleString()}</span>
+                <span className="font-mono text-text-primary">{formatUsd(subtotal)}</span>
               </div>
               <div className="flex justify-between text-text-secondary">
                 <span>Estimated Shipping</span>
                 <span className="font-mono text-text-primary">
-                  {remainingForFree === 0 ? <span className="text-emerald-400">FREE</span> : "Calculated at checkout"}
+                  {remainingForFreeUsd === 0 ? <span className="text-emerald-400">FREE</span> : "Calculated at checkout"}
                 </span>
               </div>
               <div className="flex justify-between text-sm font-bold text-text-primary pt-2 border-t border-border-subtle">
-                <span className="font-cinzel">Total</span>
-                <span className="text-primary font-mono text-base">৳{subtotal.toLocaleString()} BDT</span>
+                <span className="font-cinzel">Subtotal</span>
+                <span className="text-primary font-mono text-base">{formatUsd(subtotal)}</span>
               </div>
             </div>
 

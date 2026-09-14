@@ -13,7 +13,7 @@ export default function AboutPage() {
         <div className="max-w-container-max mx-auto px-gutter relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="space-y-8">
             <span className="text-label-accent font-label-accent text-primary uppercase tracking-[0.2em]">{t.about.eyebrow}</span>
-            <h1 className="font-serif text-4xl md:text-6xl font-bold text-white leading-tight">
+            <h1 className="font-serif text-4xl md:text-6xl font-bold text-text-primary leading-tight">
               {t.about.title}
             </h1>
             <p className="text-body-lg font-body-lg text-text-secondary max-w-lg">

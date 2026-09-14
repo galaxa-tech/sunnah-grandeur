@@ -6,12 +6,14 @@ import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
 import { updateProfile } from "firebase/auth";
 import { useAuth } from "@/context/AuthContext";
 import { db, auth } from "@/lib/firebase";
+import { formatUsdFromCents } from "@/lib/currency";
 
+// Mirrors the real shape written by backend/functions/src/domains/orders —
+// there is no `customer.email` or `total` field on an actual order document.
 interface Order {
   id: string;
-  trackingCode: string;
   status: string;
-  total: number;
+  totalInCents: number;
   createdAt: { toDate: () => Date } | null;
   items: { name: string; quantity: number }[];
 }
@@ -41,7 +43,7 @@ function AccountPageInner() {
       setOrdersLoading(true);
       const q = query(
         collection(db, "orders"),
-        where("customer.email", "==", user.email),
+        where("userId", "==", user.uid),
         orderBy("createdAt", "desc")
       );
       getDocs(q)
@@ -109,7 +111,7 @@ function AccountPageInner() {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Your name"
-              className="w-full bg-[#141414] border border-border-subtle rounded px-3 py-2.5 text-sm text-text-primary focus:border-primary-container focus:outline-none"
+              className="w-full bg-bg-primary border border-border-subtle rounded px-3 py-2.5 text-sm text-text-primary focus:border-primary-container focus:outline-none"
             />
           </div>
 
@@ -119,7 +121,7 @@ function AccountPageInner() {
               type="email"
               value={user.email || ""}
               disabled
-              className="w-full bg-[#0a0a0a] border border-border-subtle rounded px-3 py-2.5 text-sm text-text-secondary cursor-not-allowed"
+              className="w-full bg-bg-primary border border-border-subtle rounded px-3 py-2.5 text-sm text-text-secondary cursor-not-allowed"
             />
             <p className="text-[10px] text-text-secondary">Email cannot be changed here.</p>
           </div>
@@ -169,7 +171,7 @@ function AccountPageInner() {
               <div key={order.id} className="bg-surface-card border border-border-subtle rounded-xl p-5 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-mono font-bold text-primary-container text-sm">{order.trackingCode}</p>
+                    <p className="font-mono font-bold text-primary-container text-sm">{order.id}</p>
                     <p className="text-[10px] text-text-secondary mt-0.5">
                       {order.createdAt?.toDate
                         ? order.createdAt.toDate().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
@@ -177,9 +179,9 @@ function AccountPageInner() {
                     </p>
                   </div>
                   <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${
-                    order.status === "paid" || order.status === "delivered"
+                    order.status === "Delivered" || order.status === "Shipped"
                       ? "bg-emerald-500/10 text-emerald-400"
-                      : order.status === "failed"
+                      : order.status === "Cancelled"
                       ? "bg-red-500/10 text-red-400"
                       : "bg-amber-500/10 text-amber-400"
                   }`}>
@@ -194,7 +196,7 @@ function AccountPageInner() {
                 </div>
                 <div className="flex justify-between items-center pt-1 border-t border-border-subtle">
                   <span className="text-xs text-text-secondary">Total</span>
-                  <span className="text-sm font-bold text-primary-container">৳{order.total?.toLocaleString()}</span>
+                  <span className="text-sm font-bold text-primary-container">{formatUsdFromCents(order.totalInCents)}</span>
                 </div>
               </div>
             ))

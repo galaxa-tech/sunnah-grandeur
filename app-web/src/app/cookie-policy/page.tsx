@@ -18,7 +18,7 @@ export default function CookiePolicyPage() {
 
           {/* Header */}
           <div className="border-b border-border-subtle pb-8 mb-10">
-            <h1 className="font-serif text-3xl md:text-5xl font-bold text-white mb-4">Cookie Policy</h1>
+            <h1 className="font-serif text-3xl md:text-5xl font-bold text-text-primary mb-4">Cookie Policy</h1>
             <p className="text-text-secondary text-sm">Last Updated: August 2, 2026</p>
           </div>
 
@@ -29,14 +29,14 @@ export default function CookiePolicyPage() {
             </p>
 
             <section className="space-y-4">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">1. Do We Use Cookies?</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">1. Do We Use Cookies?</h2>
               <p>
                 Our website does <strong>not</strong> use advertising cookies, marketing tracking pixels (such as Meta/Facebook Pixel), or third-party analytic trackers (such as Google Analytics) to monitor your browsing behavior or serve targeted ads.
               </p>
             </section>
 
             <section className="space-y-4">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">2. Use of Local Storage</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">2. Use of Local Storage</h2>
               <p>
                 Instead of cookies, we use your browser's standard <strong>localStorage</strong> to store user preferences that improve your experience:
               </p>
@@ -49,7 +49,7 @@ export default function CookiePolicyPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">3. Controlling Your Settings</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">3. Controlling Your Settings</h2>
               <p>
                 You can clear your browser's local storage or cookies at any time through your browser settings. Please note that clearing local storage will reset your visual preferences (like dark/light theme) to the site defaults.
               </p>

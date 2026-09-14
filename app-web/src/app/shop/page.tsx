@@ -1,9 +1,10 @@
 "use client";
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useLanguageStore } from '@/store/useLanguageStore';
 import { translations } from '@/translations';
 import { products, Product } from '@/data/products';
+import { formatUsd } from '@/lib/currency';
 import { categories } from '@/data/categories';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -15,7 +16,7 @@ function ProductCard({ product, t, onQuickAdd }: { product: Product; t: any; onQ
   return (
     <div className="group relative rounded-2xl glass-card glass-card-hover overflow-hidden flex flex-col justify-between h-full">
       {/* Image Area with Ambient Spotlight */}
-      <div className="relative aspect-[4/5] bg-[#0A0907] overflow-hidden flex-shrink-0">
+      <div className="relative aspect-[4/5] bg-surface-card overflow-hidden flex-shrink-0">
         <div className="absolute inset-0 spotlight-gold opacity-40 group-hover:opacity-90 transition-opacity duration-500" />
 
         {/* Badges */}
@@ -23,7 +24,7 @@ function ProductCard({ product, t, onQuickAdd }: { product: Product; t: any; onQ
           {product.tag && (
             <span className={`px-2.5 py-0.5 text-[9px] font-mono font-bold uppercase tracking-widest rounded-full ${
               product.isSoldOut
-                ? 'bg-[#1F1F1F] text-text-secondary border border-border-subtle'
+                ? 'bg-border-subtle text-text-secondary border border-border-subtle'
                 : 'bg-primary text-black shadow-md'
             }`}>
               {product.isSoldOut ? t.cart.outOfStock : product.tag}
@@ -33,7 +34,7 @@ function ProductCard({ product, t, onQuickAdd }: { product: Product; t: any; onQ
 
         {product.originalPrice && product.originalPrice > product.price && !product.isSoldOut && (
           <span className="absolute top-3 right-3 z-10 bg-red-500/90 backdrop-blur-md text-white font-mono px-2 py-0.5 text-[9px] font-bold rounded-full">
-            ৳{(product.originalPrice - product.price).toFixed(0)} Off
+            {formatUsd(product.originalPrice - product.price)} Off
           </span>
         )}
 
@@ -59,6 +60,7 @@ function ProductCard({ product, t, onQuickAdd }: { product: Product; t: any; onQ
                   {product.bgIcon}
                 </span>
               )}
+              <span className="text-[8px] font-mono uppercase tracking-widest text-text-secondary opacity-60">Photo coming soon</span>
             </div>
           )}
         </Link>
@@ -70,14 +72,14 @@ function ProductCard({ product, t, onQuickAdd }: { product: Product; t: any; onQ
               onClick={() => onQuickAdd(product)}
               className="w-full bg-gradient-to-r from-[#E6C364] to-[#C9A84C] text-black font-cinzel font-bold py-2 px-3 rounded text-[10px] uppercase tracking-widest hover:brightness-110 shadow transition-all"
             >
-              {t.cart.addToCart} • ৳{product.price.toFixed(0)}
+              {t.cart.addToCart} • {formatUsd(product.price)}
             </button>
           </div>
         )}
       </div>
 
       {/* Details Box */}
-      <div className={`p-4 flex flex-col justify-between flex-grow bg-[#0D0C0A]/60 ${product.isSoldOut ? 'opacity-60' : ''}`}>
+      <div className={`p-4 flex flex-col justify-between flex-grow bg-surface-card/60 ${product.isSoldOut ? 'opacity-60' : ''}`}>
         <div className="space-y-1">
           <span className="text-[9px] font-mono text-primary/80 uppercase tracking-widest font-bold block">
             {product.category}
@@ -95,11 +97,11 @@ function ProductCard({ product, t, onQuickAdd }: { product: Product; t: any; onQ
         <div className="mt-3 pt-2.5 border-t border-border-subtle flex items-center justify-between">
           <div className="flex items-baseline gap-1.5">
             <span className="font-mono text-sm font-bold text-primary">
-              ৳{product.price.toFixed(0)}
+              {formatUsd(product.price)}
             </span>
             {product.originalPrice && (
               <span className="font-mono text-[10px] text-text-secondary line-through">
-                ৳{product.originalPrice.toFixed(0)}
+                {formatUsd(product.originalPrice)}
               </span>
             )}
           </div>
@@ -128,8 +130,19 @@ export default function ShopPage() {
   const [hoveredCat, setHoveredCat] = useState<string | null>(null);
   const [openMobileCat, setOpenMobileCat] = useState<string | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   const { addItem } = useCartStore();
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+        setHoveredCat(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const q = query(collection(db, 'products'), where('isActive', '==', true));
@@ -174,11 +187,11 @@ export default function ShopPage() {
   const activeCategory = categories.find((c) => c.id === activeFilter);
 
   return (
-    <div className="min-h-screen bg-[#070605] islamic-geometric-grid">
+    <div className="min-h-screen bg-bg-primary islamic-geometric-grid">
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
       {/* Page Header Banner */}
-      <section className="relative pt-32 pb-10 border-b border-primary/20 bg-[#0A0907]/90 backdrop-blur-xl">
+      <section className="relative pt-32 pb-10 border-b border-primary/20 bg-surface-card/90 backdrop-blur-xl">
         <div className="max-w-container-max mx-auto px-gutter relative z-10">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
@@ -196,7 +209,7 @@ export default function ShopPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsSidebarOpen(true)}
-                className="flex items-center gap-2 lg:hidden bg-[#14120E] border border-primary/30 px-3.5 py-2 text-xs font-mono font-bold text-primary rounded-lg uppercase tracking-wider"
+                className="flex items-center gap-2 lg:hidden bg-surface-card border border-primary/30 px-3.5 py-2 text-xs font-mono font-bold text-primary rounded-lg uppercase tracking-wider"
               >
                 <span className="material-symbols-outlined text-sm">filter_list</span>
                 Categories
@@ -204,7 +217,7 @@ export default function ShopPage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="bg-[#14120E] border border-primary/30 text-text-primary text-xs font-mono font-bold outline-none px-3.5 py-2 rounded-lg cursor-pointer uppercase tracking-wider hover:border-primary/60 transition-colors"
+                className="bg-surface-card border border-primary/30 text-text-primary text-xs font-mono font-bold outline-none px-3.5 py-2 rounded-lg cursor-pointer uppercase tracking-wider hover:border-primary/60 transition-colors"
               >
                 <option value="featured">{t.shop.featured}</option>
                 <option value="priceLow">{t.shop.priceLow}</option>
@@ -221,7 +234,7 @@ export default function ShopPage() {
 
           {/* ── Desktop Categories Sidebar ── */}
           <aside className="hidden lg:block w-60 flex-shrink-0">
-            <div className="sticky top-28 space-y-1 bg-[#0F0E0C]/80 border border-primary/20 rounded-2xl p-4 backdrop-blur-xl">
+            <div ref={sidebarRef} className="sticky top-28 space-y-1 bg-surface-card/80 border border-primary/20 rounded-2xl p-4 backdrop-blur-xl">
               <p className="text-[10px] text-primary/80 uppercase tracking-widest font-mono font-bold mb-3 px-3">
                 Collections
               </p>
@@ -232,7 +245,7 @@ export default function ShopPage() {
                 className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition-all mb-1 ${
                   !activeFilter
                     ? 'bg-primary text-black shadow-md'
-                    : 'text-text-secondary hover:text-primary hover:bg-[#16130D]'
+                    : 'text-text-secondary hover:text-primary hover:bg-primary/10'
                 }`}
               >
                 <span className="material-symbols-outlined text-base">storefront</span>
@@ -258,7 +271,7 @@ export default function ShopPage() {
                       className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-mono font-bold transition-all ${
                         isActive
                           ? 'bg-primary text-black shadow-md'
-                          : 'text-text-secondary hover:text-primary hover:bg-[#16130D]'
+                          : 'text-text-secondary hover:text-primary hover:bg-primary/10'
                       }`}
                     >
                       <span
@@ -276,7 +289,7 @@ export default function ShopPage() {
                     {/* Desktop flyout */}
                     {isHovered && cat.subcategories.length > 0 && (
                       <div
-                        className="absolute left-full top-0 z-50 w-56 bg-[#0E0D0B] border border-primary/30 rounded-xl shadow-2xl p-3 backdrop-blur-xl"
+                        className="absolute left-full top-0 z-50 w-56 bg-surface-card border border-primary/30 rounded-xl shadow-2xl p-3 backdrop-blur-xl"
                         style={{ marginLeft: '6px' }}
                       >
                         <p className="text-[9px] uppercase tracking-widest text-primary font-mono font-bold mb-2 px-1">
@@ -287,7 +300,8 @@ export default function ShopPage() {
                             <Link
                               key={sub.name}
                               href={sub.href}
-                              className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-text-secondary hover:text-primary hover:bg-[#16130D] rounded-lg transition-colors"
+                              onClick={() => setHoveredCat(null)}
+                              className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                             >
                               <span className="material-symbols-outlined text-xs opacity-40">chevron_right</span>
                               {sub.name}
@@ -307,7 +321,7 @@ export default function ShopPage() {
             {loading ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
                 {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-80 rounded-2xl bg-[#12100C] border border-border-subtle animate-pulse" />
+                  <div key={i} className="h-80 rounded-2xl bg-surface-card border border-border-subtle animate-pulse" />
                 ))}
               </div>
             ) : filteredProducts.length === 0 ? (
@@ -341,8 +355,8 @@ export default function ShopPage() {
       {isSidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)} />
-          <div className="absolute left-0 top-0 h-full w-[280px] bg-[#0A0907] border-r border-primary/20 overflow-y-auto">
-            <div className="flex items-center justify-between p-5 border-b border-border-subtle sticky top-0 bg-[#0A0907] z-10">
+          <div className="absolute left-0 top-0 h-full w-[280px] bg-surface-card border-r border-primary/20 overflow-y-auto">
+            <div className="flex items-center justify-between p-5 border-b border-border-subtle sticky top-0 bg-surface-card z-10">
               <span className="font-cinzel text-sm font-bold text-primary uppercase tracking-wider">Collections</span>
               <button onClick={() => setIsSidebarOpen(false)} className="text-text-secondary hover:text-text-primary">
                 <span className="material-symbols-outlined">close</span>
@@ -354,7 +368,7 @@ export default function ShopPage() {
                 className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg text-xs font-mono font-bold uppercase tracking-wider transition-colors ${
                   !activeFilter
                     ? 'bg-primary text-black'
-                    : 'text-text-secondary hover:text-primary hover:bg-[#14120E]'
+                    : 'text-text-secondary hover:text-primary hover:bg-primary/10'
                 }`}
               >
                 <span className="material-symbols-outlined text-base">storefront</span>
@@ -373,7 +387,7 @@ export default function ShopPage() {
                     className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg text-xs font-mono font-bold transition-colors ${
                       isActive
                         ? 'bg-primary text-black'
-                        : 'text-text-secondary hover:text-primary hover:bg-[#14120E]'
+                        : 'text-text-secondary hover:text-primary hover:bg-primary/10'
                     }`}
                   >
                     <span

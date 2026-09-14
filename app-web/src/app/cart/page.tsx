@@ -1,13 +1,22 @@
 "use client";
 import Link from 'next/link';
 import { useCartStore } from '@/store/useCartStore';
+import { formatUsd, formatUsdRaw, toDisplayUsd } from '@/lib/currency';
+
+// Mirrors backend/functions/src/domains/orders — settings/app_config defaults
+// (freeShippingThreshold: 5000 cents, standardShippingCents: 999) — shown here
+// only as an estimate; the Cloud Function computes the real charge at checkout.
+const FREE_SHIPPING_THRESHOLD_USD = 50;
+const STANDARD_SHIPPING_USD = 9.99;
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, clearCart, getSubtotal } = useCartStore();
 
   const subtotal = getSubtotal();
-  const vat = Math.round(subtotal * 0.05); // 5% VAT
-  const total = subtotal + vat;
+  const subtotalUsd = toDisplayUsd(subtotal);
+  const qualifiesForFreeShipping = subtotalUsd >= FREE_SHIPPING_THRESHOLD_USD;
+  const shippingUsd = qualifiesForFreeShipping ? 0 : STANDARD_SHIPPING_USD;
+  const totalUsd = subtotalUsd + shippingUsd;
 
   return (
     <div className="flex-grow pt-32 pb-section-padding px-gutter max-w-container-max mx-auto w-full min-h-[75vh]">
@@ -51,12 +60,16 @@ export default function CartPage() {
                 className="bg-surface-card rounded-lg border border-border-subtle p-6 flex flex-col sm:flex-row gap-6 relative group hover:border-primary/50 transition-colors duration-300"
               >
                 {/* Image */}
-                <div className="w-full sm:w-32 h-32 flex-shrink-0 bg-surface rounded overflow-hidden border border-border-subtle">
-                  <img
-                    alt={item.name}
-                    className="w-full h-full object-cover"
-                    src={item.image}
-                  />
+                <div className="w-full sm:w-32 h-32 flex-shrink-0 bg-surface rounded overflow-hidden border border-border-subtle flex items-center justify-center">
+                  {item.image ? (
+                    <img
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                      src={item.image}
+                    />
+                  ) : (
+                    <span className="material-symbols-outlined text-3xl text-primary-container opacity-50">shopping_bag</span>
+                  )}
                 </div>
 
                 {/* Details */}
@@ -72,7 +85,7 @@ export default function CartPage() {
                       {item.giftWrap && (
                         <span className="inline-flex items-center gap-1 text-[11px] bg-primary-container/20 text-primary-container px-2 py-0.5 rounded">
                           <span className="material-symbols-outlined text-xs">card_giftcard</span>
-                          Gift Wrapped (+৳50)
+                          Gift Wrapped
                         </span>
                       )}
                     </div>
@@ -107,7 +120,7 @@ export default function CartPage() {
 
                     {/* Price */}
                     <div className="text-headline-md font-headline-md text-primary">
-                      ৳{(item.price * item.quantity).toLocaleString()}
+                      {formatUsd(item.price * item.quantity)}
                     </div>
                   </div>
                 </div>
@@ -124,21 +137,22 @@ export default function CartPage() {
               <div className="space-y-4 text-body-md font-body-md">
                 <div className="flex justify-between">
                   <span className="text-on-surface-variant">Subtotal</span>
-                  <span className="text-on-surface">৳{subtotal.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-on-surface-variant">Estimated VAT (5%)</span>
-                  <span className="text-on-surface">৳{vat.toLocaleString()}</span>
+                  <span className="text-on-surface">{formatUsd(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-on-surface-variant">Shipping</span>
-                  <span className="text-green-400 font-medium">Free (Standard)</span>
+                  {qualifiesForFreeShipping ? (
+                    <span className="text-green-400 font-medium">Free (Standard)</span>
+                  ) : (
+                    <span className="text-on-surface">{formatUsdRaw(shippingUsd)}</span>
+                  )}
                 </div>
+                <p className="text-[11px] text-on-surface-variant/70">Tax is calculated when your order is confirmed.</p>
               </div>
               <div className="border-t border-border-subtle mt-6 pt-6 flex justify-between items-end">
-                <span className="text-body-lg font-body-lg text-on-surface">Total</span>
+                <span className="text-body-lg font-body-lg text-on-surface">Estimated Total</span>
                 <span className="text-headline-lg font-headline-lg text-primary">
-                  ৳{total.toLocaleString()}
+                  {formatUsdRaw(totalUsd)}
                 </span>
               </div>
               <Link

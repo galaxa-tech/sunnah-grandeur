@@ -18,7 +18,7 @@ export default function TermsOfServicePage() {
 
           {/* Header */}
           <div className="border-b border-border-subtle pb-8 mb-10">
-            <h1 className="font-serif text-3xl md:text-5xl font-bold text-white mb-4">Terms & Conditions</h1>
+            <h1 className="font-serif text-3xl md:text-5xl font-bold text-text-primary mb-4">Terms & Conditions</h1>
             <p className="text-text-secondary text-sm">Last Updated: August 2, 2026</p>
           </div>
 
@@ -29,21 +29,21 @@ export default function TermsOfServicePage() {
             </p>
 
             <section className="space-y-4">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">1. Agreement to Terms</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">1. Agreement to Terms</h2>
               <p>
                 By using our Site, you warrant that you are at least the age of majority in your jurisdiction and that you agree to all terms, conditions, policies, and notices stated here.
               </p>
             </section>
 
             <section className="space-y-4">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">2. Product Availability & Specifications</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">2. Product Availability & Specifications</h2>
               <p>
                 All products on our website are subject to availability. We reserve the right to limit the quantities of any products or services we offer. We make every effort to display the colors, descriptions, and pricing of our premium fragrances as accurately as possible. However, occasional pricing errors or visual variations may occur.
               </p>
             </section>
 
             <section className="space-y-4">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">3. Pricing & Order Processing</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">3. Pricing & Order Processing</h2>
               <p>
                 Prices for our products are subject to change without prior notice.
               </p>
@@ -58,7 +58,7 @@ export default function TermsOfServicePage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">4. Shipping & Delivery</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">4. Shipping & Delivery</h2>
               <p>
                 Shipping estimates provided at checkout are estimates only. Delivery timeframes may vary depending on local carriers, weather conditions, or holidays.
               </p>
@@ -68,14 +68,14 @@ export default function TermsOfServicePage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">5. Exchanges & Damaged Deliveries</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">5. Exchanges & Damaged Deliveries</h2>
               <p>
                 Exchanges and damaged or incorrect item requests are handled strictly in accordance with our customer support and exchange policies. Exchange requests are processed directly from our office. If you receive a damaged or wrong product, you must contact support within 48 hours of delivery and provide photos of the item.
               </p>
             </section>
 
             <section className="space-y-4 border-t border-border-subtle pt-8">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">6. Legal Compliance & Contact</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">6. Legal Compliance & Contact</h2>
               <p>
                 Users agree to use our website only for lawful purposes. These terms are governed by applicable local and federal laws.
               </p>

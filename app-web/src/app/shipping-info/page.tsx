@@ -18,7 +18,7 @@ export default function ShippingInfoPage() {
 
           {/* Header */}
           <div className="border-b border-border-subtle pb-8 mb-10">
-            <h1 className="font-serif text-3xl md:text-5xl font-bold text-white mb-4">Shipping & Delivery</h1>
+            <h1 className="font-serif text-3xl md:text-5xl font-bold text-text-primary mb-4">Shipping & Delivery</h1>
             <p className="text-text-secondary text-sm">Last Updated: August 2, 2026</p>
           </div>
 
@@ -29,21 +29,21 @@ export default function ShippingInfoPage() {
             </p>
 
             <section className="space-y-4">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">1. Shipping Regions</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">1. Shipping Regions</h2>
               <p>
                 We currently ship to addresses within the <strong>United States of America (USA) only</strong>. We do not support international shipping at this time.
               </p>
             </section>
 
             <section className="space-y-4">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">2. Shipping Fees</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">2. Shipping Fees</h2>
               <p>
                 We are pleased to offer <strong>Free Shipping</strong> on all orders. There are no minimum purchase requirements or hidden handling fees.
               </p>
             </section>
 
             <section className="space-y-4">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">3. Estimated Delivery Times</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">3. Estimated Delivery Times</h2>
               <p>
                 Our estimated delivery timeframe is <strong>3–7 business days</strong> from the date of shipment.
               </p>
@@ -53,14 +53,14 @@ export default function ShippingInfoPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">4. Order Tracking</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">4. Order Tracking</h2>
               <p>
                 Once your package has been handed over to the courier, you will receive a shipment confirmation email containing your tracking number and a link to trace your delivery. Please allow up to 24 hours for the tracking information to become active in the carrier's system.
               </p>
             </section>
 
             <section className="space-y-4 border-t border-border-subtle pt-8">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-white">5. Contact Support</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">5. Contact Support</h2>
               <p>
                 If you have any questions or require support regarding your order's delivery status, please contact us at <a href="mailto:info@sunnahgrandeur.com" className="text-primary-container hover:underline">info@sunnahgrandeur.com</a>.
               </p>

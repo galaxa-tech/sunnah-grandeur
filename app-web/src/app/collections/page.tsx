@@ -6,6 +6,7 @@ import { translations } from '@/translations';
 import { products, Product } from '@/data/products';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { formatUsd } from '@/lib/currency';
 
 export default function CollectionsPage() {
   const { language } = useLanguageStore();
@@ -34,7 +35,26 @@ export default function CollectionsPage() {
     loadProducts();
   }, []);
 
-  const perfumes = dbProducts.filter((p) => p.type === 'perfume');
+  const SCENT_FILTERS = ['Oud Based', 'Musk Collection', 'Floral Blends', 'Spicy & Woody'] as const;
+  const [activeScents, setActiveScents] = useState<string[]>([]);
+  const SCENT_KEYWORDS: Record<string, string[]> = {
+    'Oud Based': ['oud', 'agarwood'],
+    'Musk Collection': ['musk'],
+    'Floral Blends': ['floral', 'rose', 'jasmine'],
+    'Spicy & Woody': ['spice', 'spicy', 'wood', 'amber', 'sandalwood'],
+  };
+
+  const toggleScent = (cat: string) => {
+    setActiveScents((prev) => prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]);
+  };
+
+  const allPerfumes = dbProducts.filter((p) => p.type === 'perfume');
+  const perfumes = activeScents.length === 0
+    ? allPerfumes
+    : allPerfumes.filter((p) => {
+        const haystack = `${p.name} ${p.description}`.toLowerCase();
+        return activeScents.some((cat) => SCENT_KEYWORDS[cat].some((kw) => haystack.includes(kw)));
+      });
 
   return (
     <div className="pt-32 pb-24 max-w-container-max mx-auto px-gutter">
@@ -58,9 +78,23 @@ export default function CollectionsPage() {
           <div>
             <h3 className="text-label-accent font-label-accent text-text-primary uppercase tracking-widest mb-6">{t.collections.category}</h3>
             <div className="space-y-4">
-              {['All Perfumes', 'Oud Based', 'Musk Collection', 'Floral Blends', 'Spicy & Woody'].map((cat) => (
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={activeScents.length === 0}
+                  onChange={() => setActiveScents([])}
+                  className="w-4 h-4 rounded-sm border-border-subtle bg-transparent checked:bg-primary-container checked:border-primary-container focus:ring-0 transition-all"
+                />
+                <span className="text-body-md font-body-md text-text-secondary group-hover:text-text-primary transition-colors">All Perfumes</span>
+              </label>
+              {SCENT_FILTERS.map((cat) => (
                 <label key={cat} className="flex items-center gap-3 cursor-pointer group">
-                  <input type="checkbox" className="w-4 h-4 rounded-sm border-border-subtle bg-transparent checked:bg-primary-container checked:border-primary-container focus:ring-0 transition-all" />
+                  <input
+                    type="checkbox"
+                    checked={activeScents.includes(cat)}
+                    onChange={() => toggleScent(cat)}
+                    className="w-4 h-4 rounded-sm border-border-subtle bg-transparent checked:bg-primary-container checked:border-primary-container focus:ring-0 transition-all"
+                  />
                   <span className="text-body-md font-body-md text-text-secondary group-hover:text-text-primary transition-colors">{cat}</span>
                 </label>
               ))}
@@ -75,14 +109,14 @@ export default function CollectionsPage() {
               <Link href={`/product/${product.id}`} className="relative aspect-[4/5] bg-bg-primary overflow-hidden block">
                 {product.tag && (
                   <span className={`absolute top-4 left-4 z-10 px-3 py-1 text-[10px] font-label-accent uppercase rounded-full ${
-                    product.isSoldOut ? 'bg-[#1F1F1F] text-text-secondary border border-border-subtle' : 'bg-primary-container text-bg-primary'
+                    product.isSoldOut ? 'bg-border-subtle text-text-secondary border border-border-subtle' : 'bg-primary-container text-bg-primary'
                   }`}>
                     {product.isSoldOut ? t.cart.outOfStock : product.tag}
                   </span>
                 )}
                 {product.originalPrice && !product.isSoldOut && (
                   <span className="absolute top-4 right-4 z-10 bg-red-600 text-white px-2 py-1 text-[10px] font-bold rounded-full">
-                    ৳{product.originalPrice - product.price} Off
+                    {formatUsd(product.originalPrice - product.price)} Off
                   </span>
                 )}
                 <button className="absolute top-4 right-4 z-10 text-text-secondary hover:text-primary-container transition-colors">
@@ -97,9 +131,9 @@ export default function CollectionsPage() {
                 />
                 <div className="absolute bottom-0 left-0 w-full p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-gradient-to-t from-bg-primary to-transparent">
                   {product.isSoldOut ? (
-                    <button className="w-full bg-[#1F1F1F] text-text-secondary py-3 text-label-accent font-label-accent uppercase rounded-DEFAULT cursor-not-allowed">{t.cart.outOfStock}</button>
+                    <button className="w-full bg-border-subtle text-text-secondary py-3 text-label-accent font-label-accent uppercase rounded-DEFAULT cursor-not-allowed">{t.cart.outOfStock}</button>
                   ) : (
-                    <button className="w-full bg-primary-container text-bg-primary py-3 text-label-accent font-label-accent uppercase rounded-DEFAULT hover:bg-primary-fixed transition-colors">{t.cart.addToCart} — ৳{product.price}</button>
+                    <button className="w-full bg-primary-container text-bg-primary py-3 text-label-accent font-label-accent uppercase rounded-DEFAULT hover:bg-primary-fixed transition-colors">{t.cart.addToCart} — {formatUsd(product.price)}</button>
                   )}
                 </div>
               </Link>
@@ -111,9 +145,9 @@ export default function CollectionsPage() {
                   <p className="text-body-md font-body-md text-text-secondary text-sm line-clamp-2">{product.description}</p>
                 </div>
                 <div className="mt-4 flex items-center gap-3">
-                  <span className="text-body-lg font-body-lg text-primary-container">৳{product.price.toFixed(0)}</span>
+                  <span className="text-body-lg font-body-lg text-primary-container">{formatUsd(product.price)}</span>
                   {product.originalPrice && (
-                    <span className="text-sm text-text-secondary line-through">৳{product.originalPrice}</span>
+                    <span className="text-sm text-text-secondary line-through">{formatUsd(product.originalPrice)}</span>
                   )}
                 </div>
               </div>

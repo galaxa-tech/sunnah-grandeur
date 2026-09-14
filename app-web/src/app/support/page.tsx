@@ -29,7 +29,7 @@ export default function SupportPage() {
 
           {/* Header */}
           <div className="border-b border-border-subtle pb-8 mb-12">
-            <h1 className="font-serif text-3xl md:text-5xl font-bold text-white mb-4">Customer Support</h1>
+            <h1 className="font-serif text-3xl md:text-5xl font-bold text-text-primary mb-4">Customer Support</h1>
             <p className="text-text-secondary text-sm md:text-base max-w-2xl">
               We are here to assist the Ummah with any questions regarding our premium collections or services. Reach out to experience true grandeur.
             </p>
@@ -39,11 +39,11 @@ export default function SupportPage() {
             
             {/* Left/Main Column - Topics Grid */}
             <div className="lg:col-span-2 space-y-8">
-              <h2 className="font-serif text-2xl font-bold text-white mb-6">Support Topics</h2>
+              <h2 className="font-serif text-2xl font-bold text-text-primary mb-6">Support Topics</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {topics.map((topic, index) => (
                   <div key={index} className="bg-surface-card border border-border-subtle p-6 rounded-lg hover:border-primary-container transition-colors">
-                    <h3 className="font-serif text-lg font-semibold text-white mb-2">{topic.title}</h3>
+                    <h3 className="font-serif text-lg font-semibold text-text-primary mb-2">{topic.title}</h3>
                     <p className="text-text-secondary text-xs md:text-sm leading-relaxed">{topic.desc}</p>
                   </div>
                 ))}
@@ -53,7 +53,7 @@ export default function SupportPage() {
             {/* Right Column - Contact Channels */}
             <div className="space-y-6">
               <div className="bg-surface-card border border-border-subtle p-6 rounded-lg space-y-6">
-                <h2 className="font-serif text-xl font-bold text-white border-b border-border-subtle pb-3">Contact Channels</h2>
+                <h2 className="font-serif text-xl font-bold text-text-primary border-b border-border-subtle pb-3">Contact Channels</h2>
                 
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
