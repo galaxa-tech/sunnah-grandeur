@@ -254,7 +254,6 @@ export default function Navbar() {
                 </div>
               )}
             </div>
-            {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
 
             {/* Mobile Menu Button */}
             <button
@@ -271,10 +270,15 @@ export default function Navbar() {
       </nav>
 
       {/* Slide-Over Cart Drawer */}
-      <CartDrawer 
-        isOpen={isCartDrawerOpen} 
-        onClose={() => setIsCartDrawerOpen(false)} 
+      <CartDrawer
+        isOpen={isCartDrawerOpen}
+        onClose={() => setIsCartDrawerOpen(false)}
       />
+
+      {/* Sign In / Sign Up Modal — rendered outside <nav> so its position:fixed
+          isn't re-anchored by the nav's backdrop-blur (a CSS containing-block
+          trigger) once the page is scrolled. */}
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
 
       {/* Mobile Drawer Overlay */}
       {isMobileOpen && (
