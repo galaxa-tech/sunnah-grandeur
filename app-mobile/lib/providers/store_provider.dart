@@ -15,6 +15,7 @@ class StoreProvider extends ChangeNotifier {
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _categoriesSub;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _bannersSub;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _favoritesSub;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _appConfigSub;
   StreamSubscription<User?>? _authSub;
 
   List<ProductModel> _allProducts = [];
@@ -27,10 +28,18 @@ class StoreProvider extends ChangeNotifier {
   bool _isLoading = true;
   String? _error;
 
+  // Same defaults as backend/functions/src/domains/orders/index.js so the
+  // client's displayed estimate matches the server's charge before the
+  // config doc even loads.
+  int _taxRateBps = 0;
+  double _usdToLocalRate = kDefaultBdtToUsdRate;
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> _rawProductDocs = [];
+
   StoreProvider() {
     _listenProducts();
     _listenCategories();
     _listenBanners();
+    _listenAppConfig();
     _authSub = _auth.authStateChanges().listen(_listenFavorites);
   }
 
@@ -38,6 +47,13 @@ class StoreProvider extends ChangeNotifier {
   List<StoreCategoryModel> get categories => _categories;
   List<StoreBannerModel> get banners => _banners;
   Set<String> get favoriteIds => _favoriteIds;
+
+  /// Tax rate in basis points (875 = 8.75%), mirrored live from
+  /// `settings/app_config.taxRateBps` — the exact field `createOrder`
+  /// charges from, so the checkout estimate can never silently diverge
+  /// from what the customer is actually billed.
+  int get taxRateBps => _taxRateBps;
+  double get taxRate => _taxRateBps / 10000;
   String? get selectedCategoryId => _selectedCategoryId;
   String get searchQuery => _searchQuery;
   StoreSort get sort => _sort;
@@ -160,7 +176,8 @@ class StoreProvider extends ChangeNotifier {
         .where('isActive', isEqualTo: true)
         .snapshots()
         .listen((snap) {
-      _allProducts = snap.docs.map((d) => ProductModel.fromMap(d.data(), d.id)).toList();
+      _rawProductDocs = snap.docs;
+      _remapProducts();
       _isLoading = false;
       _error = null;
       notifyListeners();
@@ -170,6 +187,17 @@ class StoreProvider extends ChangeNotifier {
       _error = 'Could not load products.';
       notifyListeners();
     });
+  }
+
+  /// Re-derives [_allProducts] from the last-seen raw docs using the current
+  /// [_usdToLocalRate] — called both when products change and when the rate
+  /// itself changes, so a live admin edit to the conversion rate updates
+  /// every displayed price without needing a fresh products snapshot.
+  void _remapProducts() {
+    _allProducts = _rawProductDocs
+        .map((d) => ProductModel.fromMap(d.data(), d.id,
+            usdToLocalRate: _usdToLocalRate))
+        .toList();
   }
 
   void _listenCategories() {
@@ -198,6 +226,21 @@ class StoreProvider extends ChangeNotifier {
     }, onError: (Object e) => debugPrint('[StoreProvider] banners: $e'));
   }
 
+  void _listenAppConfig() {
+    _appConfigSub = _db
+        .collection('settings')
+        .doc('app_config')
+        .snapshots()
+        .listen((snap) {
+      final data = snap.data();
+      _taxRateBps = (data?['taxRateBps'] as num?)?.toInt() ?? 0;
+      final rate = (data?['usdToLocalRate'] as num?)?.toDouble();
+      _usdToLocalRate = (rate != null && rate > 0) ? rate : kDefaultBdtToUsdRate;
+      _remapProducts();
+      notifyListeners();
+    }, onError: (Object e) => debugPrint('[StoreProvider] app_config: $e'));
+  }
+
   void _listenFavorites(User? user) {
     _favoritesSub?.cancel();
     _favoriteIds = {};
@@ -222,6 +265,7 @@ class StoreProvider extends ChangeNotifier {
     _categoriesSub?.cancel();
     _bannersSub?.cancel();
     _favoritesSub?.cancel();
+    _appConfigSub?.cancel();
     _authSub?.cancel();
     super.dispose();
   }

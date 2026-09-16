@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { onAuthStateChanged, User } from "firebase/auth";
+import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { isAuthorizedAdmin } from "@/lib/adminAccess";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -11,12 +12,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
         router.push("/login");
         setLoading(false);
         return;
       }
+
+      // Being signed in is not enough — this gate is what actually keeps a
+      // regular storefront customer account out of the business dashboard.
+      if (!(await isAuthorizedAdmin(currentUser))) {
+        await signOut(auth);
+        router.push("/login");
+        setLoading(false);
+        return;
+      }
+
       setUser(currentUser);
       setLoading(false);
     });

@@ -3,6 +3,7 @@ import 'package:adhan/adhan.dart';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
+import 'package:timezone/timezone.dart' as tz;
 import '../models/adhan_settings.dart';
 import '../services/adhan_service.dart';
 import '../services/notification_service.dart';
@@ -20,6 +21,40 @@ class PrayerProvider extends ChangeNotifier {
   // Override coordinates from LocationProvider
   double? _overrideLat;
   double? _overrideLng;
+
+  // The IANA zone prayer times should be DISPLAYED in — see
+  // LocationProvider.displayTimezone for why this is necessary: the
+  // `adhan` package always returns times converted to whatever timezone
+  // the device itself is currently set to, which is only correct when the
+  // device happens to be physically in the same zone as these coordinates.
+  // Null means trust the device's own zone as-is (real GPS location).
+  String? _displayTimezone;
+
+  /// Null (trust the device's own zone) only when these coordinates came
+  /// from real GPS — either LocationProvider's (`_overrideLat` set with no
+  /// explicit timezone) or this provider's own `_determinePosition()` GPS
+  /// fallback. The hardcoded London fallback (neither is set) needs an
+  /// explicit zone just as much as an explicitly chosen city does.
+  String? get _effectiveTimezone {
+    if (_overrideLat != null) return _displayTimezone;
+    if (_currentPosition != null) return null;
+    return 'Europe/London';
+  }
+
+  /// Re-zones a raw `adhan` package DateTime for display. The package
+  /// bakes the executing device's own timezone into its output — undo
+  /// that (`.toUtc()` recovers the true instant on the same device) and
+  /// re-apply the coordinates' own real timezone instead.
+  DateTime _forDisplay(DateTime raw) {
+    final zone = _effectiveTimezone;
+    if (zone == null) return raw;
+    try {
+      return tz.TZDateTime.from(raw.toUtc(), tz.getLocation(zone));
+    } catch (e) {
+      debugPrint('[PrayerProvider] timezone lookup failed for $zone: $e');
+      return raw;
+    }
+  }
 
   PrayerTimes?  get prayerTimes     => _prayerTimes;
   Position?     get currentPosition => _currentPosition;
@@ -43,10 +78,11 @@ class PrayerProvider extends ChangeNotifier {
   }
 
   /// Called by ProxyProvider when LocationProvider has coordinates.
-  void updateCoordinates(double lat, double lng) {
-    if (_overrideLat == lat && _overrideLng == lng) return;
+  void updateCoordinates(double lat, double lng, {String? timezone}) {
+    if (_overrideLat == lat && _overrideLng == lng && _displayTimezone == timezone) return;
     _overrideLat = lat;
     _overrideLng = lng;
+    _displayTimezone = timezone;
     _recalculate(DateTime.now());
     _scheduleAll();
     notifyListeners();
@@ -180,22 +216,36 @@ class PrayerProvider extends ChangeNotifier {
     await _scheduleAll();
   }
 
+  // A `PrayerTimes` instance only covers one calendar day — once the
+  // current moment is past that day's Isha, `nextPrayer()` correctly
+  // returns `Prayer.none` rather than guessing. Roll over to tomorrow's
+  // Fajr instead of leaving the "Next Prayer" card blank.
+  PrayerTimes? get _tomorrowPrayerTimes =>
+      _timesForDate(DateTime.now().add(const Duration(days: 1)));
+
   String getNextPrayerName() {
     if (_prayerTimes == null) return '---';
+    if (_prayerTimes!.nextPrayer() == Prayer.none) {
+      return _tomorrowPrayerTimes != null ? 'fajr' : '---';
+    }
     return _formatPrayerName(_prayerTimes!.nextPrayer());
   }
 
   DateTime? getNextPrayerTime() {
     if (_prayerTimes == null) return null;
     final next = _prayerTimes!.nextPrayer();
-    if (next == Prayer.none) return null;
+    if (next == Prayer.none) return _tomorrowPrayerTimes?.fajr;
     return _prayerTimes!.timeForPrayer(next);
   }
 
   String formatTime(DateTime? dt) {
     if (dt == null) return '--:--';
-    return DateFormat('h:mm a').format(dt);
+    return DateFormat('h:mm a').format(_forDisplay(dt));
   }
+
+  /// For screens that need the raw, correctly-zoned instant themselves
+  /// (e.g. to split "9:19" and "AM" into separate widgets).
+  DateTime? zonedForDisplay(DateTime? dt) => dt == null ? null : _forDisplay(dt);
 
   String _formatPrayerName(Prayer prayer) {
     switch (prayer) {

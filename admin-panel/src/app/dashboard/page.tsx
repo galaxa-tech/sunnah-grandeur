@@ -41,12 +41,34 @@ export default function DashboardPage() {
     };
   }, []);
 
-  const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+  // Real order documents (backend/functions/src/domains/orders) carry
+  // `totalInCents` and a `shipping` object — not `total` or `customer`.
+  const totalRevenueCents = orders.reduce((sum, order) => sum + (order.totalInCents || 0), 0);
+
+  // Real order counts for the last 7 days (Mon–Sun of the current week),
+  // computed from the same live `orders` listener — no fabricated numbers.
+  const weekDayCounts = (() => {
+    const counts = [0, 0, 0, 0, 0, 0, 0]; // Mon..Sun
+    const now = new Date();
+    const dayOfWeek = (now.getDay() + 6) % 7; // 0=Mon .. 6=Sun
+    const monday = new Date(now);
+    monday.setHours(0, 0, 0, 0);
+    monday.setDate(now.getDate() - dayOfWeek);
+    for (const order of orders) {
+      const seconds = order.createdAt?.seconds;
+      if (!seconds) continue;
+      const d = new Date(seconds * 1000);
+      const diffDays = Math.floor((d.getTime() - monday.getTime()) / 86400000);
+      if (diffDays >= 0 && diffDays < 7) counts[diffDays]++;
+    }
+    return counts;
+  })();
+  const maxWeekCount = Math.max(1, ...weekDayCounts);
 
   return (
     <div className="flex">
       <Sidebar />
-      <main className="ml-64 min-h-screen flex-grow bg-bg-primary relative overflow-hidden">
+      <main className="ml-0 md:ml-64 min-h-screen flex-grow bg-bg-primary relative overflow-hidden">
         <div className="absolute inset-0 islamic-pattern pointer-events-none"></div>
         <Header title="Overview" />
 
@@ -55,10 +77,10 @@ export default function DashboardPage() {
           {/* Row 1: Stat Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { label: "Total Revenue", value: `৳${totalRevenue.toLocaleString()}`, growth: "Live", icon: "payments" },
+              { label: "Total Revenue", value: `$${(totalRevenueCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, growth: "Live", icon: "payments" },
               { label: "Total Orders", value: orders.length.toString(), growth: "Live", icon: "shopping_cart" },
-              { label: "Registered Users", value: userCount > 0 ? userCount.toString() : "1 (Active)", growth: "Live", icon: "group" },
-              { label: "Active Products", value: productCount > 0 ? productCount.toString() : "6 Listed", growth: "Live", icon: "inventory_2" },
+              { label: "Registered Users", value: userCount.toString(), growth: "Live", icon: "group" },
+              { label: "Active Products", value: productCount.toString(), growth: "Live", icon: "inventory_2" },
             ].map((stat) => (
               <div key={stat.label} className="bg-surface-card border border-border-subtle p-6 group hover:border-primary/50 transition-all duration-500 rounded-lg">
                 <div className="flex justify-between items-start mb-4">
@@ -105,11 +127,11 @@ export default function DashboardPage() {
                       </tr>
                     ) : (
                       orders.slice(0, 5).map((order) => {
-                        const customerName = order.customer?.fullName || order.customer?.name || "Guest Customer";
+                        const customerName = order.shipping?.name || "Guest Customer";
                         const initials = customerName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
                         return (
                           <tr key={order.id} className="group hover:bg-white/5 transition-colors">
-                            <td className="py-4 font-mono font-bold text-xs text-primary">{order.trackingCode || `#${order.id.substring(0, 8)}`}</td>
+                            <td className="py-4 font-mono font-bold text-xs text-primary">{`#${order.id.substring(0, 8)}`}</td>
                             <td className="py-4">
                               <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-primary/20 text-primary border border-primary/30 flex items-center justify-center text-[10px] font-bold">
@@ -117,11 +139,11 @@ export default function DashboardPage() {
                                 </div>
                                 <div>
                                   <p className="text-xs font-semibold text-text-primary">{customerName}</p>
-                                  <p className="text-[10px] text-on-surface-variant">{order.customer?.city || "Dhaka"}</p>
+                                  <p className="text-[10px] text-on-surface-variant">{order.shipping?.city || "—"}</p>
                                 </div>
                               </div>
                             </td>
-                            <td className="py-4 text-xs font-bold text-primary-container">৳{(order.total || 0).toLocaleString()}</td>
+                            <td className="py-4 text-xs font-bold text-primary-container">${((order.totalInCents || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                             <td className="py-4 text-right">
                               <span className="px-2.5 py-1 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] font-bold uppercase tracking-widest">
                                 {order.status || "Processing"}
@@ -139,17 +161,22 @@ export default function DashboardPage() {
             {/* Platform Activity Overview */}
             <div className="bg-surface-card border border-border-subtle p-8 flex flex-col rounded-lg">
               <div className="mb-6">
-                <h4 className="font-headline-md text-text-primary text-xl font-bold">Activity Overview</h4>
-                <p className="text-on-surface-variant text-xs mt-1">Platform traffic &amp; order volume</p>
+                <h4 className="font-headline-md text-text-primary text-xl font-bold">Orders This Week</h4>
+                <p className="text-on-surface-variant text-xs mt-1">Real order count per day, from live Firestore data</p>
               </div>
               <div className="flex-1 flex items-end gap-2 h-44 mb-6">
-                {[40, 65, 50, 85, 75, 95, 80].map((h, i) => (
-                  <div 
-                    key={i} 
-                    className={`flex-1 transition-all rounded-t ${i === 6 ? "bg-primary shadow-[0_0_15px_rgba(201,168,76,0.4)]" : "bg-primary/20 hover:bg-primary/40"}`} 
-                    style={{ height: `${h}%` }}
-                  ></div>
-                ))}
+                {weekDayCounts.map((count, i) => {
+                  const isToday = i === (new Date().getDay() + 6) % 7;
+                  const heightPct = count === 0 ? 2 : Math.max(6, (count / maxWeekCount) * 100);
+                  return (
+                    <div
+                      key={i}
+                      title={`${count} order${count === 1 ? "" : "s"}`}
+                      className={`flex-1 transition-all rounded-t ${isToday ? "bg-primary shadow-[0_0_15px_rgba(201,168,76,0.4)]" : "bg-primary/20 hover:bg-primary/40"}`}
+                      style={{ height: `${heightPct}%` }}
+                    ></div>
+                  );
+                })}
               </div>
               <div className="flex justify-between font-label-accent text-[10px] text-on-surface-variant uppercase tracking-tighter">
                 <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>

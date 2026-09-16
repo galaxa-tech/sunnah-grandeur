@@ -66,6 +66,13 @@ const createOrder = onCall({ region: "us-central1" }, async (request) => {
   const freeShippingThreshold   = config.freeShippingThreshold   ?? 5000;   // cents
   const standardShippingCents   = config.standardShippingCents   ?? 999;
   const expressShippingCents    = config.expressShippingCents    ?? 1999;
+  // Same field admin-panel/src/lib/currency.ts and app-mobile's
+  // StoreProvider read — single source of truth for the BDT→USD rate so it
+  // can't silently drift between what's displayed and what's charged.
+  const DEFAULT_BDT_TO_USD_RATE = 1 / 118;
+  const usdToLocalRate = (typeof config.usdToLocalRate === "number" && config.usdToLocalRate > 0)
+    ? config.usdToLocalRate
+    : DEFAULT_BDT_TO_USD_RATE;
 
   const orderRef = db.collection(COL.ORDERS).doc();
 
@@ -99,14 +106,23 @@ const createOrder = onCall({ region: "us-central1" }, async (request) => {
         }
 
         // ── Price sourced from Firestore only ─────────────────────────────────
-        const lineTotalInCents = p.priceInCents * item.quantity;
+        // The admin panel writes a plain decimal `price` field, entered as BDT
+        // (e.g. 550) — some earlier/seeded docs may instead carry `priceInCents`.
+        // usdToLocalRate (read above from settings/app_config) must match what
+        // admin-panel/app-mobile display, or the estimate a customer sees at
+        // checkout won't match what's actually charged/recorded. TODO: remove
+        // this conversion once the admin panel stores real USD prices directly.
+        const unitPriceInCents = typeof p.price === "number"
+          ? Math.round(p.price * usdToLocalRate * 100)
+          : (p.priceInCents ?? 0);
+        const lineTotalInCents = unitPriceInCents * item.quantity;
         subtotalInCents += lineTotalInCents;
 
         enrichedItems.push({
           productId:       item.productId,
           name:            p.name,
           sku:             p.sku,
-          priceInCents:    p.priceInCents,     // snapshot at time of order
+          priceInCents:    unitPriceInCents,     // snapshot at time of order
           quantity:        item.quantity,
           lineTotalInCents,
         });

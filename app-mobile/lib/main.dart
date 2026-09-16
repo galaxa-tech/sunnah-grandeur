@@ -1,10 +1,13 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'config/api_config.dart';
 import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'providers/store_provider.dart';
@@ -25,6 +28,7 @@ import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
 import 'screens/shell_screen.dart';
 import 'screens/onboarding/welcome_screen.dart';
+import 'screens/onboarding/onboarding_carousel_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/prayer_tools/adhan_settings_screen.dart';
@@ -82,18 +86,20 @@ void main() async {
   }
 
   // ── Stripe (native-only, skip if no valid key configured) ─────────────────
-  if (!kIsWeb && firebaseError == null) {
-    // Replace with a real key via --dart-define=STRIPE_KEY=pk_live_...
-    const stripeKey = String.fromEnvironment('STRIPE_KEY');
-    if (stripeKey.isNotEmpty) {
-      try {
-        Stripe.publishableKey = stripeKey;
-        await Stripe.instance.applySettings();
-      } catch (e) {
-        debugPrint('[main] Stripe init failed: $e');
-      }
+  if (!kIsWeb && firebaseError == null && ApiConfig.isStripeConfigured) {
+    try {
+      Stripe.publishableKey = ApiConfig.stripePublishableKey;
+      await Stripe.instance.applySettings();
+    } catch (e) {
+      debugPrint('[main] Stripe init failed: $e');
     }
   }
+
+  // Needed on every platform, not just native — PrayerProvider uses the IANA
+  // database directly to re-zone prayer times for display, independent of
+  // NotificationService (which only runs its own init, including this same
+  // call, on native). Safe to call more than once.
+  tz_data.initializeTimeZones();
 
   // ── Background services (only when Firebase is healthy) ───────────────────
   if (firebaseError == null) {
@@ -118,7 +124,7 @@ void main() async {
           create: (_) => PrayerProvider(),
           update: (_, loc, adhanSettings, prayer) {
             if (loc.hasLocation) {
-              prayer?.updateCoordinates(loc.lat!, loc.lng!);
+              prayer?.updateCoordinates(loc.lat!, loc.lng!, timezone: loc.displayTimezone);
             }
             prayer?.updateSettings(adhanSettings.settings);
             return prayer!;
@@ -207,6 +213,8 @@ class LandingPage extends StatefulWidget {
 
 class _LandingPageState extends State<LandingPage> {
   bool _forceShow = false; // safety unlock after 5 s
+  bool _checkedOnboarding = false;
+  bool _needsOnboarding = false;
 
   @override
   void initState() {
@@ -216,13 +224,24 @@ class _LandingPageState extends State<LandingPage> {
     Future.delayed(const Duration(seconds: 5), () {
       if (mounted && !_forceShow) setState(() => _forceShow = true);
     });
+    _checkOnboarding();
+  }
+
+  Future<void> _checkOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    final done = prefs.getBool('has_completed_onboarding') ?? false;
+    if (!mounted) return;
+    setState(() {
+      _needsOnboarding = !done;
+      _checkedOnboarding = true;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
 
-    if (auth.isLoading && !_forceShow) {
+    if (!_checkedOnboarding || (auth.isLoading && !_forceShow)) {
       return const Scaffold(
         backgroundColor: Color(0xFF0D0D0F),
         body: Center(
@@ -231,6 +250,13 @@ class _LandingPageState extends State<LandingPage> {
           ),
         ),
       );
+    }
+
+    // First-ever launch: run the language/location/prayer-alerts carousel
+    // before anything else, matching the reviewed competitor's flow. Once
+    // PreparingSpaceScreen marks this done, this branch never shows again.
+    if (_needsOnboarding && !auth.isSignedIn) {
+      return const OnboardingCarouselScreen();
     }
 
     // Guest users (isAnonymous) are welcome — they can explore freely.

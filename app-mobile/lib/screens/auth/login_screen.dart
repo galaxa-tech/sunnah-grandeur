@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import 'register_screen.dart';
@@ -60,7 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.pushNamedAndRemoveUntil(context, '/main', (_) => false);
     } else {
       setState(() => _isLoading = false);
-      _showSnack(auth.error ?? 'Sign-in failed. Please try again.');
+      _showSnack(auth.error ?? context.read<LanguageProvider>().tr('login_failed'));
     }
   }
 
@@ -79,6 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final lang = context.watch<LanguageProvider>();
 
     return Scaffold(
       backgroundColor: c.bg,
@@ -103,12 +105,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 4),
 
                 // ── Header ─────────────────────────────────────────────────
-                Text('Sunnah Grandeur', style: AppTextStyles.brand(c)),
+                Text(lang.tr('app_name'), style: AppTextStyles.brand(c)),
                 const SizedBox(height: 4),
-                Text('Welcome back', style: AppTextStyles.displayMd(c)),
+                Text(lang.tr('welcome_back'), style: AppTextStyles.displayMd(c)),
                 const SizedBox(height: 6),
                 Text(
-                  'Sign in to continue your journey.',
+                  lang.tr('login_subtitle'),
                   style: AppTextStyles.italic(c, fontSize: 13),
                   textAlign: TextAlign.center,
                 ),
@@ -117,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // ── Email field ────────────────────────────────────────────
                 _AuthField(
-                  label: 'Email',
+                  label: lang.tr('email'),
                   controller: _emailCtrl,
                   icon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
@@ -125,8 +127,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   onFieldSubmitted: (_) => _passFocus.requestFocus(),
                   c: c,
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Email is required';
-                    if (!v.contains('@')) return 'Enter a valid email';
+                    if (v == null || v.trim().isEmpty) return lang.tr('email_required');
+                    if (!v.contains('@')) return lang.tr('email_invalid');
                     return null;
                   },
                 ),
@@ -134,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // ── Password field ─────────────────────────────────────────
                 _AuthField(
-                  label: 'Password',
+                  label: lang.tr('password'),
                   controller: _passCtrl,
                   focusNode: _passFocus,
                   icon: Icons.lock_outline_rounded,
@@ -143,7 +145,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   onFieldSubmitted: (_) => _handleLogin(),
                   c: c,
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Password is required';
+                    if (v == null || v.isEmpty) return lang.tr('password_required');
                     return null;
                   },
                 ),
@@ -157,7 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: () => Navigator.push(context,
                         MaterialPageRoute(
                             builder: (_) => const ForgotPasswordScreen())),
-                    child: Text('Forgot password?',
+                    child: Text(lang.tr('forgot_password'),
                         style: GoogleFonts.inter(
                             color: c.gold,
                             fontSize: 12,
@@ -169,7 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // ── Sign-in button ─────────────────────────────────────────
                 _IconlessButton(
-                  label: 'Sign In',
+                  label: lang.tr('sign_in'),
                   loading: _isLoading,
                   disabled: _anyLoading,
                   onTap: _handleLogin,
@@ -182,13 +184,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Don't have an account? ",
+                    Text(lang.tr('no_account'),
                         style: AppTextStyles.bodyMuted(c, size: 13)),
                     GestureDetector(
                       onTap: () => Navigator.pushReplacement(context,
                           MaterialPageRoute(
                               builder: (_) => const RegisterScreen())),
-                      child: Text('Create one',
+                      child: Text(lang.tr('register_now'),
                         style: GoogleFonts.inter(
                           color: c.gold,
                           fontSize: 13,

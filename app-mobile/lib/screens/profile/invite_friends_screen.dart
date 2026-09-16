@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../widgets/app_snackbar.dart';
 
-const _shareLink = 'https://sunnahgrandeur.com/invite';
+// The app has no per-user referral-code system yet — every user shares the
+// same real, live link rather than a fabricated personalized one.
+const _shareLink = 'https://sunnah-grandeur-app.web.app';
 const _shareMsg  = 'Join me on Sunnah Grandeur — your Islamic lifestyle companion!\n$_shareLink';
+
+Future<void> _openShareUrl(BuildContext context, Uri uri) async {
+  final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  if (!ok && context.mounted) {
+    showAppSnackbar(context, 'Could not open that app.', type: AppSnackbarType.error);
+  }
+}
 
 class InviteFriendsScreen extends StatelessWidget {
   const InviteFriendsScreen({super.key});
@@ -99,7 +109,7 @@ class InviteFriendsScreen extends StatelessWidget {
                               borderRadius: BorderRadius.circular(11),
                               border: Border.all(color: c.bd2),
                             ),
-                            child: Text('sunnahgrandeur.com/invite/Ahmad47', style: AppTextStyles.bodyMuted(c, size: 12)),
+                            child: Text(_shareLink, style: AppTextStyles.bodyMuted(c, size: 12)),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -130,11 +140,26 @@ class InviteFriendsScreen extends StatelessWidget {
                     // Share options
                     Row(
                       children: [
-                        _ShareOption(emoji: '💬', label: 'WhatsApp', c: c),
+                        _ShareOption(
+                          emoji: '💬', label: 'WhatsApp', c: c,
+                          onTap: () => _openShareUrl(context,
+                              Uri.parse('https://wa.me/?text=${Uri.encodeComponent(_shareMsg)}')),
+                        ),
                         const SizedBox(width: 8),
-                        _ShareOption(emoji: '✈️', label: 'Telegram', c: c),
+                        _ShareOption(
+                          emoji: '✈️', label: 'Telegram', c: c,
+                          onTap: () => _openShareUrl(context,
+                              Uri.parse('https://t.me/share/url?url=${Uri.encodeComponent(_shareLink)}&text=${Uri.encodeComponent('Join me on Sunnah Grandeur — your Islamic lifestyle companion!')}')),
+                        ),
                         const SizedBox(width: 8),
-                        _ShareOption(emoji: '📧', label: 'Email', c: c),
+                        _ShareOption(
+                          emoji: '📧', label: 'Email', c: c,
+                          onTap: () => _openShareUrl(context,
+                              Uri(scheme: 'mailto', queryParameters: {
+                                'subject': 'Sunnah Grandeur App',
+                                'body': _shareMsg,
+                              })),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -199,26 +224,30 @@ class _AvatarCircle extends StatelessWidget {
 }
 
 class _ShareOption extends StatelessWidget {
-  const _ShareOption({required this.emoji, required this.label, required this.c});
+  const _ShareOption({required this.emoji, required this.label, required this.c, required this.onTap});
   final String emoji, label;
   final AppColors c;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
-        decoration: BoxDecoration(
-          color: c.surf,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: c.bd),
-        ),
-        child: Column(
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 22)),
-            const SizedBox(height: 6),
-            Text(label, style: AppTextStyles.bodyMuted(c, size: 10)),
-          ],
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+          decoration: BoxDecoration(
+            color: c.surf,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: c.bd),
+          ),
+          child: Column(
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 22)),
+              const SizedBox(height: 6),
+              Text(label, style: AppTextStyles.bodyMuted(c, size: 10)),
+            ],
+          ),
         ),
       ),
     );

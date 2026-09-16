@@ -1,29 +1,17 @@
 "use strict";
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { FieldValue }         = require("firebase-admin/firestore");
-const { requireAdmin }       = require("../../middleware/auth");
-const { validate }           = require("../../middleware/validate");
 const { db, COL }            = require("../../lib/db");
 
 const DEFAULT_PAGE_SIZE = 12;
 const MAX_PAGE_SIZE     = 48;
 
-// ── Schemas ───────────────────────────────────────────────────────────────────
-
-const createProductSchema = {
-  name:             { required: true,  type: "string", min: 1, max: 200 },
-  description:      { required: true,  type: "string", min: 1 },
-  priceInCents:     { required: true,  type: "number", integer: true, positive: true },
-  category:         { required: true,  type: "string" },
-  sku:              { required: true,  type: "string", min: 1, max: 50 },
-  stockQuantity:    { required: true,  type: "number", integer: true, min: 0 },
-  images:           { required: true,  type: "array",  min: 1 },
-  isActive:         { required: false, type: "boolean" },
-  badge:            { required: false, type: "string", enum: ["new", "sale", "bestseller"] },
-  fragrance:        { required: false, type: "string" },
-  volumeMl:         { required: false, type: "number", positive: true },
-};
+// createProduct/updateProduct were removed here — the admin panel writes
+// products directly to Firestore via the client SDK (see
+// backend/firestore.rules, "Admin panel writes products directly via client
+// SDK"), which is the real, live path. These two callables were deployed but
+// had zero callers on either the admin panel or mobile app; keeping unused,
+// deployed write-path functions around just adds audit surface for no benefit.
 
 // ── getProducts ───────────────────────────────────────────────────────────────
 // Public. Direct Firestore read is equally valid for the client;
@@ -78,51 +66,6 @@ const getProductById = onCall({ region: "us-central1" }, async (request) => {
   return _toProduct(doc);
 });
 
-// ── createProduct (admin) ─────────────────────────────────────────────────────
-
-const createProduct = onCall({ region: "us-central1" }, async (request) => {
-  requireAdmin(request);
-  validate(request.data, createProductSchema);
-
-  const {
-    name, description, priceInCents, category, sku,
-    stockQuantity, images, isActive = true, badge = null,
-    fragrance = null, volumeMl = null,
-  } = request.data;
-
-  const ref = db.collection(COL.PRODUCTS).doc();
-  await ref.set({
-    name, description, priceInCents, category, sku,
-    stockQuantity, images, isActive, badge, fragrance, volumeMl,
-    createdAt: FieldValue.serverTimestamp(),
-    updatedAt: FieldValue.serverTimestamp(),
-  });
-
-  return { productId: ref.id };
-});
-
-// ── updateProduct (admin) ─────────────────────────────────────────────────────
-
-const updateProduct = onCall({ region: "us-central1" }, async (request) => {
-  requireAdmin(request);
-
-  const { productId, ...fields } = request.data || {};
-  if (!productId) throw new HttpsError("invalid-argument", "'productId' is required.");
-
-  // Whitelist updatable fields
-  const ALLOWED = [
-    "name", "description", "priceInCents", "category", "sku",
-    "stockQuantity", "images", "isActive", "badge", "fragrance", "volumeMl",
-  ];
-  const updates = { updatedAt: FieldValue.serverTimestamp() };
-  for (const key of ALLOWED) {
-    if (fields[key] !== undefined) updates[key] = fields[key];
-  }
-
-  await db.collection(COL.PRODUCTS).doc(productId).update(updates);
-  return { success: true };
-});
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function _toProduct(doc) {
@@ -144,4 +87,4 @@ function _toProduct(doc) {
   };
 }
 
-module.exports = { getProducts, getProductById, createProduct, updateProduct };
+module.exports = { getProducts, getProductById };

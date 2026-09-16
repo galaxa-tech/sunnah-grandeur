@@ -20,6 +20,16 @@ class ApiConfig {
 
   static bool get isPlacesConfigured => placesApiKey.isNotEmpty;
 
+  // ── Stripe (native-only card checkout) ─────────────────────────────────────
+  //
+  // Reads the value set in api_keys.json: { "STRIPE_KEY": "pk_live_..." }
+  // Publishable keys are safe to ship in a client build — only the secret key
+  // (held server-side in Cloud Functions) can move money.
+  static const stripePublishableKey =
+      String.fromEnvironment('STRIPE_KEY', defaultValue: '');
+
+  static bool get isStripeConfigured => stripePublishableKey.isNotEmpty;
+
   // ── Runtime guard (call from PlacesService) ───────────────────────────────
   //
   // Call this during development to catch missing key early.

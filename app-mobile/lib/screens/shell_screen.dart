@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/language_provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import '../widgets/onboarding_celebration_dialog.dart';
 import 'home/home_screen.dart';
 import 'media/media_hub_screen.dart';
 import 'shop/shop_home_screen.dart';
@@ -33,6 +35,20 @@ class _ShellScreenState extends State<ShellScreen> {
     ShopHomeScreen(),
     ProfileScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowCelebration());
+  }
+
+  Future<void> _maybeShowCelebration() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!(prefs.getBool('show_onboarding_celebration') ?? false)) return;
+    await prefs.setBool('show_onboarding_celebration', false);
+    if (!mounted) return;
+    await showOnboardingCelebration(context);
+  }
 
   void _onTabTapped(int index) {
     if (_currentIndex == index) {

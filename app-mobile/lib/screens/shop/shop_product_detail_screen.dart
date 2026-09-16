@@ -4,7 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/cart_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../models/product_model.dart';
+import '../../widgets/shop/product_reviews_section.dart';
 import 'shop_cart_screen.dart';
 
 // ─── Website colour tokens ────────────────────────────────────────────────────
@@ -48,11 +50,10 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
     return orig - widget.product.price;
   }
 
-  List<String> get _thumbs {
-    final imgs = widget.product.images;
-    if (imgs.isEmpty) return ['', '', ''];
-    return [imgs.first, imgs.first, imgs.first];
-  }
+  // Only the product's real images — never fabricate extra angles or a
+  // 360° view that doesn't exist (today's admin form only captures one
+  // image per product, so this is usually 0 or 1 real entries).
+  List<String> get _thumbs => widget.product.images;
 
   @override
   Widget build(BuildContext context) {
@@ -139,6 +140,17 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
                   _buildBuyBox(cart),
                 ],
               ),
+            const SizedBox(height: 32),
+            const Divider(color: _bd),
+            const SizedBox(height: 20),
+            ProductReviewsSection(
+              productId: widget.product.id,
+              goldColor: _gold,
+              surfaceColor: _surf,
+              borderColor: _bd,
+              textPrimary: _t1,
+              textSecondary: _t2,
+            ),
             const SizedBox(height: 48),
           ],
         ),
@@ -151,26 +163,30 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
     final p = widget.product;
     return Column(
       children: [
-        // Main image
-        AspectRatio(
-          aspectRatio: 1,
-          child: Container(
-            decoration: BoxDecoration(
-              color: _surf,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: _bd),
+        // Main image — same Hero tag as ProductCard, so opening this screen
+        // morphs the grid thumbnail straight into place instead of a flat cut.
+        Hero(
+          tag: 'product-image-${p.id}',
+          child: AspectRatio(
+            aspectRatio: 1,
+            child: Container(
+              decoration: BoxDecoration(
+                color: _surf,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: _bd),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: p.primaryImage.isNotEmpty
+                  ? Image.network(
+                      _activeThumb < _thumbs.length
+                          ? _thumbs[_activeThumb]
+                          : p.primaryImage,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) =>
+                          _buildGradientFallback(p),
+                    )
+                  : _buildGradientFallback(p),
             ),
-            clipBehavior: Clip.antiAlias,
-            child: p.primaryImage.isNotEmpty
-                ? Image.network(
-                    _thumbs[_activeThumb].isNotEmpty
-                        ? _thumbs[_activeThumb]
-                        : p.primaryImage,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
-                        _buildGradientFallback(p),
-                  )
-                : _buildGradientFallback(p),
           ),
         ),
         const SizedBox(height: 8),
@@ -201,23 +217,6 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
                 ),
               ),
             )),
-            // 360° placeholder thumb
-            Container(
-              width: 64, height: 64,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: _bd),
-                color: _surf,
-              ),
-              alignment: Alignment.center,
-              child: Text('360°\nView',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.manrope(
-                  fontSize: 9, color: _t2,
-                  fontWeight: FontWeight.w500,
-                  height: 1.3,
-                )),
-            ),
           ],
         ),
       ],
@@ -246,13 +245,14 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
   // ── CENTER: Product details ─────────────────────────────────────────────────
   Widget _buildDetails() {
     final p = widget.product;
+    final lang = context.watch<LanguageProvider>();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Store link
         GestureDetector(
-          child: Text('Visit the Sunnah Grandeur Store',
+          child: Text(lang.tr('visit_store'),
             style: GoogleFonts.manrope(
               fontSize: 13, color: _gold,
               decoration: TextDecoration.underline,
@@ -269,52 +269,8 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
           )),
         const SizedBox(height: 16),
 
-        // Stars + badges
-        Row(
-          children: [
-            ...List.generate(4, (_) => const Icon(Icons.star_rounded,
-                color: _gold, size: 18)),
-            const Icon(Icons.star_half_rounded, color: _gold, size: 18),
-            const SizedBox(width: 6),
-            Text('4.3',
-              style: GoogleFonts.manrope(
-                fontSize: 13, color: _gold,
-                decoration: TextDecoration.underline,
-                decorationColor: _gold,
-              )),
-            const SizedBox(width: 6),
-            Text('(167,855)',
-              style: GoogleFonts.manrope(fontSize: 13, color: _t2)),
-            if (!_isSoldOut) ...[
-              const SizedBox(width: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1b4332),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text("Customers' Choice",
-                  style: GoogleFonts.manrope(
-                    fontSize: 11, fontWeight: FontWeight.bold,
-                    color: const Color(0xFF52b788),
-                  )),
-              ),
-            ],
-          ],
-        ),
-        if (!_isSoldOut) ...[
-          const SizedBox(height: 8),
-          Text.rich(
-            TextSpan(children: [
-              TextSpan(text: '2K+ ',
-                style: GoogleFonts.manrope(
-                  fontSize: 13, fontWeight: FontWeight.w600,
-                  color: _t1)),
-              TextSpan(text: 'bought in the past month',
-                style: GoogleFonts.manrope(fontSize: 13, color: _t2)),
-            ]),
-          ),
-        ],
+        // No rating badge here — real per-product average now shown in the
+        // Reviews section below, not fabricated inline.
 
         const SizedBox(height: 16),
         const Divider(color: _bd),
@@ -329,7 +285,7 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
               color: const Color(0xFF7f1d1d),
               borderRadius: BorderRadius.circular(4),
             ),
-            child: Text('Limited time deal',
+            child: Text(lang.tr('limited_time_deal'),
               style: GoogleFonts.manrope(
                 fontSize: 11, fontWeight: FontWeight.bold,
                 color: Colors.white)),
@@ -418,6 +374,7 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
   // ── RIGHT: Buy box ──────────────────────────────────────────────────────────
   Widget _buildBuyBox(CartProvider cart) {
     final p = widget.product;
+    final lang = context.watch<LanguageProvider>();
 
     return Column(
       children: [
@@ -432,7 +389,7 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Buy New',
+              Text(lang.tr('buy_new'),
                 style: GoogleFonts.manrope(fontSize: 11, color: _t2)),
               const SizedBox(height: 4),
               Text('\$${p.price.toInt()}',
@@ -450,14 +407,14 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text.rich(TextSpan(children: [
-                        TextSpan(text: 'FREE ',
+                        TextSpan(text: lang.tr('free_shipping_prefix'),
                           style: GoogleFonts.manrope(
                             fontSize: 13, fontWeight: FontWeight.w600,
                             color: const Color(0xFF4ade80))),
-                        TextSpan(text: 'shipping on every purchase',
+                        TextSpan(text: lang.tr('free_shipping_line'),
                           style: GoogleFonts.manrope(fontSize: 13, color: _t2)),
                       ])),
-                      Text('Free Delivery Across the USA',
+                      Text(lang.tr('free_delivery_usa'),
                         style: GoogleFonts.manrope(fontSize: 11, color: _t2)),
                     ],
                   )),
@@ -467,7 +424,7 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
 
               // Stock status
               Text(
-                _isSoldOut ? 'Currently Unavailable' : 'In Stock',
+                _isSoldOut ? lang.tr('currently_unavailable') : lang.tr('in_stock'),
                 style: GoogleFonts.manrope(
                   fontSize: 13, fontWeight: FontWeight.w600,
                   color: _isSoldOut
@@ -481,7 +438,7 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
               if (!_isSoldOut) ...[
                 Row(
                   children: [
-                    Text('Quantity:',
+                    Text(lang.tr('quantity_label'),
                       style: GoogleFonts.manrope(fontSize: 11, color: _t2)),
                     const SizedBox(width: 12),
                     Container(
@@ -528,22 +485,22 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
 
               // CTAs
               if (_isSoldOut)
-                const _FilledBtn(
-                  label: 'OUT OF STOCK',
+                _FilledBtn(
+                  label: lang.tr('out_of_stock_caps'),
                   onTap: null,
                   disabled: true,
                 )
               else
                 Column(children: [
                   _FilledBtn(
-                    label:  'ADD TO CART',
+                    label:  lang.tr('add_to_cart_caps'),
                     icon:   Icons.shopping_bag_outlined,
                     onTap:  () => _doAddToCart(cart),
                     gold:   true,
                   ),
                   const SizedBox(height: 8),
                   _FilledBtn(
-                    label:  'BUY NOW',
+                    label:  lang.tr('buy_now_caps'),
                     onTap:  () => _doBuyNow(cart),
                     orange: true,
                   ),
@@ -611,7 +568,7 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text.rich(TextSpan(children: [
-                          TextSpan(text: 'Add premium gift wrapping for ',
+                          TextSpan(text: lang.tr('gift_wrap_prefix'),
                             style: GoogleFonts.manrope(
                               fontSize: 11, color: _t2)),
                           TextSpan(text: '\$5',
@@ -774,21 +731,22 @@ class _BreadSep extends StatelessWidget {
 class _DeliverySection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    const items = [
-      (Icons.local_shipping_outlined,    'Free Delivery',  'Across the USA'),
-      (Icons.inventory_2_outlined,       'Ships from',     'Sunnah Grandeur'),
-      (Icons.assignment_return_outlined, '30-day Easy',    'Returns'),
-      (Icons.support_agent_outlined,     'Customer',       'Support'),
+    final lang = context.watch<LanguageProvider>();
+    final items = [
+      (Icons.local_shipping_outlined,    lang.tr('free_delivery'), lang.tr('across_usa')),
+      (Icons.inventory_2_outlined,       lang.tr('ships_from'),    lang.tr('app_name')),
+      (Icons.assignment_return_outlined, lang.tr('returns_30day'), lang.tr('returns')),
+      (Icons.support_agent_outlined,     lang.tr('customer'),      lang.tr('support')),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('DELIVERY & SUPPORT',
+        Text(lang.tr('delivery_support'),
           style: GoogleFonts.manrope(
             fontSize: 11, fontWeight: FontWeight.bold,
             color: _t1, letterSpacing: 2.0)),
         const SizedBox(height: 4),
-        Text('Select to learn more',
+        Text(lang.tr('select_to_learn_more'),
           style: GoogleFonts.manrope(fontSize: 11, color: _t2)),
         const SizedBox(height: 12),
         Wrap(

@@ -200,7 +200,7 @@ class _ForbiddenTimesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fmt = DateFormat('h:mm a');
+    final fmt = context.read<PrayerProvider>().formatTime;
 
     final sunriseEnd  = times.sunrise.add(const Duration(minutes: 20));
     final zawalStart  = times.dhuhr.subtract(const Duration(minutes: 18));
@@ -232,17 +232,17 @@ class _ForbiddenTimesSection extends StatelessWidget {
             _ForbiddenRow(c: c,
                 name: lang.tr('sunrise'),
                 sub:  'Ishraq · avoid prayer',
-                time: '${fmt.format(times.sunrise)} – ${fmt.format(sunriseEnd)}'),
+                time: '${fmt(times.sunrise)} – ${fmt(sunriseEnd)}'),
             const SizedBox(height: 9),
             _ForbiddenRow(c: c,
                 name: 'Zawal Noon',
                 sub:  'Before Dhuhr · 18 min',
-                time: '${fmt.format(zawalStart)} – ${fmt.format(times.dhuhr)}'),
+                time: '${fmt(zawalStart)} – ${fmt(times.dhuhr)}'),
             const SizedBox(height: 9),
             _ForbiddenRow(c: c,
                 name: lang.tr('sunset'),
                 sub:  'Before Maghrib · 20 min',
-                time: '${fmt.format(sunsetStart)} – ${fmt.format(times.maghrib)}'),
+                time: '${fmt(sunsetStart)} – ${fmt(times.maghrib)}'),
           ]),
         ),
       ]),

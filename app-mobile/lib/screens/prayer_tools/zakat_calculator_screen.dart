@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import '../../providers/language_provider.dart';
+import '../../services/metal_prices_service.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../widgets/eye_row.dart';
@@ -21,8 +24,8 @@ class _ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
   static const double _nisabGoldGrams = 85.0;
   static const double _zakatRate = 0.025; // 2.5%
 
-  // Placeholder market prices — clearly labelled in the UI as needing an
-  // up-to-date value; there is no bundled live gold/silver price feed.
+  // Fallback values shown while the live price (see MetalPricesService)
+  // loads, or if that fetch fails — always editable either way.
   static const double _defaultGoldPricePerGram = 75.0;
   static const double _defaultSilverPricePerGram = 0.95;
 
@@ -35,6 +38,9 @@ class _ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
       TextEditingController(text: _defaultGoldPricePerGram.toStringAsFixed(2));
   final _silverPriceCtrl = TextEditingController(
       text: _defaultSilverPricePerGram.toStringAsFixed(2));
+
+  bool _loadingLivePrices = false;
+  bool _usingLivePrices = false;
 
   @override
   void initState() {
@@ -50,6 +56,21 @@ class _ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
     ]) {
       c.addListener(() => setState(() {}));
     }
+    _refreshLivePrices();
+  }
+
+  Future<void> _refreshLivePrices() async {
+    setState(() => _loadingLivePrices = true);
+    final prices = await MetalPricesService.instance.fetchLivePrices();
+    if (!mounted) return;
+    setState(() {
+      _loadingLivePrices = false;
+      if (prices != null) {
+        _goldPriceCtrl.text = prices.goldUsdPerGram.toStringAsFixed(2);
+        _silverPriceCtrl.text = prices.silverUsdPerGram.toStringAsFixed(2);
+        _usingLivePrices = true;
+      }
+    });
   }
 
   @override
@@ -69,6 +90,7 @@ class _ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final lang = context.watch<LanguageProvider>();
 
     final cash = _num(_cashCtrl);
     final goldGrams = _num(_goldGramsCtrl);
@@ -98,8 +120,8 @@ class _ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
               Expanded(child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Zakat Calculator', style: AppTextStyles.heading(c, fontSize: 19)),
-                  Text('CALCULATE YOUR ANNUAL ZAKAT', style: AppTextStyles.brandTag(c)),
+                  Text(lang.tr('zakat_calculator'), style: AppTextStyles.heading(c, fontSize: 19)),
+                  Text(lang.tr('zakat_calc_tag'), style: AppTextStyles.brandTag(c)),
                 ],
               )),
             ]),
@@ -135,12 +157,10 @@ class _ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('About Zakat', style: AppTextStyles.displaySm(c).copyWith(fontSize: 14)),
+                            Text(lang.tr('about_zakat'), style: AppTextStyles.displaySm(c).copyWith(fontSize: 14)),
                             const SizedBox(height: 3),
                             Text(
-                              'Zakat is due once your total zakatable wealth has met or exceeded the Nisab '
-                              '(the value of 85g of gold) and has been held for one lunar year. Enter your '
-                              'assets below to see what you owe.',
+                              lang.tr('about_zakat_body'),
                               style: AppTextStyles.bodyMuted(c, size: 10).copyWith(height: 1.55),
                             ),
                           ],
@@ -150,57 +170,73 @@ class _ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
                   ),
                 ),
 
-                const EyeRow(label: 'YOUR ZAKATABLE ASSETS'),
+                EyeRow(label: lang.tr('your_zakatable_assets')),
                 _AmountField(
-                  c: c, label: 'Cash & Savings',
-                  hint: 'Bank balances, cash on hand',
+                  c: c, label: lang.tr('cash_savings'),
+                  hint: lang.tr('cash_savings_hint'),
                   controller: _cashCtrl,
                 ),
                 _AmountField(
-                  c: c, label: 'Gold You Own (grams)',
-                  hint: 'Total weight of gold owned',
+                  c: c, label: lang.tr('gold_owned'),
+                  hint: lang.tr('gold_owned_hint'),
                   controller: _goldGramsCtrl,
                   suffix: 'g',
                 ),
                 _AmountField(
-                  c: c, label: 'Silver You Own (grams)',
-                  hint: 'Total weight of silver owned',
+                  c: c, label: lang.tr('silver_owned'),
+                  hint: lang.tr('silver_owned_hint'),
                   controller: _silverGramsCtrl,
                   suffix: 'g',
                 ),
                 _AmountField(
-                  c: c, label: 'Business Assets / Inventory',
-                  hint: 'Value of stock-in-trade & receivables',
+                  c: c, label: lang.tr('business_assets'),
+                  hint: lang.tr('business_assets_hint'),
                   controller: _businessCtrl,
                 ),
                 _AmountField(
-                  c: c, label: 'Other Investments',
-                  hint: 'Stocks, crypto, other zakatable holdings',
+                  c: c, label: lang.tr('other_investments'),
+                  hint: lang.tr('other_investments_hint'),
                   controller: _investmentsCtrl,
                 ),
 
                 const SizedBox(height: 6),
-                const EyeRow(
-                  label: 'CURRENT MARKET PRICES',
-                  trailing: SgPill(label: 'Update with today\'s price', variant: 'gold', fontSize: 7.5),
+                EyeRow(
+                  label: lang.tr('current_market_prices'),
+                  trailing: GestureDetector(
+                    onTap: _loadingLivePrices ? null : _refreshLivePrices,
+                    child: _loadingLivePrices
+                        ? SizedBox(
+                            width: 12, height: 12,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 1.5, color: c.gold),
+                          )
+                        : SgPill(
+                            label: _usingLivePrices
+                                ? lang.tr('live_price_refresh')
+                                : lang.tr('tap_fetch_price'),
+                            variant: 'gold',
+                            fontSize: 7.5,
+                          ),
+                  ),
                 ),
                 _AmountField(
-                  c: c, label: 'Gold Price (per gram)',
-                  hint: 'Used for gold value & Nisab threshold',
+                  c: c, label: lang.tr('gold_price_gram'),
+                  hint: lang.tr('gold_price_gram_hint'),
                   controller: _goldPriceCtrl,
                   prefix: '\$',
                 ),
                 _AmountField(
-                  c: c, label: 'Silver Price (per gram)',
-                  hint: 'Used for silver value',
+                  c: c, label: lang.tr('silver_price_gram'),
+                  hint: lang.tr('silver_price_gram_hint'),
                   controller: _silverPriceCtrl,
                   prefix: '\$',
                 ),
 
                 const SizedBox(height: 10),
-                const EyeRow(label: 'RESULT'),
+                EyeRow(label: lang.tr('zakat_result')),
                 _ResultCard(
                   c: c,
+                  lang: lang,
                   totalWealth: totalWealth,
                   nisab: nisab,
                   meetsNisab: meetsNisab,
@@ -294,6 +330,7 @@ class _AmountField extends StatelessWidget {
 class _ResultCard extends StatelessWidget {
   const _ResultCard({
     required this.c,
+    required this.lang,
     required this.totalWealth,
     required this.nisab,
     required this.meetsNisab,
@@ -303,6 +340,7 @@ class _ResultCard extends StatelessWidget {
   });
 
   final AppColors c;
+  final LanguageProvider lang;
   final double totalWealth;
   final double nisab;
   final bool meetsNisab;
@@ -333,19 +371,19 @@ class _ResultCard extends StatelessWidget {
       decoration: c.goldCardDecoration,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text('TOTAL ZAKATABLE WEALTH', style: AppTextStyles.brandTag(c)),
+          Text(lang.tr('total_zakatable_wealth'), style: AppTextStyles.brandTag(c)),
           Text(_fmt(totalWealth), style: AppTextStyles.body(c, size: 13, weight: FontWeight.w600)),
         ]),
         if (goldValue > 0 || silverValue > 0) ...[
           const SizedBox(height: 6),
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Text('  Gold + Silver value', style: AppTextStyles.bodyMuted(c, size: 10)),
+            Text('  ${lang.tr('gold_silver_value')}', style: AppTextStyles.bodyMuted(c, size: 10)),
             Text(_fmt(goldValue + silverValue), style: AppTextStyles.bodyMuted(c, size: 10)),
           ]),
         ],
         const SizedBox(height: 8),
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text('NISAB THRESHOLD (85g GOLD)', style: AppTextStyles.brandTag(c).copyWith(color: c.t3)),
+          Text(lang.tr('nisab_threshold'), style: AppTextStyles.brandTag(c).copyWith(color: c.t3)),
           Text(_fmt(nisab), style: AppTextStyles.body(c, size: 13, color: c.t2)),
         ]),
         const SizedBox(height: 14),
@@ -355,10 +393,10 @@ class _ResultCard extends StatelessWidget {
           Row(children: [
             Icon(Icons.check_circle_rounded, color: c.green, size: 18),
             const SizedBox(width: 8),
-            Text('Zakat is due this year', style: AppTextStyles.heading(c, fontSize: 14, color: c.green)),
+            Text(lang.tr('zakat_due_this_year'), style: AppTextStyles.heading(c, fontSize: 14, color: c.green)),
           ]),
           const SizedBox(height: 10),
-          Text('ZAKAT DUE (2.5%)', style: AppTextStyles.brandTag(c)),
+          Text(lang.tr('zakat_due_pct'), style: AppTextStyles.brandTag(c)),
           const SizedBox(height: 2),
           Text(_fmt(zakatDue), style: AppTextStyles.displaySm(c).copyWith(fontSize: 30, color: c.gold)),
         ] else ...[
@@ -367,7 +405,7 @@ class _ResultCard extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Your total wealth is below the Nisab threshold — no Zakat is due this year.',
+                lang.tr('below_nisab_notice'),
                 style: AppTextStyles.body(c, size: 12.5, color: c.t2),
               ),
             ),

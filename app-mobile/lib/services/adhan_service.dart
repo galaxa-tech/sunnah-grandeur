@@ -6,11 +6,10 @@ import '../models/adhan_settings.dart';
 
 // ── Asset setup ───────────────────────────────────────────────────────────────
 //
-// Required audio files (place in assets/audio/):
+// Audio files (in assets/audio/ — see README.md there for source/license):
 //   adhan.mp3          — Classic/default Adhan
-//   adhan_makkah.mp3   — Makkah Adhan (optional)
-//   adhan_madinah.mp3  — Madinah Adhan (optional)
-//   adhan_fajr.mp3     — Fajr-specific Adhan (optional)
+//   adhan_makkah.mp3   — Second Adhan option
+//   adhan_madinah.mp3  — Third Adhan option
 //
 // Also copy each .mp3 to:
 //   android/app/src/main/res/raw/   (for notification sound)
@@ -34,7 +33,6 @@ class AdhanService {
   // ── Init ──────────────────────────────────────────────────────────────────
 
   Future<void> init({String soundKey = 'adhan_classic'}) async {
-    if (kIsWeb) return;
     await _loadSound(soundKey);
   }
 
@@ -61,7 +59,6 @@ class AdhanService {
     String soundKey = 'adhan_classic',
     double volume   = 1.0,
   }) async {
-    if (kIsWeb) return;
     if (_loadedKey != soundKey || !_isReady) await _loadSound(soundKey);
     if (!_isReady) return;
     try {
@@ -78,7 +75,6 @@ class AdhanService {
   /// Returns false when the audio asset is missing, so the caller can tell
   /// the user why nothing played instead of leaving it a silent mystery.
   Future<bool> previewSound(String soundKey, {double volume = 1.0}) async {
-    if (kIsWeb) return false;
     final sound = soundByKey(soundKey);
     try {
       await rootBundle.load(sound.assetPath);
@@ -118,7 +114,6 @@ class AdhanService {
 
   void scheduleForegroundAdhan(DateTime prayerTime,
       {String soundKey = 'adhan_classic', double volume = 1.0}) {
-    if (kIsWeb) return;
     _fgTimer?.cancel();
     final delay = prayerTime.difference(DateTime.now());
     if (delay.isNegative || delay.inHours > 12) return;

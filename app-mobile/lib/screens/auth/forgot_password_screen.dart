@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../widgets/app_snackbar.dart';
@@ -24,9 +25,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   Future<void> _handleReset() async {
+    final lang = context.read<LanguageProvider>();
     final email = _emailCtrl.text.trim();
     if (email.isEmpty) {
-      showAppSnackbar(context, 'Please enter your email',
+      showAppSnackbar(context, lang.tr('enter_email_prompt'),
           type: AppSnackbarType.error);
       return;
     }
@@ -38,11 +40,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     if (mounted) {
       setState(() => _isLoading = false);
       if (success) {
-        showAppSnackbar(context, 'Password reset link sent to your email',
+        showAppSnackbar(context, lang.tr('reset_link_sent'),
             type: AppSnackbarType.success);
         Navigator.pop(context);
       } else {
-        showAppSnackbar(context, 'Failed to send reset link. Please try again.',
+        showAppSnackbar(context, lang.tr('reset_link_failed'),
             type: AppSnackbarType.error);
       }
     }
@@ -51,6 +53,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final lang = context.watch<LanguageProvider>();
     return Scaffold(
       backgroundColor: c.bg,
       appBar: AppBar(
@@ -69,19 +72,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             children: [
               const SizedBox(height: 20),
               // Brand
-              Text('Sunnah Grandeur', style: AppTextStyles.brand(c)),
+              Text(lang.tr('app_name'), style: AppTextStyles.brand(c)),
               const SizedBox(height: 40),
-              
-              Text('Reset Password', style: AppTextStyles.displayMd(c)),
+
+              Text(lang.tr('reset_password_title'), style: AppTextStyles.displayMd(c)),
               const SizedBox(height: 8),
-              Text('Enter your email to receive a password reset link', 
+              Text(lang.tr('reset_password_sub'),
                 style: AppTextStyles.italic(c, fontSize: 13),
                 textAlign: TextAlign.center),
 
               const SizedBox(height: 40),
-              
+
               _AuthField(
-                label: 'Email',
+                label: lang.tr('email'),
                 controller: _emailCtrl,
                 icon: Icons.email_outlined,
                 keyboardType: TextInputType.emailAddress,
@@ -89,11 +92,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ),
 
               const SizedBox(height: 30),
-              
+
               _isLoading
                 ? CircularProgressIndicator(color: c.gold)
                 : _GoldButton(
-                    label: 'Send Reset Link',
+                    label: lang.tr('send_reset_link'),
                     onTap: _handleReset,
                   ),
             ],

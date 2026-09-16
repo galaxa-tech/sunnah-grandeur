@@ -1,5 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+// The admin panel's product form is labeled "Price (BDT)" and writes a plain
+// decimal `price` field as Bangladeshi Taka (e.g. 550 meaning ৳550) — not
+// already-USD dollars. The actual rate lives in Firestore
+// (`settings/app_config.usdToLocalRate`, streamed by StoreProvider) so this,
+// the admin panel, and the backend all read the SAME value at runtime
+// instead of each hardcoding an independent copy that can silently drift.
+// kDefaultBdtToUsdRate is only the fallback used before that doc loads.
+// TODO: remove once the admin panel stores real USD prices directly.
+const double kDefaultBdtToUsdRate = 1 / 118;
+
 class ProductModel {
   final String        id;
   final String        name;
@@ -57,11 +67,22 @@ class ProductModel {
 
   // ── Serialisation ─────────────────────────────────────────────────────────
 
-  factory ProductModel.fromMap(Map<String, dynamic> map, String docId) {
-    // Accept both new schema (priceInCents) and legacy float price field
-    final int parsedPrice = map['priceInCents'] is int
-        ? map['priceInCents'] as int
-        : (((map['price'] ?? map['priceInCents'] ?? 0) as num).toDouble() * 100).round();
+  factory ProductModel.fromMap(
+    Map<String, dynamic> map,
+    String docId, {
+    double usdToLocalRate = kDefaultBdtToUsdRate,
+  }) {
+    // Every real product document carries BOTH fields today: `price` (the
+    // BDT number the admin actually typed) and `priceInCents` (just that
+    // same number × 100 — BDT paisa, NOT USD cents, despite the name). The
+    // website and the order backend both read `price` first for exactly
+    // this reason; this must match or the same product prices differently
+    // on each surface. Only fall back to treating `priceInCents` as real
+    // USD cents when `price` is absent (a product saved with real USD
+    // pricing directly, once the admin panel is updated to do that).
+    final int parsedPrice = map['price'] is num
+        ? ((map['price'] as num).toDouble() * usdToLocalRate * 100).round()
+        : (map['priceInCents'] is num ? (map['priceInCents'] as num).toInt() : 0);
 
     return ProductModel(
       id:            docId,
@@ -83,11 +104,9 @@ class ProductModel {
       stockQuantity: ((map['stockQuantity'] ?? map['stock'] ?? 0) as num).toInt(),
       isActive:      (map['isActive']     ?? true)           as bool,
       categoryId:     _slug(map['categoryId'] ?? map['categorySlug'] ?? map['category'] ?? ''),
-      originalPriceInCents: map['originalPriceInCents'] is num
-          ? (map['originalPriceInCents'] as num).toInt()
-          : map['originalPrice'] == null
-              ? null
-              : ((map['originalPrice'] as num).toDouble() * 100).round(),
+      originalPriceInCents: map['originalPrice'] is num
+          ? ((map['originalPrice'] as num).toDouble() * usdToLocalRate * 100).round()
+          : (map['originalPriceInCents'] is num ? (map['originalPriceInCents'] as num).toInt() : null),
       isFeatured:     (map['isFeatured'] ?? map['featured'] ?? false) as bool,
       badge:          map['badge']     as String?,
       fragrance:      map['fragrance'] as String?,

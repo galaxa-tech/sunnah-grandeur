@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
-import { collection, onSnapshot, doc, updateDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { collection, onSnapshot } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
+import { db, functions } from "@/lib/firebase";
 
 export default function UserManagementPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -38,18 +39,24 @@ export default function UserManagementPage() {
 
   const handleToggleUserRole = async (userId: string, currentRole: string) => {
     if (userId.startsWith("admin-")) return;
+    const newRole = currentRole === "admin" || currentRole === "superAdmin" ? "user" : "admin";
     try {
-      const newRole = currentRole === "admin" ? "user" : "admin";
-      await updateDoc(doc(db, "users", userId), { role: newRole });
-    } catch (err) {
+      // Firestore rules gate real admin access on the Firebase Auth custom
+      // claim, not the /users/{uid}.role field — a direct Firestore write
+      // here would just relabel the row without granting any real access.
+      // setUserRole sets the actual claim (and mirrors it to Firestore).
+      const setUserRole = httpsCallable(functions, "setUserRole");
+      await setUserRole({ targetUid: userId, role: newRole });
+    } catch (err: any) {
       console.error("Error updating user role:", err);
+      alert(err?.message || "Failed to update role.");
     }
   };
 
   return (
     <div className="flex">
       <Sidebar />
-      <main className="ml-64 min-h-screen flex-grow flex flex-col bg-bg-primary relative overflow-hidden">
+      <main className="ml-0 md:ml-64 min-h-screen flex-grow flex flex-col bg-bg-primary relative overflow-hidden">
         <Header title="User Management" />
 
         {/* Content Canvas */}

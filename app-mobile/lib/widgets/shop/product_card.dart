@@ -66,8 +66,10 @@ class _ProductCardState extends State<ProductCard> {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    // Image / gradient fallback
-                    _buildImageArea(p),
+                    // Image / gradient fallback — Hero-tagged so tapping a
+                    // card morphs straight into the PDP's main image instead
+                    // of a flat cut, matching the tag used there.
+                    Hero(tag: 'product-image-${p.id}', child: _buildImageArea(p)),
 
                     // Left badge (tag)
                     if (p.badge != null)

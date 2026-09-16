@@ -1,5 +1,24 @@
 name: Build & Release Mobile App
 
+# ── Required GitHub Secrets ────────────────────────────────────────────────
+# (Settings → Secrets and variables → Actions, on this repo)
+#
+# Always needed for a real release build:
+#   PLACES_API_KEY          — Google Places key (api_keys.json → PLACES_API_KEY)
+#   STRIPE_PUBLISHABLE_KEY  — Stripe pk_live_/pk_test_ key (api_keys.json → STRIPE_KEY)
+#
+# Needed for a Play-Console-uploadable signed AAB (falls back to debug
+# signing with a warning if any of these four are missing):
+#   ANDROID_KEYSTORE_BASE64 — `base64 -w0 android/upload-keystore.jks`
+#   ANDROID_KEYSTORE_PASSWORD
+#   ANDROID_KEY_ALIAS
+#   ANDROID_KEY_PASSWORD
+#
+# Needed for the iOS job to actually sign (currently builds unsigned to at
+# least catch compile errors — see the ios job below for what's still
+# missing to produce a real, uploadable .ipa):
+#   APPLE_TEAM_ID
+
 on:
   push:
     branches: [ main, master ]
@@ -8,8 +27,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build Flutter Android App
+  build-android:
+    name: Build Android (APK + AAB)
     runs-on: ubuntu-latest
 
     steps:
@@ -37,13 +56,58 @@ jobs:
         run: flutter analyze
         working-directory: ./app-mobile
 
-      - name: Build Android Release APK
-        run: flutter build apk --release
+      # Reconstructs the gitignored api_keys.json from secrets so this build
+      # gets the same --dart-define-from-file config a local dev build does.
+      - name: Write api_keys.json from secrets
+        env:
+          PLACES_API_KEY: ${{ secrets.PLACES_API_KEY }}
+          STRIPE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+        run: |
+          cat > app-mobile/api_keys.json <<EOF
+          {
+            "PLACES_API_KEY": "${PLACES_API_KEY}",
+            "STRIPE_KEY": "${STRIPE_KEY}"
+          }
+          EOF
+
+      # Reconstructs the gitignored release keystore + key.properties from
+      # secrets. If any secret is unset, key.properties is skipped entirely
+      # and the Gradle config (see android/app/build.gradle.kts) falls back
+      # to debug signing with a build-time warning rather than failing.
+      - name: Write Android signing config from secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > app-mobile/android/upload-keystore.jks
+            cat > app-mobile/android/key.properties <<EOF
+          storeFile=upload-keystore.jks
+          storePassword=${STORE_PASSWORD}
+          keyAlias=${KEY_ALIAS}
+          keyPassword=${KEY_PASSWORD}
+          EOF
+            echo "Release signing configured."
+          else
+            echo "::warning::ANDROID_KEYSTORE_BASE64 secret not set — this build will be DEBUG-signed and cannot be uploaded to Play Console."
+          fi
+
+      # versionCode must strictly increase on every Play Console upload —
+      # the run number is a simple, always-increasing source for it.
+      - name: Build Android Release APK + AAB
+        run: |
+          flutter build apk --release --dart-define-from-file=api_keys.json --build-number=${{ github.run_number }}
+          flutter build appbundle --release --dart-define-from-file=api_keys.json --build-number=${{ github.run_number }}
         working-directory: ./app-mobile
 
-      - name: Build Android App Bundle (AAB)
-        run: flutter build appbundle --release
-        working-directory: ./app-mobile
+      - name: Fail on placeholder API keys in the build output
+        run: |
+          if grep -rIl "YOUR_GOOGLE_MAPS_API_KEY\|YOUR_.*_API_KEY\|sk_test_placeholder" app-mobile/build/app/outputs/; then
+            echo "::error::Placeholder API key found in the Android build output — see files listed above."
+            exit 1
+          fi
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
@@ -51,11 +115,52 @@ jobs:
           name: app-release-apk
           path: app-mobile/build/app/outputs/flutter-apk/app-release.apk
 
-      - name: Upload AAB Artifact
+      - name: Upload AAB Artifact (upload this one to Play Console)
         uses: actions/upload-artifact@v4
         with:
           name: app-release-aab
           path: app-mobile/build/app/outputs/bundle/release/app-release.aab
+
+  build-ios:
+    name: Build iOS (unsigned — verifies compile only)
+    runs-on: macos-latest
+    # Placeholder for real signing — see the header comment above. Without
+    # APPLE_TEAM_ID + a provisioning approach (Fastlane match, or manual
+    # certificate/profile secrets), this job can only prove the Dart/iOS
+    # side compiles; it does not produce an installable .ipa yet.
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+        working-directory: ./app-mobile
+
+      - name: Write api_keys.json from secrets
+        env:
+          PLACES_API_KEY: ${{ secrets.PLACES_API_KEY }}
+          STRIPE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+        run: |
+          cat > app-mobile/api_keys.json <<EOF
+          {
+            "PLACES_API_KEY": "${PLACES_API_KEY}",
+            "STRIPE_KEY": "${STRIPE_KEY}"
+          }
+          EOF
+
+      - name: Install CocoaPods dependencies
+        run: pod install
+        working-directory: ./app-mobile/ios
+
+      - name: Build iOS (no codesign)
+        run: flutter build ios --release --no-codesign --dart-define-from-file=api_keys.json --build-number=${{ github.run_number }}
+        working-directory: ./app-mobile
 
   build-web:
     name: Build Flutter Web App (Firebase Hosting "app" target)
@@ -75,8 +180,20 @@ jobs:
         run: flutter pub get
         working-directory: ./app-mobile
 
+      - name: Write api_keys.json from secrets
+        env:
+          PLACES_API_KEY: ${{ secrets.PLACES_API_KEY }}
+          STRIPE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+        run: |
+          cat > app-mobile/api_keys.json <<EOF
+          {
+            "PLACES_API_KEY": "${PLACES_API_KEY}",
+            "STRIPE_KEY": "${STRIPE_KEY}"
+          }
+          EOF
+
       - name: Build Web Release
-        run: flutter build web --release
+        run: flutter build web --release --dart-define-from-file=api_keys.json
         working-directory: ./app-mobile
 
       # Placeholder API keys shipping to production is exactly how Masjid

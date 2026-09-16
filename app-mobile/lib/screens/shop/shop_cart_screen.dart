@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/cart_provider.dart';
+import '../../providers/store_provider.dart';
+import '../../providers/language_provider.dart';
 import '../store/checkout_screen.dart';
 
 // ─── Website colour tokens ────────────────────────────────────────────────────
@@ -25,6 +27,7 @@ class ShopCartScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cart   = context.watch<CartProvider>();
+    final lang   = context.watch<LanguageProvider>();
     final w      = MediaQuery.of(context).size.width;
     final isWide = w > 900;
 
@@ -39,32 +42,32 @@ class ShopCartScreen extends StatelessWidget {
               color: _t2, size: 18),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Cart',
+        title: Text(lang.tr('cart'),
           style: GoogleFonts.notoSerif(
             fontSize: 18, fontWeight: FontWeight.bold, color: _t1)),
       ),
       body: cart.items.isEmpty
-          ? _buildEmptyCart(context)
-          : _buildCartContent(context, cart, isWide),
+          ? _buildEmptyCart(context, lang)
+          : _buildCartContent(context, cart, isWide, lang),
     );
   }
 
-  Widget _buildEmptyCart(BuildContext context) {
+  Widget _buildEmptyCart(BuildContext context, LanguageProvider lang) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(Icons.shopping_bag_outlined, size: 72, color: _bd),
           const SizedBox(height: 20),
-          Text('Your cart is empty',
+          Text(lang.tr('cart_empty_title'),
             style: GoogleFonts.notoSerif(
               fontSize: 22, fontWeight: FontWeight.bold, color: _t1)),
           const SizedBox(height: 8),
-          Text('Add items from the shop to get started.',
+          Text(lang.tr('cart_empty_sub'),
             style: GoogleFonts.manrope(fontSize: 14, color: _t2)),
           const SizedBox(height: 24),
           _GoldButton(
-            label: 'CONTINUE SHOPPING',
+            label: lang.tr('continue_shopping').toUpperCase(),
             onTap: () => Navigator.pop(context),
           ),
         ],
@@ -73,7 +76,7 @@ class ShopCartScreen extends StatelessWidget {
   }
 
   Widget _buildCartContent(
-      BuildContext context, CartProvider cart, bool isWide) {
+      BuildContext context, CartProvider cart, bool isWide, LanguageProvider lang) {
     final headerPad = isWide ? 48.0 : 20.0;
 
     final header = Padding(
@@ -81,11 +84,11 @@ class ShopCartScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Your Cart',
+          Text(lang.tr('your_cart'),
             style: GoogleFonts.notoSerif(
               fontSize: 28, fontWeight: FontWeight.bold, color: _gold)),
           const SizedBox(height: 4),
-          Text('Review your selections before completing your purchase.',
+          Text(lang.tr('cart_review_sub'),
             style: GoogleFonts.manrope(fontSize: 13, color: _t2)),
         ],
       ),
@@ -286,7 +289,12 @@ class _OrderSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tax   = cart.subtotal * 0.05;
+    // Same settings/app_config.taxRateBps createOrder charges from
+    // server-side — keeps this estimate from ever silently diverging from
+    // the real charge.
+    final taxRate = context.watch<StoreProvider>().taxRate;
+    final lang  = context.watch<LanguageProvider>();
+    final tax   = cart.subtotal * taxRate;
     final total = cart.subtotal + tax; // free shipping
 
     return Container(
@@ -302,23 +310,24 @@ class _OrderSummary extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Order Summary',
+          Text(lang.tr('order_summary'),
             style: GoogleFonts.notoSerif(
               fontSize: 20, fontWeight: FontWeight.bold, color: _gold)),
           const SizedBox(height: 8),
           const Divider(color: _bd),
           const SizedBox(height: 16),
 
-          _Row('Subtotal', '\$${cart.subtotal.toStringAsFixed(2)}'),
+          _Row(lang.tr('subtotal'), '\$${cart.subtotal.toStringAsFixed(2)}'),
           const SizedBox(height: 12),
-          _Row('Estimated Tax (VAT)', '\$${tax.toStringAsFixed(2)}'),
+          _Row('${lang.tr('estimated_tax')} (${(taxRate * 100).toStringAsFixed(1)}%)',
+              '\$${tax.toStringAsFixed(2)}'),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Shipping',
+              Text(lang.tr('shipping'),
                   style: GoogleFonts.manrope(fontSize: 13, color: _t2)),
-              Text('Free — Across the USA',
+              Text(lang.tr('free_shipping_usa'),
                 style: GoogleFonts.manrope(
                   fontSize: 13, fontWeight: FontWeight.w600,
                   color: const Color(0xFF4ade80))),
@@ -334,7 +343,7 @@ class _OrderSummary extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text('Total',
+              Text(lang.tr('total'),
                   style: GoogleFonts.manrope(fontSize: 15, color: _t1)),
               Text('\$${total.toStringAsFixed(2)}',
                 style: GoogleFonts.notoSerif(
@@ -344,7 +353,7 @@ class _OrderSummary extends StatelessWidget {
 
           const SizedBox(height: 28),
           _GoldButton(
-            label: 'PROCEED TO CHECKOUT',
+            label: lang.tr('proceed_checkout'),
             icon:  Icons.arrow_forward_rounded,
             onTap: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const CheckoutScreen())),
@@ -355,7 +364,7 @@ class _OrderSummary extends StatelessWidget {
             children: [
               const Icon(Icons.lock_outline_rounded, color: _t2, size: 14),
               const SizedBox(width: 6),
-              Text('Secure Encrypted Checkout',
+              Text(lang.tr('secure_checkout'),
                 style: GoogleFonts.manrope(
                   fontSize: 10, fontWeight: FontWeight.bold,
                   color: _t2, letterSpacing: 1.2)),

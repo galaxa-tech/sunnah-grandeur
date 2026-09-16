@@ -12,8 +12,6 @@ class AppearanceSettingsScreen extends StatefulWidget {
 }
 
 class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
-  String _appIcon = 'Dark Gold';
-
   String textScaleLabel(double v) {
     if (v <= 0.90) return 'Small';
     if (v <= 1.05) return 'Default';
@@ -260,93 +258,12 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
                       ),
                     ),
 
-                    _EyeRow(label: 'App Icon', c: c),
-
-                    Row(
-                      children: [
-                        _AppIconCard(
-                          name: 'Dark Gold',
-                          isEq: _appIcon == 'Dark Gold',
-                          onTap: () => setState(() => _appIcon = 'Dark Gold'),
-                          mockIconBg: const LinearGradient(colors: [Color(0xFF1C1204), Color(0xFF0D0D0F)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                          iconColor: c.gold,
-                          borderColor: c.gold.withValues(alpha: 0.3),
-                          c: c,
-                        ),
-                        const SizedBox(width: 10),
-                        _AppIconCard(
-                          name: 'Light Sand',
-                          isEq: _appIcon == 'Light Sand',
-                          onTap: () => setState(() => _appIcon = 'Light Sand'),
-                          mockIconBg: const LinearGradient(colors: [Color(0xFFF8F3EA), Color(0xFFEDE7D8)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                          iconColor: const Color(0xFFA07828),
-                          borderColor: const Color(0xFFDDD4C0),
-                          c: c,
-                        ),
-                        const SizedBox(width: 10),
-                        _AppIconCard(
-                          name: 'Emerald',
-                          isEq: _appIcon == 'Emerald',
-                          onTap: () => setState(() => _appIcon = 'Emerald'),
-                          mockIconBg: const LinearGradient(colors: [Color(0xFF0D3520), Color(0xFF061510)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                          iconColor: const Color(0xFF4CAF82),
-                          borderColor: const Color(0xFF4CAF82).withValues(alpha: 0.2),
-                          c: c,
-                        ),
-                      ],
-                    ),
                     const SizedBox(height: 20),
                   ],
                 ),
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _AppIconCard extends StatelessWidget {
-  const _AppIconCard({
-    required this.name, required this.isEq, required this.onTap,
-    required this.mockIconBg, required this.iconColor, required this.borderColor,
-    required this.c,
-  });
-  final String name;
-  final bool isEq;
-  final VoidCallback onTap;
-  final Gradient mockIconBg;
-  final Color iconColor, borderColor;
-  final AppColors c;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: isEq ? c.goldSurface : c.surf.withValues(alpha: 0.6),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: isEq ? c.gold.withValues(alpha: 0.5) : c.bd, width: isEq ? 1.5 : 1),
-          ),
-          child: Column(
-            children: [
-              Container(
-                width: 40, height: 40,
-                margin: const EdgeInsets.only(bottom: 8),
-                decoration: BoxDecoration(
-                  gradient: mockIconBg,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: borderColor),
-                ),
-                child: Icon(Icons.star_rounded, color: iconColor, size: 22),
-              ),
-              Text(name, style: AppTextStyles.body(c, color: isEq ? c.gold : c.t3, size: 10).copyWith(fontWeight: isEq ? FontWeight.w500 : FontWeight.normal)),
-            ],
-          ),
         ),
       ),
     );

@@ -34,14 +34,36 @@ dependencies:
   http: 1.2.2
   url_launcher: ^6.3.1
   geocoding: ^3.0.0
+  flutter_animate: ^4.5.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: 3.0.2
+  flutter_native_splash: ^2.4.3
 
 flutter:
   uses-material-design: true
   assets:
     - assets/audio/
     - assets/images/
+
+# flutter_native_splash config — run `dart run flutter_native_splash:create`
+# after `flutter pub get` to (re)generate the native splash assets for both
+# platforms from this. Matches AppColors.dark (near-black bg, gold logo glow)
+# so cold start reads as branded instead of a flash of white.
+flutter_native_splash:
+  color: "#0D0D0F"
+  image: assets/images/logo.png
+  color_dark: "#0D0D0F"
+  image_dark: assets/images/logo.png
+  android_12:
+    color: "#0D0D0F"
+    image: assets/images/logo.png
+    color_dark: "#0D0D0F"
+    image_dark: assets/images/logo.png
+  # false: only the splash is branded, status bar stays normal once Flutter
+  # takes over. `true` would set UIStatusBarHidden statically in Info.plist
+  # with nothing in this app wired to restore it afterward, hiding the
+  # status bar app-wide — not just during splash.
+  fullscreen: false

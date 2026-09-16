@@ -21,10 +21,9 @@ class AdhanSoundOption {
   });
 }
 
-// Add your Adhan .mp3 files to:
-//   assets/audio/           → Flutter (just_audio)
-//   android/app/src/main/res/raw/  → Android notification sound
-//   ios/Runner/             → iOS notification sound
+// Real, freely-licensed recordings (see assets/audio/README.md for exact
+// source/license/attribution of each file) — no recording here is actually
+// from Masjid Al-Haram or Masjid An-Nabawi, so labels don't claim that.
 const kAdhanSounds = <AdhanSoundOption>[
   AdhanSoundOption(
     key:         'adhan_classic',
@@ -35,24 +34,17 @@ const kAdhanSounds = <AdhanSoundOption>[
   ),
   AdhanSoundOption(
     key:         'adhan_makkah',
-    label:       'Makkah Adhan',
-    artist:      'Masjid Al-Haram',
+    label:       'Adhan — Sabah Fakhry',
+    artist:      '1985 recording',
     assetPath:   'assets/audio/adhan_makkah.mp3',
     rawResource: 'adhan_makkah',
   ),
   AdhanSoundOption(
     key:         'adhan_madinah',
-    label:       'Madinah Adhan',
-    artist:      'Masjid An-Nabawi',
+    label:       'Adhan — Aaqib Azeez',
+    artist:      'Traditional recitation',
     assetPath:   'assets/audio/adhan_madinah.mp3',
     rawResource: 'adhan_madinah',
-  ),
-  AdhanSoundOption(
-    key:         'adhan_fajr',
-    label:       'Fajr Adhan',
-    artist:      'Special recitation',
-    assetPath:   'assets/audio/adhan_fajr.mp3',
-    rawResource: 'adhan_fajr',
   ),
 ];
 
@@ -116,6 +108,24 @@ final kCalcMethods = <CalcMethodOption>[
     getParams: () => CalculationMethod.singapore.getParameters(),
   ),
 ];
+
+// Compact abbreviation for [kCalcMethods], used anywhere space is tight
+// (e.g. the Next Prayer card's badge). Falls back to the full label.
+String calcMethodShortLabel(int index) {
+  const short = <int, String>{
+    0: 'MWL',
+    1: 'Umm al-Qura',
+    2: 'Egypt',
+    3: 'Karachi',
+    4: 'ISNA',
+  };
+  if (short.containsKey(index)) return short[index]!;
+  if (index >= 0 && index < kCalcMethods.length) return kCalcMethods[index].label;
+  return 'MWL';
+}
+
+// 0 = Hanafi, 1 = Shafi'i/Maliki/Hanbali — see AdhanSettings.madhabIndex.
+String madhabShortLabel(int index) => index == 0 ? 'Hanafi' : "Shafi'i";
 
 // ── Prayer index helpers ──────────────────────────────────────────────────────
 

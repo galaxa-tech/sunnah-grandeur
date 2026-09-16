@@ -56,6 +56,26 @@ class _AccountIdentityScreenState extends State<AccountIdentityScreen> {
     }
   }
 
+  Future<void> _handleChangePassword() async {
+    final auth = context.read<AuthProvider>();
+    final email = auth.firebaseUser?.email;
+    if (email == null) return;
+    final confirm = await showAppConfirmDialog(
+      context,
+      title: 'Change Password',
+      message: 'Send a password reset link to $email?',
+      confirmLabel: 'Send Link',
+    );
+    if (confirm != true) return;
+    final success = await auth.sendPasswordReset(email);
+    if (!mounted) return;
+    showAppSnackbar(
+      context,
+      success ? 'Reset link sent to $email' : 'Failed to send reset link',
+      type: success ? AppSnackbarType.success : AppSnackbarType.error,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
@@ -121,33 +141,17 @@ class _AccountIdentityScreenState extends State<AccountIdentityScreen> {
                       padding: const EdgeInsets.only(top: 20, bottom: 22),
                       child: Column(
                         children: [
-                          Stack(
-                            alignment: Alignment.bottomRight,
-                            children: [
-                              Container(
-                                width: 80, height: 80,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: c.goldSurface,
-                                  border: Border.all(color: c.gold.withValues(alpha: 0.28), width: 1.5),
-                                ),
-                                child: Icon(Icons.person_outline_rounded, color: c.gold, size: 34),
-                              ),
-                              Container(
-                                width: 24, height: 24,
-                                decoration: BoxDecoration(
-                                  color: c.gold,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: c.bg, width: 2),
-                                ),
-                                child: Icon(Icons.edit_rounded, color: c.bg, size: 12),
-                              ),
-                            ],
+                          Container(
+                            width: 80, height: 80,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: c.goldSurface,
+                              border: Border.all(color: c.gold.withValues(alpha: 0.28), width: 1.5),
+                            ),
+                            child: Icon(Icons.person_outline_rounded, color: c.gold, size: 34),
                           ),
                           const SizedBox(height: 12),
                           Text(auth.userData?.name ?? 'Guest', style: AppTextStyles.displaySm(c).copyWith(fontSize: 18)),
-                          const SizedBox(height: 3),
-                          Text('Tap avatar to change photo', style: AppTextStyles.bodyMuted(c, size: 10)),
                         ],
                       ),
                     ),
@@ -156,18 +160,23 @@ class _AccountIdentityScreenState extends State<AccountIdentityScreen> {
                     const SizedBox(height: 10),
 
                     _FormField(label: 'Full Name', controller: _nameCtrl, c: c, isFocused: true),
-                    _FormField(label: 'Email Address', controller: _emailCtrl, c: c, keyboardType: TextInputType.emailAddress),
+                    _FormField(label: 'Email Address', controller: _emailCtrl, c: c, keyboardType: TextInputType.emailAddress, enabled: false),
                     _FormField(label: 'Phone Number', controller: _phoneCtrl, c: c, keyboardType: TextInputType.phone),
 
                     const SizedBox(height: 10),
                     _EyeRow(label: 'Security', c: c),
                     const SizedBox(height: 10),
 
-                    _SettingsRow(
-                      icon: Icons.password_rounded,
-                      title: 'Change Password',
-                      sub: 'Last changed 30 days ago',
-                      c: c,
+                    GestureDetector(
+                      onTap: _handleChangePassword,
+                      child: _SettingsRow(
+                        icon: Icons.password_rounded,
+                        title: 'Change Password',
+                        sub: auth.firebaseUser?.email != null
+                            ? 'Send a reset link to ${auth.firebaseUser!.email}'
+                            : 'No email on this account',
+                        c: c,
+                      ),
                     ),
 
                     const SizedBox(height: 10),
@@ -260,12 +269,14 @@ class _FormField extends StatelessWidget {
     required this.controller,
     this.isFocused = false,
     this.keyboardType = TextInputType.text,
+    this.enabled = true,
     required this.c,
   });
   final String label;
   final TextEditingController controller;
   final bool isFocused;
   final TextInputType keyboardType;
+  final bool enabled;
   final AppColors c;
 
   @override
@@ -290,7 +301,8 @@ class _FormField extends StatelessWidget {
                 child: TextField(
                   controller: controller,
                   keyboardType: keyboardType,
-                  style: AppTextStyles.body(c, size: 14),
+                  enabled: enabled,
+                  style: AppTextStyles.body(c, size: 14).copyWith(color: enabled ? null : c.t3),
                   decoration: const InputDecoration(
                     border: InputBorder.none,
                     isDense: true,
@@ -298,7 +310,7 @@ class _FormField extends StatelessWidget {
                   ),
                 ),
               ),
-              Icon(Icons.edit_rounded, color: isFocused ? c.gold : c.t3, size: 14),
+              if (enabled) Icon(Icons.edit_rounded, color: isFocused ? c.gold : c.t3, size: 14),
             ],
           ),
         ),

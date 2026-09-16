@@ -1,33 +1,26 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// PlacesService — wraps Google Places API (Legacy) for mosque discovery.
+// PlacesService — mosque discovery via our own masjidNearby/masjidSearch
+// Cloud Functions, which proxy Google Places API (Legacy) server-side.
 //
-// Requires the following APIs enabled in Google Cloud Console
-// for the configured PLACES_API_KEY (see config/api_config.dart):
-//   • Places API
-//   • Maps JavaScript API (optional — handled by Maps SDK natively)
-//
-// Endpoints used:
-//   Nearby Search : /nearbysearch/json?location=&radius=&type=mosque
-//   Text Search   : /textsearch/json?query=mosque+{query}
-//   Photo         : /photo?maxwidth=&photo_reference=
+// WHY A PROXY: the Places Web Service does not send CORS headers, so a
+// browser calling it directly is blocked by the browser's own CORS policy —
+// this app is deployed as a web app, so a direct call never worked here (it
+// would only work on a native Android/iOS build, which has no CORS). Routing
+// through our backend also keeps the API key out of the client bundle.
+// See backend/functions/src/domains/masjid/index.js.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
-import '../config/api_config.dart';
 import '../models/masjid_result.dart';
 
 class PlacesService {
   PlacesService._();
   static final PlacesService instance = PlacesService._();
 
-  // API key is injected at compile time via:
-  //   flutter run --dart-define-from-file=api_keys.json
-  // Never hardcode the key in source — see api_keys.template.json for setup.
-  static String get _apiKey => ApiConfig.placesApiKey;
-  static const _base = 'https://maps.googleapis.com/maps/api/place';
+  static const _base = 'https://us-central1-sunnah-grandeur.cloudfunctions.net';
 
   // ── Nearby mosque search ──────────────────────────────────────────────────
 
@@ -38,30 +31,22 @@ class PlacesService {
     double lng, {
     int radius = 5000,
   }) async {
-    ApiConfig.assertConfigured();
     final uri = Uri.parse(
-      '$_base/nearbysearch/json'
-      '?location=$lat,$lng'
-      '&radius=$radius'
-      '&type=mosque'
-      '&key=$_apiKey',
+      '$_base/masjidNearby'
+      '?lat=$lat&lng=$lng&radius=$radius',
     );
 
     // Deliberately does NOT swallow errors to an empty list — a config or
     // network failure must not be indistinguishable from "0 mosques nearby".
     // MasjidProvider._loadNearby() catches and surfaces this as a real error.
     final res = await http.get(uri).timeout(const Duration(seconds: 12));
-    if (res.statusCode != 200) {
-      throw Exception('Places API HTTP ${res.statusCode}');
-    }
 
     final body   = jsonDecode(res.body) as Map<String, dynamic>;
     final status = body['status'] as String?;
 
-    if (status == 'REQUEST_DENIED') {
-      debugPrint('[PlacesService] REQUEST_DENIED — check Places API is enabled '
-          'for the configured key | ${body['error_message']}');
-      throw Exception('Places API request denied: ${body['error_message'] ?? 'REQUEST_DENIED'}');
+    if (res.statusCode != 200) {
+      debugPrint('[PlacesService] masjidNearby HTTP ${res.statusCode} | ${body['error_message']}');
+      throw Exception(body['error_message'] ?? 'Places lookup failed (HTTP ${res.statusCode})');
     }
     if (status != 'OK' && status != 'ZERO_RESULTS') {
       throw Exception('Places API status: $status');
@@ -80,23 +65,18 @@ class PlacesService {
     double lat,
     double lng,
   ) async {
-    final q   = Uri.encodeComponent('mosque $query');
     final uri = Uri.parse(
-      '$_base/textsearch/json'
-      '?query=$q'
-      '&location=$lat,$lng'
-      '&radius=20000'
-      '&key=$_apiKey',
+      '$_base/masjidSearch'
+      '?query=${Uri.encodeComponent(query)}&lat=$lat&lng=$lng',
     );
 
     final res = await http.get(uri).timeout(const Duration(seconds: 12));
-    if (res.statusCode != 200) {
-      throw Exception('Places API HTTP ${res.statusCode}');
-    }
-
     final body   = jsonDecode(res.body) as Map<String, dynamic>;
     final status = body['status'] as String?;
 
+    if (res.statusCode != 200) {
+      throw Exception(body['error_message'] ?? 'Places search failed (HTTP ${res.statusCode})');
+    }
     if (status != 'OK' && status != 'ZERO_RESULTS') {
       throw Exception('Places API status: $status');
     }
@@ -105,12 +85,6 @@ class PlacesService {
     debugPrint('[PlacesService] search "$query": ${results.length} results');
     return results;
   }
-
-  // ── Photo URL ─────────────────────────────────────────────────────────────
-
-  /// Returns a ready-to-use HTTPS URL for a Places photo.
-  String photoUrl(String photoRef, {int maxWidth = 600}) =>
-      '$_base/photo?maxwidth=$maxWidth&photo_reference=$photoRef&key=$_apiKey';
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 

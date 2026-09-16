@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
-import { collection, doc, addDoc, updateDoc, deleteDoc, serverTimestamp, onSnapshot, query, orderBy } from "firebase/firestore";
+import { collection, doc, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, onSnapshot, query, orderBy } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { db, functions } from "@/lib/firebase";
+import { storedToUsd, usdToStored, formatUsd, DEFAULT_BDT_TO_USD_RATE } from "@/lib/currency";
 
 interface Product {
   id: string;
@@ -23,12 +24,48 @@ interface Product {
   stockQuantity?: number;
 }
 
+interface Category {
+  id: string;
+  name: string;
+  description: string;
+}
+
+interface Banner {
+  id: string;
+  title: string;
+  subtitle: string;
+  imageUrl?: string;
+  cta: string;
+  isActive: boolean;
+  sortOrder?: number;
+}
+
 export default function ShopManagementPage() {
-  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'orders' | 'inventory'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'banners' | 'orders' | 'inventory'>('products');
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
   const [ordersList, setOrdersList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  // Live from settings/app_config.usdToLocalRate — the same field
+  // createOrder/app-mobile read, so this display never silently drifts.
+  const [usdRate, setUsdRate] = useState(DEFAULT_BDT_TO_USD_RATE);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Category form state
+  const [isCatModalOpen, setIsCatModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [catName, setCatName] = useState("");
+  const [catDescription, setCatDescription] = useState("");
+
+  // Banner form state
+  const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
+  const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
+  const [bannerTitle, setBannerTitle] = useState("");
+  const [bannerSubtitle, setBannerSubtitle] = useState("");
+  const [bannerImageUrl, setBannerImageUrl] = useState("");
+  const [bannerCta, setBannerCta] = useState("Shop now");
+  const [bannerIsActive, setBannerIsActive] = useState(true);
 
   // Form states
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -43,7 +80,7 @@ export default function ShopManagementPage() {
 
   useEffect(() => {
     setLoading(true);
-    
+
     // Real-time products listener
     const unsubscribeProducts = onSnapshot(collection(db, "products"), (snapshot) => {
       const list: Product[] = [];
@@ -55,6 +92,17 @@ export default function ShopManagementPage() {
     }, (error) => {
       console.error("Error listening to products:", error);
       setLoading(false);
+    });
+
+    // Real-time categories listener
+    const unsubscribeCategories = onSnapshot(collection(db, "categories"), (snapshot) => {
+      const list: Category[] = [];
+      snapshot.forEach((doc) => {
+        list.push({ id: doc.id, ...(doc.data() as any) });
+      });
+      setCategories(list.sort((a, b) => a.name.localeCompare(b.name)));
+    }, (error) => {
+      console.error("Error listening to categories:", error);
     });
 
     // Real-time orders listener
@@ -73,11 +121,167 @@ export default function ShopManagementPage() {
       console.error("Error listening to orders:", error);
     });
 
+    // Real-time banners listener
+    const unsubscribeBanners = onSnapshot(collection(db, "banners"), (snapshot) => {
+      const list: Banner[] = [];
+      snapshot.forEach((doc) => {
+        list.push({ id: doc.id, ...(doc.data() as any) });
+      });
+      setBanners(list.sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999)));
+    }, (error) => {
+      console.error("Error listening to banners:", error);
+    });
+
+    // Real-time app config listener (tax rate + USD conversion rate)
+    const unsubscribeConfig = onSnapshot(doc(db, "settings", "app_config"), (snap) => {
+      const rate = snap.data()?.usdToLocalRate;
+      if (typeof rate === "number" && rate > 0) setUsdRate(rate);
+    }, (error) => {
+      console.error("Error listening to app_config:", error);
+    });
+
     return () => {
       unsubscribeProducts();
+      unsubscribeCategories();
+      unsubscribeBanners();
       unsubscribeOrders();
+      unsubscribeConfig();
     };
   }, []);
+
+  // ── Category CRUD ──────────────────────────────────────────────────────────
+
+  const openAddCatModal = () => {
+    setEditingCategory(null);
+    setCatName("");
+    setCatDescription("");
+    setIsCatModalOpen(true);
+  };
+
+  const openEditCatModal = (cat: Category) => {
+    setEditingCategory(cat);
+    setCatName(cat.name);
+    setCatDescription(cat.description || "");
+    setIsCatModalOpen(true);
+  };
+
+  const slugify = (s: string) =>
+    s.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+  const handleCatSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const id = editingCategory ? editingCategory.id : slugify(catName);
+    if (!id) return;
+    if (!editingCategory && categories.some((c) => c.id === id)) {
+      alert(`A category with the ID "${id}" already exists. Choose a different name.`);
+      return;
+    }
+    try {
+      if (editingCategory) {
+        await updateDoc(doc(db, "categories", id), {
+          name: catName.trim(),
+          description: catDescription.trim(),
+          updatedAt: serverTimestamp(),
+        });
+      } else {
+        await setDoc(doc(db, "categories", id), {
+          name: catName.trim(),
+          description: catDescription.trim(),
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      }
+      setIsCatModalOpen(false);
+    } catch (err) {
+      console.error("Error saving category:", err);
+      alert("Failed to save category.");
+    }
+  };
+
+  const handleDeleteCategory = async (cat: Category) => {
+    const inUse = products.filter((p) => p.categoryId === cat.id).length;
+    if (inUse > 0) {
+      alert(`Can't delete "${cat.name}" — ${inUse} product(s) still use it. Move them to another category first.`);
+      return;
+    }
+    if (!window.confirm(`Delete category "${cat.name}"?`)) return;
+    try {
+      await deleteDoc(doc(db, "categories", cat.id));
+    } catch (err) {
+      console.error("Error deleting category:", err);
+    }
+  };
+
+  // ── Banner CRUD ─────────────────────────────────────────────────────────────
+  // Matches app-mobile/lib/models/store_category_model.dart's StoreBannerModel
+  // (title, subtitle, imageUrl, cta, isActive) exactly — this is the admin
+  // side of infrastructure that already existed on the mobile app (a live
+  // Firestore listener + security rules) but previously had no UI to manage it.
+
+  const openAddBannerModal = () => {
+    setEditingBanner(null);
+    setBannerTitle("");
+    setBannerSubtitle("");
+    setBannerImageUrl("");
+    setBannerCta("Shop now");
+    setBannerIsActive(true);
+    setIsBannerModalOpen(true);
+  };
+
+  const openEditBannerModal = (banner: Banner) => {
+    setEditingBanner(banner);
+    setBannerTitle(banner.title);
+    setBannerSubtitle(banner.subtitle);
+    setBannerImageUrl(banner.imageUrl || "");
+    setBannerCta(banner.cta || "Shop now");
+    setBannerIsActive(banner.isActive);
+    setIsBannerModalOpen(true);
+  };
+
+  const handleBannerSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bannerTitle.trim()) return;
+    try {
+      const data = {
+        title: bannerTitle.trim(),
+        subtitle: bannerSubtitle.trim(),
+        imageUrl: bannerImageUrl.trim() || null,
+        cta: bannerCta.trim() || "Shop now",
+        isActive: bannerIsActive,
+        updatedAt: serverTimestamp(),
+      };
+      if (editingBanner) {
+        await updateDoc(doc(db, "banners", editingBanner.id), data);
+      } else {
+        await addDoc(collection(db, "banners"), {
+          ...data,
+          sortOrder: banners.length,
+          createdAt: serverTimestamp(),
+        });
+      }
+      setIsBannerModalOpen(false);
+    } catch (err) {
+      console.error("Error saving banner:", err);
+      alert("Failed to save banner.");
+    }
+  };
+
+  const handleDeleteBanner = async (banner: Banner) => {
+    if (!window.confirm(`Delete banner "${banner.title}"?`)) return;
+    try {
+      await deleteDoc(doc(db, "banners", banner.id));
+    } catch (err) {
+      console.error("Error deleting banner:", err);
+    }
+  };
+
+  const handleToggleBannerActive = async (banner: Banner) => {
+    try {
+      await updateDoc(doc(db, "banners", banner.id), { isActive: !banner.isActive });
+    } catch (err) {
+      console.error("Error toggling banner:", err);
+    }
+  };
 
   const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
@@ -97,7 +301,7 @@ export default function ShopManagementPage() {
     setName("");
     setTag("");
     setDescription("");
-    setCategorySelection("Fragrance");
+    setCategorySelection(categories[0]?.id || "");
     setPrice("");
     setOriginalPrice("");
     setImage("");
@@ -110,9 +314,9 @@ export default function ShopManagementPage() {
     setName(product.name);
     setTag(product.tag || "");
     setDescription(product.description);
-    setCategorySelection(product.category);
-    setPrice(product.price.toString());
-    setOriginalPrice(product.originalPrice ? product.originalPrice.toString() : "");
+    setCategorySelection(product.categoryId || categories[0]?.id || "");
+    setPrice(storedToUsd(product.price, usdRate).toFixed(2));
+    setOriginalPrice(product.originalPrice ? storedToUsd(product.originalPrice, usdRate).toFixed(2) : "");
     setImage(product.image || "");
     setStockQuantity((product.stockQuantity ?? 0).toString());
     setIsModalOpen(true);
@@ -143,50 +347,45 @@ export default function ShopManagementPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Map category selection to schema fields
-    let category = "Fragrance";
-    let categoryId = "fragrance";
-    let type: "perfume" | "other" = "perfume";
 
-    if (categorySelection === "Salah & Worship" || categorySelection === "Tasbih & Beads") {
-      category = "Salah & Worship";
-      categoryId = "salah";
-      type = "other";
-    } else if (categorySelection === "Women" || categorySelection === "Premium Apparel") {
-      category = "Women";
-      categoryId = "women";
-      type = "other";
-    } else if (categorySelection === "Home Decor" || categorySelection === "Home & Decor") {
-      category = "Home & Decor";
-      categoryId = "home";
-      type = "other";
+    const selectedCat = categories.find((c) => c.id === categorySelection);
+    if (!selectedCat) {
+      alert("Choose a category first.");
+      return;
     }
+    const type: "perfume" | "other" = selectedCat.id === "fragrance" ? "perfume" : "other";
+
+    const storedPrice = Math.round(usdToStored(parseFloat(price) || 0, usdRate) * 100) / 100;
+    const storedOriginalPrice = originalPrice
+      ? Math.round(usdToStored(parseFloat(originalPrice) || 0, usdRate) * 100) / 100
+      : null;
 
     const productPayload = {
       name,
       tag: tag || null,
       description,
-      category,
-      categoryId,
+      category: selectedCat.name,
+      categoryId: selectedCat.id,
       type,
-      price: parseFloat(price) || 0,
-      originalPrice: originalPrice ? parseFloat(originalPrice) : null,
+      price: storedPrice,
+      priceInCents: Math.round(storedPrice * 100),
+      originalPrice: storedOriginalPrice,
       image: image || "/products/PhotoshopExtension_Image_1.png", // default fallback
       stockQuantity: parseInt(stockQuantity, 10) || 0,
-      isActive: true,
       updatedAt: serverTimestamp()
     };
 
     try {
       if (editingProduct) {
-        // Update existing product
+        // Update existing product — isActive is managed by its own toggle,
+        // never overwritten here.
         const productRef = doc(db, "products", editingProduct.id);
         await updateDoc(productRef, productPayload);
       } else {
         // Add new product
         await addDoc(collection(db, "products"), {
           ...productPayload,
+          isActive: true,
           createdAt: serverTimestamp()
         });
       }
@@ -199,7 +398,7 @@ export default function ShopManagementPage() {
   return (
     <div className="flex">
       <Sidebar />
-      <main className="ml-64 flex-1 flex flex-col min-h-screen relative bento-pattern overflow-hidden">
+      <main className="ml-0 md:ml-64 flex-1 flex flex-col min-h-screen relative bento-pattern overflow-hidden">
         <Header title="Shop Management" />
 
         {/* Sub Navigation */}
@@ -207,6 +406,7 @@ export default function ShopManagementPage() {
           {[
             { id: "products", label: "PRODUCTS" },
             { id: "categories", label: "CATEGORIES" },
+            { id: "banners", label: "BANNERS" },
             { id: "orders", label: "ORDERS" },
             { id: "inventory", label: "INVENTORY" },
           ].map((tab) => (
@@ -269,7 +469,7 @@ export default function ShopManagementPage() {
                           <th className="px-6 py-4 font-label-accent text-[10px] text-primary uppercase tracking-widest">Image</th>
                           <th className="px-6 py-4 font-label-accent text-[10px] text-primary uppercase tracking-widest">Name</th>
                           <th className="px-6 py-4 font-label-accent text-[10px] text-primary uppercase tracking-widest">Category</th>
-                          <th className="px-6 py-4 font-label-accent text-[10px] text-primary uppercase tracking-widest">Price (BDT)</th>
+                          <th className="px-6 py-4 font-label-accent text-[10px] text-primary uppercase tracking-widest">Price</th>
                           <th className="px-6 py-4 font-label-accent text-[10px] text-primary uppercase tracking-widest">Stock</th>
                           <th className="px-6 py-4 font-label-accent text-[10px] text-primary uppercase tracking-widest">Tag</th>
                           <th className="px-6 py-4 font-label-accent text-[10px] text-primary uppercase tracking-widest text-center">Active</th>
@@ -291,7 +491,7 @@ export default function ShopManagementPage() {
                             <td className="px-6 py-4">
                               <span className="font-label-accent text-[10px] border border-primary/30 text-primary px-3 py-1 rounded-full">{product.category}</span>
                             </td>
-                            <td className="px-6 py-4 font-body-lg text-sm text-on-surface">৳{product.price.toFixed(0)}</td>
+                            <td className="px-6 py-4 font-body-lg text-sm text-on-surface">{formatUsd(product.price, usdRate)}</td>
                             <td className="px-6 py-4">
                               <span className={`font-body-md text-xs ${
                                 (product.stockQuantity ?? 0) === 0
@@ -344,26 +544,101 @@ export default function ShopManagementPage() {
 
             {activeTab === "categories" && (
               <div className="p-8 space-y-6">
-                <h3 className="font-headline-md text-xl text-on-background">Product Categories</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {[
-                    { name: "Fragrance", desc: "Pure non-alcoholic attars and extraits" },
-                    { name: "Salah & Worship", desc: "Prayer mats, misbaha, and qubba items" },
-                    { name: "Women", desc: "Modest khimar sets and accessories" },
-                    { name: "Home & Decor", desc: "Islamic arch wall art and incense burners" },
-                  ].map((cat) => {
-                    const count = products.filter((p) => p.category === cat.name).length;
-                    return (
-                      <div key={cat.name} className="p-6 bg-surface-container rounded-xl border border-border-subtle hover:border-primary/50 transition-colors">
-                        <h4 className="font-bold text-primary text-base">{cat.name}</h4>
-                        <p className="text-xs text-on-surface-variant mt-1">{cat.desc}</p>
-                        <span className="inline-block mt-4 text-[10px] font-label-accent text-primary bg-primary/10 px-3 py-1 rounded-full">
-                          {count} {count === 1 ? "Item" : "Items"}
-                        </span>
-                      </div>
-                    );
-                  })}
+                <div className="flex justify-between items-center">
+                  <h3 className="font-headline-md text-xl text-on-background">Product Categories ({categories.length})</h3>
+                  <button
+                    onClick={openAddCatModal}
+                    className="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded font-label-accent text-[10px] hover:brightness-110 transition-all"
+                  >
+                    <span className="material-symbols-outlined text-sm">add</span>
+                    NEW CATEGORY
+                  </button>
                 </div>
+                {categories.length === 0 ? (
+                  <div className="p-12 text-center text-on-surface-variant bg-surface-container/40 rounded-xl border border-border-subtle">
+                    <p className="text-sm">No categories yet.</p>
+                    <p className="text-xs text-text-secondary mt-1">Add one so products can be organized and filtered on the storefront.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {categories.map((cat) => {
+                      const count = products.filter((p) => p.categoryId === cat.id).length;
+                      return (
+                        <div key={cat.id} className="p-6 bg-surface-container rounded-xl border border-border-subtle hover:border-primary/50 transition-colors group relative">
+                          <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => openEditCatModal(cat)} className="material-symbols-outlined text-primary hover:text-primary-fixed text-base">edit</button>
+                            <button onClick={() => handleDeleteCategory(cat)} className="material-symbols-outlined text-status-cancelled hover:opacity-80 text-base">delete</button>
+                          </div>
+                          <h4 className="font-bold text-primary text-base pr-12">{cat.name}</h4>
+                          <p className="text-xs text-on-surface-variant mt-1">{cat.description}</p>
+                          <span className="inline-block mt-4 text-[10px] font-label-accent text-primary bg-primary/10 px-3 py-1 rounded-full">
+                            {count} {count === 1 ? "Item" : "Items"}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === "banners" && (
+              <div className="p-8 space-y-6">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-headline-md text-xl text-on-background">Promo Banners ({banners.length})</h3>
+                  <button
+                    onClick={openAddBannerModal}
+                    className="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded font-label-accent text-[10px] hover:brightness-110 transition-all"
+                  >
+                    <span className="material-symbols-outlined text-sm">add</span>
+                    NEW BANNER
+                  </button>
+                </div>
+                <p className="text-xs text-text-secondary -mt-2">
+                  Active banners appear as a promo carousel on the mobile app&apos;s Home and Shop screens.
+                </p>
+                {banners.length === 0 ? (
+                  <div className="p-12 text-center text-on-surface-variant bg-surface-container/40 rounded-xl border border-border-subtle">
+                    <p className="text-sm">No banners yet.</p>
+                    <p className="text-xs text-text-secondary mt-1">Add one to feature a promotion or collection on the app.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {banners.map((banner) => (
+                      <div key={banner.id} className="bg-surface-container rounded-xl border border-border-subtle overflow-hidden group relative">
+                        <div className="h-28 bg-surface-container-high overflow-hidden">
+                          {banner.imageUrl ? (
+                            <img className="w-full h-full object-cover" src={banner.imageUrl} alt={banner.title} />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-on-surface-variant text-xs">No image</div>
+                          )}
+                        </div>
+                        <div className="p-4">
+                          <div className="flex justify-between items-start gap-2">
+                            <h4 className="font-bold text-primary text-sm">{banner.title}</h4>
+                            <div className="flex gap-2 shrink-0">
+                              <button onClick={() => openEditBannerModal(banner)} className="material-symbols-outlined text-primary hover:text-primary-fixed text-base">edit</button>
+                              <button onClick={() => handleDeleteBanner(banner)} className="material-symbols-outlined text-status-cancelled hover:opacity-80 text-base">delete</button>
+                            </div>
+                          </div>
+                          <p className="text-xs text-on-surface-variant mt-1 line-clamp-2">{banner.subtitle}</p>
+                          <div className="flex items-center justify-between mt-3">
+                            <span className="text-[10px] font-label-accent text-primary bg-primary/10 px-3 py-1 rounded-full">{banner.cta}</span>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                              <input
+                                checked={banner.isActive}
+                                onChange={() => handleToggleBannerActive(banner)}
+                                className="sr-only peer"
+                                type="checkbox"
+                              />
+                              <div className="w-9 h-5 bg-surface-container-highest rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -386,13 +661,14 @@ export default function ShopManagementPage() {
                     <p className="text-xs text-text-secondary mt-1">Orders placed on the Web Storefront or Mobile App will appear here in real time.</p>
                   </div>
                 ) : (
+                  <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-sm">
                     <thead>
                       <tr className="bg-surface-container-low border-b border-border-subtle text-primary font-label-accent text-[10px]">
                         <th className="px-6 py-4">ORDER ID</th>
                         <th className="px-6 py-4">CUSTOMER</th>
                         <th className="px-6 py-4">ITEMS</th>
-                        <th className="px-6 py-4">TOTAL (BDT)</th>
+                        <th className="px-6 py-4">TOTAL</th>
                         <th className="px-6 py-4">STATUS</th>
                       </tr>
                     </thead>
@@ -413,7 +689,7 @@ export default function ShopManagementPage() {
                             {order.items ? `${order.items.length} item(s)` : "1 item"}
                           </td>
                           <td className="px-6 py-4 font-semibold text-primary">
-                            ৳{(order.totalInCents != null ? order.totalInCents / 100 : (order.total || order.amount || 0)).toLocaleString()}
+                            ${(order.totalInCents != null ? order.totalInCents / 100 : (order.total || order.amount || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
                           <td className="px-6 py-4">
                             <select
@@ -431,6 +707,7 @@ export default function ShopManagementPage() {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 )}
               </div>
             )}
@@ -527,37 +804,40 @@ export default function ShopManagementPage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
                     <div className="space-y-2">
                       <label className="block font-label-accent text-[10px] text-primary tracking-widest uppercase">Category</label>
-                      <select 
-                        value={categorySelection} 
+                      <select
+                        value={categorySelection}
                         onChange={(e) => setCategorySelection(e.target.value)}
                         className="w-full bg-[#1A1A1A] border border-outline-variant rounded px-4 py-3 focus:outline-none focus:border-primary transition-all appearance-none cursor-pointer"
                         required
+                        disabled={categories.length === 0}
                       >
-                        <option value="Fragrance">Attar & Fragrances</option>
-                        <option value="Salah & Worship">Tasbih & Beads</option>
-                        <option value="Women">Premium Apparel</option>
-                        <option value="Home Decor">Home Decor</option>
+                        {categories.length === 0 && <option value="">No categories yet — add one first</option>}
+                        {categories.map((cat) => (
+                          <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))}
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className="block font-label-accent text-[10px] text-primary tracking-widest uppercase">Price (BDT)</label>
-                      <input 
-                        value={price} 
+                      <label className="block font-label-accent text-[10px] text-primary tracking-widest uppercase">Price (USD)</label>
+                      <input
+                        value={price}
                         onChange={(e) => setPrice(e.target.value)}
-                        className="w-full bg-[#1A1A1A] border border-outline-variant rounded px-4 py-3 focus:outline-none focus:border-primary transition-all" 
-                        placeholder="0.00" 
-                        required 
-                        type="number" 
+                        className="w-full bg-[#1A1A1A] border border-outline-variant rounded px-4 py-3 focus:outline-none focus:border-primary transition-all"
+                        placeholder="25.00"
+                        required
+                        step="0.01"
+                        type="number"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="block font-label-accent text-[10px] text-primary tracking-widest uppercase">Original Price (optional)</label>
-                      <input 
-                        value={originalPrice} 
+                      <label className="block font-label-accent text-[10px] text-primary tracking-widest uppercase">Original Price (USD, optional)</label>
+                      <input
+                        value={originalPrice}
                         onChange={(e) => setOriginalPrice(e.target.value)}
-                        className="w-full bg-[#1A1A1A] border border-outline-variant rounded px-4 py-3 focus:outline-none focus:border-primary transition-all" 
-                        placeholder="Before discount" 
-                        type="number" 
+                        className="w-full bg-[#1A1A1A] border border-outline-variant rounded px-4 py-3 focus:outline-none focus:border-primary transition-all"
+                        placeholder="Before discount"
+                        step="0.01"
+                        type="number"
                       />
                     </div>
                   </div>
@@ -602,6 +882,127 @@ export default function ShopManagementPage() {
                     className="bg-primary px-12 py-3 rounded font-label-accent text-[10px] tracking-widest text-on-primary shadow-lg shadow-primary/20 hover:brightness-110 transition-all"
                   >
                     {editingProduct ? "SAVE CHANGES" : "PUBLISH PRODUCT"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Add/Edit Category Modal */}
+        {isCatModalOpen && (
+          <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-4">
+            <div className="max-w-[500px] w-full bg-surface-card border border-border-subtle rounded-2xl shadow-2xl">
+              <div className="px-8 py-6 border-b border-border-subtle flex justify-between items-center">
+                <h2 className="font-headline-lg text-xl text-primary">{editingCategory ? "Edit Category" : "New Category"}</h2>
+                <button
+                  onClick={() => setIsCatModalOpen(false)}
+                  className="text-on-surface-variant hover:text-primary transition-colors"
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              <form onSubmit={handleCatSubmit} className="p-8 space-y-5">
+                <div className="space-y-2">
+                  <label className="block text-xs font-label-accent text-primary tracking-widest uppercase">Name</label>
+                  <input
+                    value={catName}
+                    onChange={(e) => setCatName(e.target.value)}
+                    className="w-full bg-[#1A1A1A] border border-outline-variant rounded px-4 py-3 text-sm focus:outline-none focus:border-primary"
+                    placeholder="e.g. Ramadan & Eid"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-xs font-label-accent text-primary tracking-widest uppercase">Description</label>
+                  <textarea
+                    value={catDescription}
+                    onChange={(e) => setCatDescription(e.target.value)}
+                    rows={2}
+                    className="w-full bg-[#1A1A1A] border border-outline-variant rounded px-4 py-3 text-sm focus:outline-none focus:border-primary resize-none"
+                    placeholder="Short description shown to shoppers"
+                  />
+                </div>
+                {editingCategory && (
+                  <p className="text-[10px] text-on-surface-variant">ID: {editingCategory.id} (fixed — products reference this)</p>
+                )}
+                <div className="pt-2 flex justify-end gap-4">
+                  <button type="button" onClick={() => setIsCatModalOpen(false)} className="text-on-surface-variant text-xs">CANCEL</button>
+                  <button type="submit" className="bg-primary text-on-primary px-6 py-2 rounded text-xs">
+                    {editingCategory ? "SAVE CHANGES" : "ADD CATEGORY"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Add/Edit Banner Modal */}
+        {isBannerModalOpen && (
+          <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-4">
+            <div className="max-w-[500px] w-full bg-surface-card border border-border-subtle rounded-2xl shadow-2xl">
+              <div className="px-8 py-6 border-b border-border-subtle flex justify-between items-center">
+                <h2 className="font-headline-lg text-xl text-primary">{editingBanner ? "Edit Banner" : "New Banner"}</h2>
+                <button
+                  onClick={() => setIsBannerModalOpen(false)}
+                  className="text-on-surface-variant hover:text-primary transition-colors"
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              <form onSubmit={handleBannerSubmit} className="p-8 space-y-5">
+                <div className="space-y-2">
+                  <label className="block text-xs font-label-accent text-primary tracking-widest uppercase">Title</label>
+                  <input
+                    value={bannerTitle}
+                    onChange={(e) => setBannerTitle(e.target.value)}
+                    className="w-full bg-[#1A1A1A] border border-outline-variant rounded px-4 py-3 text-sm focus:outline-none focus:border-primary"
+                    placeholder="e.g. Ramadan Collection"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-xs font-label-accent text-primary tracking-widest uppercase">Subtitle</label>
+                  <textarea
+                    value={bannerSubtitle}
+                    onChange={(e) => setBannerSubtitle(e.target.value)}
+                    rows={2}
+                    className="w-full bg-[#1A1A1A] border border-outline-variant rounded px-4 py-3 text-sm focus:outline-none focus:border-primary resize-none"
+                    placeholder="Short line shown under the title"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-xs font-label-accent text-primary tracking-widest uppercase">Image URL</label>
+                  <input
+                    value={bannerImageUrl}
+                    onChange={(e) => setBannerImageUrl(e.target.value)}
+                    className="w-full bg-[#1A1A1A] border border-outline-variant rounded px-4 py-3 text-sm focus:outline-none focus:border-primary"
+                    placeholder="https://..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-xs font-label-accent text-primary tracking-widest uppercase">Button Label</label>
+                  <input
+                    value={bannerCta}
+                    onChange={(e) => setBannerCta(e.target.value)}
+                    className="w-full bg-[#1A1A1A] border border-outline-variant rounded px-4 py-3 text-sm focus:outline-none focus:border-primary"
+                    placeholder="Shop now"
+                  />
+                </div>
+                <label className="flex items-center gap-3 cursor-pointer w-fit">
+                  <input
+                    type="checkbox"
+                    checked={bannerIsActive}
+                    onChange={(e) => setBannerIsActive(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary relative"></div>
+                  <span className="text-xs text-on-surface-variant">Active (visible on the app)</span>
+                </label>
+                <div className="pt-2 flex justify-end gap-4">
+                  <button type="button" onClick={() => setIsBannerModalOpen(false)} className="text-on-surface-variant text-xs">CANCEL</button>
+                  <button type="submit" className="bg-primary text-on-primary px-6 py-2 rounded text-xs">
+                    {editingBanner ? "SAVE CHANGES" : "ADD BANNER"}
                   </button>
                 </div>
               </form>

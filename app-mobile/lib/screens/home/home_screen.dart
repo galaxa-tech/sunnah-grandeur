@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../theme/app_motion.dart';
+import '../../models/adhan_settings.dart';
 import '../../providers/dawah_provider.dart';
 import '../../providers/prayer_provider.dart';
 import '../../providers/language_provider.dart';
@@ -160,7 +163,7 @@ class _PrayerHeroCardState extends State<_PrayerHeroCard> {
     final nextKey  = prayer.getNextPrayerName(); // lowercase translation key
     final nextName = lang.tr(nextKey);
     final nextTime = prayer.getNextPrayerTime();
-    final timeStr  = nextTime != null ? DateFormat('h:mm a').format(nextTime) : '--:--';
+    final timeStr  = prayer.formatTime(nextTime);
 
     double progress = 0.0;
     String remaining = '--';
@@ -201,7 +204,8 @@ class _PrayerHeroCardState extends State<_PrayerHeroCard> {
         ),
         const SizedBox(height: 5),
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text(lang.tr('calculation_mwl'), style: AppTextStyles.bodyMuted(c, size: 9)),
+          Text('${lang.tr("calculation")}: ${calcMethodShortLabel(prayer.adhanSettings.calcMethodIndex)}',
+              style: AppTextStyles.bodyMuted(c, size: 9)),
           Text(nextName, style: AppTextStyles.pill(c, size: 9,
               color: c.gold).copyWith(fontWeight: FontWeight.w500)),
         ]),
@@ -355,10 +359,12 @@ class _SawmCardState extends State<_SawmCard> {
 
     if (times == null) return const SizedBox.shrink();
 
-    final sehri    = DateFormat('h:mm').format(times.fajr);
-    final iftar    = DateFormat('h:mm').format(times.maghrib);
-    final sehriSub = DateFormat('a').format(times.fajr);
-    final iftarSub = DateFormat('a').format(times.maghrib);
+    final fajrZoned    = prayer.zonedForDisplay(times.fajr)!;
+    final maghribZoned = prayer.zonedForDisplay(times.maghrib)!;
+    final sehri    = DateFormat('h:mm').format(fajrZoned);
+    final iftar    = DateFormat('h:mm').format(maghribZoned);
+    final sehriSub = DateFormat('a').format(fajrZoned);
+    final iftarSub = DateFormat('a').format(maghribZoned);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 18),
@@ -439,55 +445,55 @@ class _QuickAccessGrid extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
       child: Column(children: [
         Row(children: [
-          Expanded(child: _AccessCard(
+          Expanded(child: _staggered(0, _AccessCard(
             c: c, icon: Icons.calendar_month_outlined,
             title: lang.tr('namaz_schedule'), sub: lang.tr('five_prayer_times'),
             onTap: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const NamazScheduleScreen())),
-          )),
+          ))),
           const SizedBox(width: 8),
-          Expanded(child: _AccessCard(
+          Expanded(child: _staggered(1, _AccessCard(
             c: c, icon: Icons.block_outlined,
             title: lang.tr('forbidden_times'), sub: lang.tr('makrooh_windows'),
             iconColor: c.red,
             onTap: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const ForbiddenTimesScreen())),
-          )),
+          ))),
         ]),
         const SizedBox(height: 8),
         Row(children: [
-          Expanded(child: _AccessCard(
+          Expanded(child: _staggered(2, _AccessCard(
             c: c, icon: Icons.explore_outlined,
             title: lang.tr('qibla_finder'), sub: lang.tr('live_compass'),
             onTap: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const QiblaFinderScreen())),
-          )),
+          ))),
           const SizedBox(width: 8),
-          Expanded(child: _AccessCard(
+          Expanded(child: _staggered(3, _AccessCard(
             c: c, icon: Icons.spa_outlined,
             title: lang.tr('tasbeeh'), sub: lang.tr('digital_dhikr'),
             onTap: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const TasbeehScreen())),
-          )),
+          ))),
         ]),
         const SizedBox(height: 8),
         Row(children: [
-          Expanded(child: _AccessCard(
+          Expanded(child: _staggered(4, _AccessCard(
             c: c, icon: Icons.calculate_outlined,
             title: lang.tr('zakat_calculator'), sub: lang.tr('calculate_zakat_due'),
             onTap: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const ZakatCalculatorScreen())),
-          )),
+          ))),
           const SizedBox(width: 8),
-          Expanded(child: _AccessCard(
+          Expanded(child: _staggered(5, _AccessCard(
             c: c, icon: Icons.calendar_today_outlined,
             title: lang.tr('hijri_calendar'), sub: lang.tr('islamic_lunar_dates'),
             onTap: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const HijriCalendarScreen())),
-          )),
+          ))),
         ]),
         const SizedBox(height: 8),
-        GestureDetector(
+        _staggered(6, GestureDetector(
           onTap: () => Navigator.push(context,
               MaterialPageRoute(builder: (_) => const MasjidFinderScreen())),
           child: Container(
@@ -509,9 +515,18 @@ class _QuickAccessGrid extends StatelessWidget {
               Icon(Icons.chevron_right_rounded, color: c.t3, size: 18),
             ]),
           ),
-        ),
+        )),
       ]),
     );
+  }
+
+  /// Staggered fade+slide entrance for the quick-access grid — cheap,
+  /// consistent-feeling polish on first paint of Home.
+  Widget _staggered(int index, Widget child) {
+    return child
+        .animate(delay: AppMotion.staggerStep * index)
+        .fadeIn(duration: AppMotion.base, curve: AppMotion.curve)
+        .slideY(begin: 0.08, end: 0, duration: AppMotion.base, curve: AppMotion.curve);
   }
 
   Widget _iconBox(AppColors c, IconData icon, {Color? iconColor}) {

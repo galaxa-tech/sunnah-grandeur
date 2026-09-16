@@ -42,7 +42,7 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
   }
 
   void _pickCity(CityResult city, LocationProvider loc) async {
-    await loc.setManualLocation(city.lat, city.lng, city.displayName);
+    await loc.setManualLocation(city.lat, city.lng, city.displayName, timezone: city.timezone);
     if (!mounted) return;
     _searchCtrl.clear();
     setState(() => _suggestions = []);
@@ -322,12 +322,12 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
 
 // Popular cities shown as quick-select
 const List<CityResult> _popularCities = [
-  CityResult('Mecca', 'Saudi Arabia', 21.3891, 39.8579),
-  CityResult('London', 'UK', 51.5074, -0.1278),
-  CityResult('New York', 'USA', 40.7128, -74.0060),
-  CityResult('Dhaka', 'Bangladesh', 23.8103, 90.4125),
-  CityResult('Karachi', 'Pakistan', 24.8607, 67.0011),
-  CityResult('Istanbul', 'Turkey', 41.0082, 28.9784),
+  CityResult('Mecca', 'Saudi Arabia', 21.3891, 39.8579, 'Asia/Riyadh'),
+  CityResult('London', 'UK', 51.5074, -0.1278, 'Europe/London'),
+  CityResult('New York', 'USA', 40.7128, -74.0060, 'America/New_York'),
+  CityResult('Dhaka', 'Bangladesh', 23.8103, 90.4125, 'Asia/Dhaka'),
+  CityResult('Karachi', 'Pakistan', 24.8607, 67.0011, 'Asia/Karachi'),
+  CityResult('Istanbul', 'Turkey', 41.0082, 28.9784, 'Europe/Istanbul'),
 ];
 
 class _EyeRow extends StatelessWidget {

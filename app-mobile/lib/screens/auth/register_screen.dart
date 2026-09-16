@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 
@@ -64,7 +65,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       Navigator.pushNamedAndRemoveUntil(context, '/main', (_) => false);
     } else {
       setState(() => _isLoading = false);
-      _showSnack(auth.error ?? 'Registration failed. Please try again.');
+      _showSnack(auth.error ?? context.read<LanguageProvider>().tr('register_failed'));
     }
   }
 
@@ -102,6 +103,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     final c       = AppColors.of(context);
     final isGuest = context.watch<AuthProvider>().isGuest;
+    final lang    = context.watch<LanguageProvider>();
 
     return Scaffold(
       backgroundColor: c.bg,
@@ -126,17 +128,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 4),
 
                 // ── Header ─────────────────────────────────────────────────
-                Text('Sunnah Grandeur', style: AppTextStyles.brand(c)),
+                Text(lang.tr('app_name'), style: AppTextStyles.brand(c)),
                 const SizedBox(height: 12),
                 Text(
-                  isGuest ? 'Save Your Progress' : 'Create Account',
+                  isGuest ? lang.tr('save_progress') : lang.tr('create_account'),
                   style: AppTextStyles.displayMd(c),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   isGuest
-                      ? 'Create an account to sync your favorites, orders & settings.'
-                      : 'Join the community. Takes less than a minute.',
+                      ? lang.tr('guest_register_sub')
+                      : lang.tr('join_community_sub'),
                   style: AppTextStyles.italic(c, fontSize: 13),
                   textAlign: TextAlign.center,
                 ),
@@ -159,7 +161,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'Your guest session will be preserved when you upgrade.',
+                            lang.tr('guest_session_notice'),
                             style: GoogleFonts.inter(
                                 color: c.t2, fontSize: 12, height: 1.4),
                           ),
@@ -177,7 +179,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // since it's the fastest way to save their progress.
                 if (isGuest) ...[
                   _IconlessButton(
-                    label: 'Continue with Google',
+                    label: lang.tr('continue_with_google'),
                     loading: _googleLoading,
                     disabled: _anyLoading,
                     onTap: _handleGoogle,
@@ -193,7 +195,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       Expanded(child: Divider(color: c.bd2, thickness: 0.8)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 14),
-                        child: Text('or create with email',
+                        child: Text(lang.tr('or_create_with_email'),
                             style: GoogleFonts.inter(
                                 color: c.t3, fontSize: 11)),
                       ),
@@ -206,7 +208,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 // ── Name ───────────────────────────────────────────────────
                 _RegField(
-                  label: 'Full Name',
+                  label: lang.tr('name'),
                   controller: _nameCtrl,
                   icon: Icons.person_outline_rounded,
                   textCapitalization: TextCapitalization.words,
@@ -214,8 +216,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onFieldSubmitted: (_) => _emailFocus.requestFocus(),
                   c: c,
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Name is required';
-                    if (v.trim().length < 2) return 'Name is too short';
+                    if (v == null || v.trim().isEmpty) return lang.tr('name_required');
+                    if (v.trim().length < 2) return lang.tr('name_too_short');
                     return null;
                   },
                 ),
@@ -224,7 +226,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 // ── Email ──────────────────────────────────────────────────
                 _RegField(
-                  label: 'Email Address',
+                  label: lang.tr('email_address'),
                   controller: _emailCtrl,
                   focusNode: _emailFocus,
                   icon: Icons.email_outlined,
@@ -233,9 +235,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onFieldSubmitted: (_) => _passFocus.requestFocus(),
                   c: c,
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Email is required';
+                    if (v == null || v.trim().isEmpty) return lang.tr('email_required');
                     if (!v.contains('@') || !v.contains('.')) {
-                      return 'Enter a valid email';
+                      return lang.tr('email_invalid');
                     }
                     return null;
                   },
@@ -245,7 +247,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 // ── Password ───────────────────────────────────────────────
                 _RegField(
-                  label: 'Password',
+                  label: lang.tr('password'),
                   controller: _passCtrl,
                   focusNode: _passFocus,
                   icon: Icons.lock_outline_rounded,
@@ -254,8 +256,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onFieldSubmitted: (_) => _handleRegister(),
                   c: c,
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Password is required';
-                    if (v.length < 6) return 'Minimum 6 characters';
+                    if (v == null || v.isEmpty) return lang.tr('password_required');
+                    if (v.length < 6) return lang.tr('min_6_chars');
                     return null;
                   },
                 ),
@@ -264,7 +266,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 // ── Create Account button ──────────────────────────────────
                 _IconlessButton(
-                  label: isGuest ? 'Save & Upgrade Account' : 'Create Account',
+                  label: isGuest ? lang.tr('save_upgrade_account') : lang.tr('create_account'),
                   loading: _isLoading,
                   disabled: _anyLoading,
                   onTap: _handleRegister,
@@ -278,11 +280,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('Already have an account? ',
+                    Text(lang.tr('already_account'),
                         style: AppTextStyles.bodyMuted(c, size: 13)),
                     GestureDetector(
                       onTap: () => Navigator.maybePop(context),
-                      child: Text('Sign in',
+                      child: Text(lang.tr('sign_in'),
                         style: GoogleFonts.inter(
                           color: c.gold,
                           fontSize: 13,

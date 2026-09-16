@@ -10,6 +10,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -18,10 +19,14 @@ export default function Sidebar() {
     return () => unsubscribe();
   }, []);
 
+  // Close the mobile drawer whenever the admin navigates to a new section.
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [pathname]);
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      if (typeof window !== 'undefined') localStorage.removeItem("demoAdmin");
       router.push("/login");
     } catch (err) {
       console.error("Logout error:", err);
@@ -32,6 +37,7 @@ export default function Sidebar() {
     { name: "Dashboard", href: "/dashboard", icon: "dashboard" },
     { name: "Users", href: "/dashboard/users", icon: "group" },
     { name: "Shop & Orders", href: "/dashboard/shop", icon: "shopping_bag" },
+    { name: "Media", href: "/dashboard/media", icon: "video_library" },
     { name: "Settings", href: "/dashboard/settings", icon: "settings" },
   ];
 
@@ -41,11 +47,40 @@ export default function Sidebar() {
   const userEmail = user?.email || "admin@sunnahgrandeur.com";
 
   return (
-    <aside className="flex flex-col h-full py-6 px-4 w-64 fixed left-0 top-0 bg-surface-container-lowest border-r border-outline-variant z-50">
-      <div className="mb-10 px-2">
-        <h1 className="font-headline-md text-headline-md font-bold text-primary">Sunnah Grandeur</h1>
-        <p className="font-label-accent text-on-surface-variant text-[10px] tracking-widest uppercase mt-1">Administrator Portal</p>
-      </div>
+    <>
+      {/* Mobile menu trigger — the sidebar is off-screen by default below md */}
+      <button
+        onClick={() => setIsMobileOpen(true)}
+        aria-label="Open menu"
+        className="md:hidden fixed top-4 left-4 z-40 w-10 h-10 rounded-lg bg-surface-container-lowest border border-outline-variant flex items-center justify-center text-primary"
+      >
+        <span className="material-symbols-outlined">menu</span>
+      </button>
+
+      {/* Backdrop, mobile only, while the drawer is open */}
+      {isMobileOpen && (
+        <div
+          onClick={() => setIsMobileOpen(false)}
+          className="md:hidden fixed inset-0 bg-black/70 z-40"
+        />
+      )}
+
+      <aside
+        className={`flex flex-col h-full py-6 px-4 w-64 fixed left-0 top-0 bg-surface-container-lowest border-r border-outline-variant z-50 transition-transform duration-300 ease-in-out ${
+          isMobileOpen ? "translate-x-0" : "-translate-x-full"
+        } md:translate-x-0`}
+      >
+        <button
+          onClick={() => setIsMobileOpen(false)}
+          aria-label="Close menu"
+          className="md:hidden self-end mb-2 w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-primary"
+        >
+          <span className="material-symbols-outlined">close</span>
+        </button>
+        <div className="mb-10 px-2">
+          <h1 className="font-headline-md text-headline-md font-bold text-primary">Sunnah Grandeur</h1>
+          <p className="font-label-accent text-on-surface-variant text-[10px] tracking-widest uppercase mt-1">Administrator Portal</p>
+        </div>
 
       <nav className="flex-1 space-y-1">
         {menuItems.map((item) => (
@@ -93,6 +128,7 @@ export default function Sidebar() {
           </button>
         </div>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

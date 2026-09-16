@@ -1,6 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
+import '../../providers/adhan_settings_provider.dart';
+
+// Maps this screen's method labels to AdhanSettings.calcMethodIndex, which
+// indexes into kCalcMethods (see models/adhan_settings.dart).
+const _methodIndexByKey = <String, int>{
+  'MWL': 0,
+  'UmmAlQura': 1,
+  'Egypt': 2,
+  'Karachi': 3,
+  'ISNA': 4,
+};
+const _methodKeyByIndex = <int, String>{
+  0: 'MWL',
+  1: 'UmmAlQura',
+  2: 'Egypt',
+  3: 'Karachi',
+  4: 'ISNA',
+};
+
+// AdhanSettings.madhabIndex: 0 = Hanafi, 1 = Shafi'i (see model doc comment).
+String _madhabKeyFromIndex(int i) => i == 0 ? 'Hanafi' : "Shafi'i";
+int _madhabIndexFromKey(String k) => k == 'Hanafi' ? 0 : 1;
+
+const _methodLabels = <String, String>{
+  'ISNA': 'ISNA',
+  'MWL': 'MWL',
+  'Egypt': 'Egyptian Authority',
+  'UmmAlQura': 'Umm al-Qura',
+  'Karachi': 'Karachi',
+};
+String _methodLabel(String key) => _methodLabels[key] ?? key;
 
 class PrayerMethodScreen extends StatefulWidget {
   const PrayerMethodScreen({super.key});
@@ -10,8 +42,29 @@ class PrayerMethodScreen extends StatefulWidget {
 }
 
 class _PrayerMethodScreenState extends State<PrayerMethodScreen> {
-  String _calcMethod = 'ISNA';
-  String _asrMadhab = "Shafi'i";
+  late String _calcMethod;
+  late String _asrMadhab;
+
+  @override
+  void initState() {
+    super.initState();
+    final settings = context.read<AdhanSettingsProvider>().settings;
+    _calcMethod = _methodKeyByIndex[settings.calcMethodIndex] ?? 'ISNA';
+    _asrMadhab = _madhabKeyFromIndex(settings.madhabIndex);
+  }
+
+  Future<void> _save() async {
+    final provider = context.read<AdhanSettingsProvider>();
+    await provider.setCalcMethod(_methodIndexByKey[_calcMethod] ?? 4);
+    await provider.setMadhab(_madhabIndexFromKey(_asrMadhab));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Prayer method saved.'), duration: Duration(seconds: 2)),
+    );
+    Future.delayed(const Duration(milliseconds: 400), () {
+      if (mounted) Navigator.pop(context);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +122,7 @@ class _PrayerMethodScreenState extends State<PrayerMethodScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("Current: ISNA · Shafi'i", style: AppTextStyles.heading(c, fontSize: 15)),
+                          Text('Current: ${_methodLabel(_calcMethod)} · $_asrMadhab', style: AppTextStyles.heading(c, fontSize: 15)),
                           const SizedBox(height: 4),
                           Text('Affects Asr timing and twilight calculations for your region.', style: AppTextStyles.bodyMuted(c, size: 10.5).copyWith(height: 1.5)),
                         ],
@@ -154,16 +207,19 @@ class _PrayerMethodScreenState extends State<PrayerMethodScreen> {
                     const SizedBox(height: 20),
 
                     // Save Button
-                    Container(
-                      width: double.infinity,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        gradient: c.goldGradient,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [BoxShadow(color: c.gold.withValues(alpha: 0.22), blurRadius: 20, offset: const Offset(0, 4))],
+                    GestureDetector(
+                      onTap: _save,
+                      child: Container(
+                        width: double.infinity,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          gradient: c.goldGradient,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [BoxShadow(color: c.gold.withValues(alpha: 0.22), blurRadius: 20, offset: const Offset(0, 4))],
+                        ),
+                        alignment: Alignment.center,
+                        child: Text('Save Prayer Method', style: AppTextStyles.button(c).copyWith(color: const Color(0xFF0D0D0F))),
                       ),
-                      alignment: Alignment.center,
-                      child: Text('Save Prayer Method', style: AppTextStyles.button(c).copyWith(color: const Color(0xFF0D0D0F))),
                     ),
                     const SizedBox(height: 20),
                   ],

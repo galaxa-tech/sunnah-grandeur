@@ -6,8 +6,8 @@ interface HeaderProps {
 
 export default function Header({ title }: HeaderProps) {
   return (
-    <header className="flex justify-between items-center w-full px-8 py-4 sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-outline-variant">
-      <h2 className="font-headline-md text-headline-md text-primary">{title}</h2>
+    <header className="flex justify-between items-center w-full pl-16 pr-4 md:px-8 py-4 sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-outline-variant">
+      <h2 className="font-headline-md text-headline-md text-primary truncate">{title}</h2>
       <div className="flex items-center gap-6">
         <div className="relative hidden lg:block">
           <input

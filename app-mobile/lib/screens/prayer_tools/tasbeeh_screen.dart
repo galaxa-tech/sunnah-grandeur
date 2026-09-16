@@ -244,7 +244,14 @@ class _TasbeehScreenState extends State<TasbeehScreen>
                       ),
                     ),
 
-                    const SizedBox(height: 26),
+                    const SizedBox(height: 22),
+
+                    // Swipeable bead string — a second, tactile way to count
+                    // alongside the tap circle above, matching the reference
+                    // "swipe right to count" dhikr-app pattern.
+                    _BeadString(c: c, count: _count, onSwipe: _onTap),
+
+                    const SizedBox(height: 22),
 
                     // Stats row
                     Row(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -259,6 +266,99 @@ class _TasbeehScreenState extends State<TasbeehScreen>
           ),
         ]),
       ),
+    );
+  }
+}
+
+/// Swipeable string of beads — swiping right past the drag threshold counts
+/// once, same as a tap on the main circle. Purely a second input affordance;
+/// [count] just drives which bead is highlighted (count % beadCount), it
+/// doesn't track its own separate total.
+class _BeadString extends StatefulWidget {
+  const _BeadString({required this.c, required this.count, required this.onSwipe});
+  final AppColors c;
+  final int count;
+  final VoidCallback onSwipe;
+
+  static const _beadCount = 9;
+  static const _dragThreshold = 36.0;
+
+  @override
+  State<_BeadString> createState() => _BeadStringState();
+}
+
+class _BeadStringState extends State<_BeadString> {
+  double _dragAccum = 0;
+  double _pullOffset = 0;
+
+  void _onDragUpdate(DragUpdateDetails d) {
+    setState(() {
+      _dragAccum += d.delta.dx;
+      _pullOffset = _dragAccum.clamp(-16.0, 16.0);
+    });
+    if (_dragAccum >= _BeadString._dragThreshold) {
+      HapticFeedback.lightImpact();
+      widget.onSwipe();
+      setState(() {
+        _dragAccum = 0;
+        _pullOffset = 0;
+      });
+    }
+  }
+
+  void _onDragEnd(DragEndDetails d) {
+    setState(() {
+      _dragAccum = 0;
+      _pullOffset = 0;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.c;
+    final active = widget.count % _BeadString._beadCount;
+
+    return Column(
+      children: [
+        GestureDetector(
+          onHorizontalDragUpdate: _onDragUpdate,
+          onHorizontalDragEnd: _onDragEnd,
+          onHorizontalDragCancel: () => setState(() {
+            _dragAccum = 0;
+            _pullOffset = 0;
+          }),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 80),
+              transform: Matrix4.translationValues(_pullOffset, 0, 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(_BeadString._beadCount, (i) {
+                  final isActive = i == active;
+                  final isPast = i < active;
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOut,
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    width: isActive ? 16 : 12,
+                    height: isActive ? 16 : 12,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: (isActive || isPast) ? c.goldGradient : null,
+                      color: (isActive || isPast) ? null : c.bd2,
+                      boxShadow: isActive
+                          ? [BoxShadow(color: c.gold.withValues(alpha: 0.5), blurRadius: 8)]
+                          : null,
+                    ),
+                  );
+                }),
+              ),
+            ),
+          ),
+        ),
+        Text('Swipe right to count', style: AppTextStyles.bodyMuted(c, size: 9.5)),
+      ],
     );
   }
 }

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../main.dart' show LandingPage;
+import '../providers/language_provider.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_text_styles.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -55,6 +58,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final lang = context.watch<LanguageProvider>();
 
     return Scaffold(
       backgroundColor: c.bg,
@@ -63,11 +67,22 @@ class _SplashScreenState extends State<SplashScreen>
           opacity: _fade,
           child: ScaleTransition(
             scale: _scale,
-            child: Image.asset(
-              'assets/images/logo.png',
-              width: 220,
-              height: 220,
-              fit: BoxFit.contain,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset(
+                  'assets/images/logo.png',
+                  width: 220,
+                  height: 220,
+                  fit: BoxFit.contain,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  lang.tr('muslim_productivity_tag'),
+                  style: AppTextStyles.brandTag(c),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           ),
         ),

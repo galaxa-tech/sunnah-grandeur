@@ -5,9 +5,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/store_provider.dart';
 import '../../providers/cart_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../models/product_model.dart';
 import '../../models/store_category_model.dart';
 import '../../widgets/shop/product_card.dart';
+import '../../widgets/shop/banner_carousel.dart';
 import 'shop_product_detail_screen.dart';
 import 'shop_cart_screen.dart';
 
@@ -183,48 +185,45 @@ class _PageHeader extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              if (isWide)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: _ShopTitleBlock(catName: catName, count: count, fontSize: 32),
+                    ),
+                    const SizedBox(width: 16),
+                    Row(
                       children: [
-                        Text(
-                          catName,
-                          style: GoogleFonts.notoSerif(
-                            fontSize: isWide ? 32 : 24,
-                            fontWeight: FontWeight.bold,
-                            color: _t1, height: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '$count product${count != 1 ? 's' : ''} found',
-                          style: GoogleFonts.manrope(fontSize: 12, color: _t2),
-                        ),
+                        _SortDropdown(store: store),
+                        const SizedBox(width: 8),
+                        _CartIconBtn(count: cartCount, onTap: onCart),
                       ],
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  // Controls row
-                  Row(
-                    children: [
-                      if (!isWide)
-                        _HeaderBtn(
-                          icon:  Icons.filter_list_rounded,
-                          label: 'Categories',
-                          onTap: onFilter,
-                        ),
-                      if (!isWide) const SizedBox(width: 8),
-                      _SortDropdown(store: store),
-                      const SizedBox(width: 8),
-                      // Cart icon
-                      _CartIconBtn(count: cartCount, onTap: onCart),
-                    ],
-                  ),
-                ],
-              ),
+                  ],
+                )
+              else ...[
+                // Mobile: the title gets the full row to itself — squeezing
+                // it next to Categories/Sort/Cart left no room for even
+                // "All Products" to render without truncating mid-word.
+                _ShopTitleBlock(catName: catName, count: count, fontSize: 24),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _HeaderBtn(
+                        icon:  Icons.filter_list_rounded,
+                        label: 'Categories',
+                        onTap: onFilter,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    _SortDropdown(store: store),
+                    const SizedBox(width: 8),
+                    _CartIconBtn(count: cartCount, onTap: onCart),
+                  ],
+                ),
+              ],
             ],
           ),
         ],
@@ -269,6 +268,37 @@ class _CartIconBtn extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+class _ShopTitleBlock extends StatelessWidget {
+  const _ShopTitleBlock({required this.catName, required this.count, required this.fontSize});
+  final String catName;
+  final int count;
+  final double fontSize;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          catName,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.notoSerif(
+            fontSize: fontSize,
+            fontWeight: FontWeight.bold,
+            color: _t1, height: 1.2,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '$count product${count != 1 ? 's' : ''} found',
+          style: GoogleFonts.manrope(fontSize: 12, color: _t2),
+        ),
+      ],
     );
   }
 }
@@ -366,6 +396,7 @@ class _DesktopSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>();
     return SizedBox(
       width: 208,
       child: SingleChildScrollView(
@@ -375,7 +406,7 @@ class _DesktopSidebar extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Text('BROWSE',
+              child: Text(lang.tr('browse'),
                 style: GoogleFonts.manrope(
                   fontSize: 10, color: _t2,
                   fontWeight: FontWeight.bold, letterSpacing: 2.0,
@@ -552,6 +583,7 @@ class _ProductGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final products = store.products;
     final w        = MediaQuery.of(context).size.width;
+    final lang     = context.watch<LanguageProvider>();
 
     if (store.isLoading) {
       return const Center(
@@ -569,12 +601,12 @@ class _ProductGrid extends StatelessWidget {
           children: [
             const Icon(Icons.inventory_2_outlined, size: 52, color: _bd),
             const SizedBox(height: 16),
-            Text('No products in this category yet.',
+            Text(lang.tr('no_products_category'),
               style: GoogleFonts.manrope(fontSize: 14, color: _t2)),
             const SizedBox(height: 12),
             GestureDetector(
               onTap: () => store.setCategory(null),
-              child: Text('View all products',
+              child: Text(lang.tr('view_all_products'),
                 style: GoogleFonts.manrope(
                   fontSize: 14, fontWeight: FontWeight.bold,
                   color: _gold,
@@ -589,29 +621,43 @@ class _ProductGrid extends StatelessWidget {
 
     // cols: 2 mobile, 3 sm, 4 xl — matching website grid-cols-2 sm:grid-cols-3 xl:grid-cols-4
     final cols = w < 600 ? 2 : w < 1200 ? 3 : 4;
+    final hPad = w > 900 ? 24.0 : 16.0;
 
-    return GridView.builder(
-      padding: EdgeInsets.fromLTRB(
-        w > 900 ? 24 : 16,
-        24,
-        w > 900 ? 24 : 16,
-        40,
-      ),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount:   cols,
-        mainAxisSpacing:  12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 0.58, // matches 3/4 image + ~3 rows info
-      ),
-      itemCount: products.length,
-      itemBuilder: (_, i) {
-        final p = products[i];
-        return ProductCard(
-          product: p,
-          onTap: () => onProductTap(p),
-          onAddToCart: () => _addToCart(context, p),
-        );
-      },
+    return CustomScrollView(
+      slivers: [
+        if (store.banners.isNotEmpty)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 0),
+              child: BannerCarousel(
+                banners: store.banners,
+                onTap: (_) => store.setCategory(null),
+              ),
+            ),
+          ),
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 40),
+          sliver: SliverGrid(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount:   cols,
+              mainAxisSpacing:  12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 0.58, // matches 3/4 image + ~3 rows info
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (_, i) {
+                final p = products[i];
+                return ProductCard(
+                  product: p,
+                  onTap: () => onProductTap(p),
+                  onAddToCart: () => _addToCart(context, p),
+                );
+              },
+              childCount: products.length,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -658,6 +704,7 @@ class _MobileDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>();
     return Stack(
       children: [
         // Backdrop
@@ -683,7 +730,7 @@ class _MobileDrawer extends StatelessWidget {
                         border: Border(bottom: BorderSide(color: _bd))),
                     child: Row(
                       children: [
-                        Text('CATEGORIES',
+                        Text(lang.tr('categories_caps'),
                           style: GoogleFonts.manrope(
                             fontSize: 13, fontWeight: FontWeight.bold,
                             color: _t1, letterSpacing: 1.5,

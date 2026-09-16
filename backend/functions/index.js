@@ -9,18 +9,19 @@
  *  Callable (authenticated):
  *    createUserMetadata    updateUserProfile     deleteAccount
  *    getProducts           getProductById
- *    createProduct         updateProduct         (admin only)
  *    createOrder           getOrdersByUser       updateOrderStatus (admin only)
  *    createPaymentIntent   verifyPayment
- *    getMedia              triggerSync            (admin only)
+ *    getMedia
  *    getHadiths
  *    setAdminRole          getDashboardStats      (admin only)
  *
  *  HTTPS (raw):
  *    stripeWebhook
+ *    masjidNearby          masjidSearch           (Places API proxy, public)
+ *    metalPrices                                  (gold/silver spot proxy, public)
  *
- *  Scheduled:
- *    scheduledSync  — daily 03:00 UTC
+ * Media is admin-curated only (see app-mobile/lib/providers/media_provider.dart)
+ * — no YouTube auto-sync function exists by design; do not reintroduce one.
  */
 
 require("dotenv").config();
@@ -36,12 +37,9 @@ exports.updateUserProfile  = updateUserProfile;
 exports.deleteAccount      = deleteAccount;
 
 // ── Products ──────────────────────────────────────────────────────────────────
-const { getProducts, getProductById, createProduct, updateProduct } =
-  require("./src/domains/products");
+const { getProducts, getProductById } = require("./src/domains/products");
 exports.getProducts    = getProducts;
 exports.getProductById = getProductById;
-exports.createProduct  = createProduct;
-exports.updateProduct  = updateProduct;
 
 // ── Orders ────────────────────────────────────────────────────────────────────
 const { createOrder, getOrdersByUser, updateOrderStatus } =
@@ -60,12 +58,9 @@ exports.verifyPayment       = verifyPayment;
 const { stripeWebhook } = require("./src/domains/payments/webhook");
 exports.stripeWebhook = stripeWebhook;
 
-// ── Media ─────────────────────────────────────────────────────────────────────
-const { getMedia }                      = require("./src/domains/media");
-const { triggerSync, scheduledSync }    = require("./src/domains/media/sync");
-exports.getMedia       = getMedia;
-exports.triggerSync    = triggerSync;
-exports.scheduledSync  = scheduledSync;
+// ── Media (admin-curated only — see index.js header comment) ──────────────────
+const { getMedia } = require("./src/domains/media");
+exports.getMedia = getMedia;
 
 // ── Hadiths ───────────────────────────────────────────────────────────────────
 const { getHadiths } = require("./src/domains/hadiths");
@@ -76,3 +71,12 @@ const { setAdminRole, setUserRole, getDashboardStats } = require("./src/domains/
 exports.setAdminRole      = setAdminRole;
 exports.setUserRole       = setUserRole;
 exports.getDashboardStats = getDashboardStats;
+
+// ── Masjid Finder (Places API proxy — see src/domains/masjid/index.js) ────────
+const { masjidNearby, masjidSearch } = require("./src/domains/masjid");
+exports.masjidNearby = masjidNearby;
+exports.masjidSearch = masjidSearch;
+
+// ── Zakat (live metal-price proxy — see src/domains/zakat/index.js) ───────────
+const { metalPrices } = require("./src/domains/zakat");
+exports.metalPrices = metalPrices;

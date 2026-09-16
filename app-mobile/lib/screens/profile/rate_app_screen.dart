@@ -1,6 +1,18 @@
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../providers/auth_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
+
+// TODO: fill in once the App Store Connect listing exists (Apple assigns
+// this numeric ID when the app record is created) — until then, iOS users
+// who tap Submit just get the in-app "thank you" state with no store
+// redirect, rather than a broken link.
+const String _kAppStoreNumericId = '';
+const String _kAndroidPackageId = 'com.sunnahgrandeur.app';
 
 class RateAppScreen extends StatefulWidget {
   const RateAppScreen({super.key});
@@ -11,6 +23,78 @@ class RateAppScreen extends StatefulWidget {
 
 class _RateAppScreenState extends State<RateAppScreen> {
   int _rating = 0;
+  bool _submitting = false;
+  bool _submitted = false;
+  final _reviewController = TextEditingController();
+
+  @override
+  void dispose() {
+    _reviewController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_rating == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tap a star to choose a rating first.')),
+      );
+      return;
+    }
+    setState(() => _submitting = true);
+    try {
+      final auth = context.read<AuthProvider>();
+      await FirebaseFirestore.instance.collection('app_feedback').add({
+        'rating': _rating,
+        'review': _reviewController.text.trim(),
+        'userId': auth.firebaseUser?.uid,
+        'email': auth.firebaseUser?.email,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _submitted = true;
+      });
+      // Only send happy users on to leave a public store review — a common,
+      // low-friction way to avoid a low rating turning into a public 1-star
+      // review that a private feedback form could have caught instead.
+      if (_rating >= 4) _openStoreListing();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not submit feedback: $e')),
+      );
+    }
+  }
+
+  Future<void> _openStoreListing() async {
+    if (kIsWeb) return;
+    Uri? uri;
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      uri = Uri.parse('market://details?id=$_kAndroidPackageId');
+    } else if (defaultTargetPlatform == TargetPlatform.iOS &&
+        _kAppStoreNumericId.isNotEmpty) {
+      uri = Uri.parse(
+          'https://apps.apple.com/app/id$_kAppStoreNumericId?action=write-review');
+    }
+    if (uri == null) return;
+    try {
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        // market:// only resolves if the Play Store app is installed —
+        // fall back to the plain web listing URL otherwise.
+        if (defaultTargetPlatform == TargetPlatform.android) {
+          await launchUrl(
+            Uri.parse('https://play.google.com/store/apps/details?id=$_kAndroidPackageId'),
+            mode: LaunchMode.externalApplication,
+          );
+        }
+      }
+    } catch (_) {
+      // Best-effort only — the in-app "thank you" state already shown is a
+      // fine outcome on its own if the store app/link isn't available.
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,38 +183,63 @@ class _RateAppScreenState extends State<RateAppScreen> {
 
                     // Review field
                     Container(
-                      constraints: const BoxConstraints(minHeight: 100),
                       width: double.infinity,
-                      padding: const EdgeInsets.all(14),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
                       decoration: BoxDecoration(
                         color: c.surf,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(color: c.bd2),
                       ),
-                      child: Text('What do you love most about Sunnah Grandeur? (optional)', style: AppTextStyles.bodyMuted(c, size: 12).copyWith(height: 1.6)),
+                      child: TextField(
+                        controller: _reviewController,
+                        enabled: !_submitted,
+                        maxLines: 4,
+                        minLines: 3,
+                        style: AppTextStyles.body(c, size: 13),
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.all(14),
+                          hintText: 'What do you love most about Sunnah Grandeur? (optional)',
+                          hintStyle: AppTextStyles.bodyMuted(c, size: 12).copyWith(height: 1.6),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 14),
 
                     // Action Button
-                    Container(
-                      width: double.infinity,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        gradient: c.goldGradient,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [BoxShadow(color: c.gold.withValues(alpha: 0.22), blurRadius: 20, offset: const Offset(0, 4))],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.thumb_up_rounded, color: c.bg, size: 18),
-                          const SizedBox(width: 8),
-                          Text('Rate on App Store', style: AppTextStyles.button(c).copyWith(color: const Color(0xFF0D0D0F))),
-                        ],
+                    GestureDetector(
+                      onTap: (_submitting || _submitted) ? null : _submit,
+                      child: Container(
+                        width: double.infinity,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          gradient: _submitted ? null : c.goldGradient,
+                          color: _submitted ? c.surf : null,
+                          borderRadius: BorderRadius.circular(16),
+                          border: _submitted ? Border.all(color: c.bd2) : null,
+                          boxShadow: _submitted ? null : [BoxShadow(color: c.gold.withValues(alpha: 0.22), blurRadius: 20, offset: const Offset(0, 4))],
+                        ),
+                        alignment: Alignment.center,
+                        child: _submitting
+                            ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: c.gold))
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(_submitted ? Icons.check_rounded : Icons.thumb_up_rounded, color: _submitted ? c.gold : c.bg, size: 18),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _submitted ? 'Feedback Sent' : 'Submit Feedback',
+                                    style: AppTextStyles.button(c).copyWith(color: _submitted ? c.gold : const Color(0xFF0D0D0F)),
+                                  ),
+                                ],
+                              ),
                       ),
                     ),
                     const SizedBox(height: 14),
-                    Text('Already rated? JazakAllah Khair 🤍', style: AppTextStyles.bodyMuted(c, size: 12)),
+                    Text(
+                      _submitted ? 'JazakAllah Khair for the feedback 🤍' : 'Your feedback goes straight to our team.',
+                      style: AppTextStyles.bodyMuted(c, size: 12),
+                    ),
                     const SizedBox(height: 20),
                   ],
                 ),

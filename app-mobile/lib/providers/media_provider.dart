@@ -1,11 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/video_model.dart';
-import '../services/youtube_api_service.dart';
 
+// The media shelf is admin-curated only, by explicit product decision: no
+// algorithmic "up next," no YouTube-suggested content. Content enters only
+// through the admin panel's Media Library, which writes to Firestore
+// `/media`. Do not reintroduce YouTubeApiService as a content source here.
 class MediaProvider extends ChangeNotifier {
   final FirebaseFirestore _db  = FirebaseFirestore.instance;
-  final _api                   = YouTubeApiService.instance;
 
   List<VideoModel> _videos      = [];
   List<VideoModel> _quranMedia  = [];
@@ -54,22 +56,12 @@ class MediaProvider extends ChangeNotifier {
     _videosError   = null;
     notifyListeners();
     try {
-      final result = await _api.fetchLectures();
-      if (result.videos.isNotEmpty) {
-        _videos      = result.videos;
-        _videosError = null;
-      } else {
-        _videos = await _firestoreFetch('video');
-        if (_videos.isEmpty) {
-          _videosError = result.status == ApiFetchStatus.empty
-              ? 'No videos available — playlist may be empty or private.'
-              : 'Failed to load videos. Check your connection.';
-        }
-      }
+      _videos = await _firestoreFetch('video');
+      _videosError = _videos.isEmpty ? 'No videos added yet.' : null;
     } catch (e) {
       debugPrint('[MediaProvider] lectures: $e');
-      _videos      = await _firestoreFetch('video');
-      _videosError = _videos.isEmpty ? 'Could not load videos.' : null;
+      _videos      = [];
+      _videosError = 'Could not load videos.';
     } finally {
       _loadingVideos = false;
       notifyListeners();
@@ -81,22 +73,12 @@ class MediaProvider extends ChangeNotifier {
     _quranError   = null;
     notifyListeners();
     try {
-      final result = await _api.fetchQuran();
-      if (result.videos.isNotEmpty) {
-        _quranMedia = result.videos;
-        _quranError = null;
-      } else {
-        _quranMedia = await _firestoreFetch('quran');
-        if (_quranMedia.isEmpty) {
-          _quranError = result.status == ApiFetchStatus.empty
-              ? 'No Quran videos available — playlist may be empty or private.'
-              : 'Failed to load Quran. Check your connection.';
-        }
-      }
+      _quranMedia = await _firestoreFetch('quran');
+      _quranError = _quranMedia.isEmpty ? 'No Quran media added yet.' : null;
     } catch (e) {
       debugPrint('[MediaProvider] quran: $e');
-      _quranMedia = await _firestoreFetch('quran');
-      _quranError = _quranMedia.isEmpty ? 'Could not load Quran.' : null;
+      _quranMedia = [];
+      _quranError = 'Could not load Quran.';
     } finally {
       _loadingQuran = false;
       notifyListeners();
@@ -108,22 +90,12 @@ class MediaProvider extends ChangeNotifier {
     _ruqyahError   = null;
     notifyListeners();
     try {
-      final result = await _api.fetchRuqyah();
-      if (result.videos.isNotEmpty) {
-        _ruqyahMedia = result.videos;
-        _ruqyahError = null;
-      } else {
-        _ruqyahMedia = await _firestoreFetch('ruqyah');
-        if (_ruqyahMedia.isEmpty) {
-          _ruqyahError = result.status == ApiFetchStatus.empty
-              ? 'No Ruqyah videos available — playlist may be empty or private.'
-              : 'Failed to load Ruqyah. Check your connection.';
-        }
-      }
+      _ruqyahMedia = await _firestoreFetch('ruqyah');
+      _ruqyahError = _ruqyahMedia.isEmpty ? 'No Ruqyah media added yet.' : null;
     } catch (e) {
       debugPrint('[MediaProvider] ruqyah: $e');
-      _ruqyahMedia = await _firestoreFetch('ruqyah');
-      _ruqyahError = _ruqyahMedia.isEmpty ? 'Could not load Ruqyah.' : null;
+      _ruqyahMedia = [];
+      _ruqyahError = 'Could not load Ruqyah.';
     } finally {
       _loadingRuqyah = false;
       notifyListeners();

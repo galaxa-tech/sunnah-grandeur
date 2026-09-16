@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signInWithEmailAndPassword, sendPasswordResetEmail, signOut, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { isAuthorizedAdmin } from "@/lib/adminAccess";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -23,16 +24,8 @@ export default function LoginPage() {
 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const tokenResult = await userCredential.user.getIdTokenResult(true);
-      
-      const userEmail = userCredential.user.email?.toLowerCase();
-      const isAdminEmail = userEmail === "sunnahgrandeur.nyc@gmail.com" || 
-                           userEmail === "admin@sunnahgrandeur.com" || 
-                           userEmail === "talharrc@gmail.com" || 
-                           userEmail === "rihadhamid20@gmail.com";
 
-      if (tokenResult.claims.role === "admin" || tokenResult.claims.role === "superAdmin" || isAdminEmail) {
-        if (typeof window !== 'undefined') localStorage.setItem("demoAdmin", "true");
+      if (await isAuthorizedAdmin(userCredential.user)) {
         router.push("/dashboard");
       } else {
         await signOut(auth);
@@ -58,20 +51,12 @@ export default function LoginPage() {
     try {
       const provider = new GoogleAuthProvider();
       const userCredential = await signInWithPopup(auth, provider);
-      const tokenResult = await userCredential.user.getIdTokenResult(true);
-      
-      const userEmail = userCredential.user.email?.toLowerCase();
-      const isAdminEmail = userEmail === "sunnahgrandeur.nyc@gmail.com" || 
-                           userEmail === "admin@sunnahgrandeur.com" || 
-                           userEmail === "talharrc@gmail.com" || 
-                           userEmail === "rihadhamid20@gmail.com";
 
-      if (tokenResult.claims.role === "admin" || tokenResult.claims.role === "superAdmin" || isAdminEmail) {
-        if (typeof window !== 'undefined') localStorage.setItem("demoAdmin", "true");
+      if (await isAuthorizedAdmin(userCredential.user)) {
         router.push("/dashboard");
       } else {
         await signOut(auth);
-        setError("Access Denied: Account (" + userEmail + ") is not authorized for Admin Access.");
+        setError("Access Denied: Account (" + userCredential.user.email + ") is not authorized for Admin Access.");
       }
     } catch (err: any) {
       console.error("Google login error:", err);
@@ -111,8 +96,8 @@ export default function LoginPage() {
       <main className="relative z-10 w-full max-w-md bg-surface-card border border-primary/20 p-8 md:p-12 shadow-2xl rounded-lg">
         {/* Logo Section */}
         <div className="flex flex-col items-center mb-8">
-          <div className="mb-4 h-16 w-16 bg-primary/10 flex items-center justify-center rounded-full border border-primary/30">
-            <span className="material-symbols-outlined text-primary text-4xl">auto_awesome</span>
+          <div className="mb-4 h-16 w-16 bg-primary/10 flex items-center justify-center rounded-full border border-primary/30 overflow-hidden">
+            <img src="/logo.png" alt="Sunnah Grandeur" className="h-11 w-11 object-contain" />
           </div>
           <h1 className="font-headline-md text-headline-md text-primary tracking-wide text-center">Sunnah Grandeur</h1>
           <p className="font-label-accent text-label-accent text-primary/60 uppercase mt-1 tracking-widest text-xs">
@@ -185,7 +170,7 @@ export default function LoginPage() {
                   className="w-full bg-[#1A1A1A] border border-outline-variant text-on-surface px-12 py-4 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-300 placeholder:text-outline-variant text-sm" 
                   id="email" 
                   name="email" 
-                  placeholder="sunnahgrandeur.nyc@gmail.com" 
+                  placeholder="you@sunnahgrandeur.com"
                   required 
                   type="email"
                   value={email}
@@ -259,7 +244,7 @@ export default function LoginPage() {
                 <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15s.7 5.3 1.9 7.7l3.7-2.9z"/>
                 <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z"/>
               </svg>
-              Sign In with Google (SG Mail)
+              Sign In with Google
             </button>
           </form>
         )}

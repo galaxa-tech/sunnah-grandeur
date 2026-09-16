@@ -6,8 +6,11 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../widgets/eye_row.dart';
 import '../../widgets/sg_pill.dart';
+import '../../models/adhan_settings.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/adhan_settings_provider.dart';
 import '../../providers/language_provider.dart';
+import '../../providers/location_provider.dart';
 import '../../providers/prayer_tracking_provider.dart';
 import '../../providers/profile_stats_provider.dart';
 import '../auth/login_screen.dart';
@@ -20,6 +23,7 @@ import 'language_settings_screen.dart';
 import 'prayer_method_screen.dart';
 import 'invite_friends_screen.dart';
 import 'rate_app_screen.dart';
+import 'support_us_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -30,6 +34,8 @@ class ProfileScreen extends StatelessWidget {
     final lang          = context.watch<LanguageProvider>();
     final themeNotifier = context.watch<ThemeNotifier>();
     final auth          = context.watch<AuthProvider>();
+    final adhanSettings = context.watch<AdhanSettingsProvider>().settings;
+    final location       = context.watch<LocationProvider>();
 
     return Scaffold(
       backgroundColor: c.bg,
@@ -39,13 +45,9 @@ class ProfileScreen extends StatelessWidget {
             // Header
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 10, 18, 4),
-              child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(lang.tr('profile'), style: AppTextStyles.brand(c)),
-                  Text(lang.tr('your_islamic_journey'), style: AppTextStyles.brandTag(c)),
-                ]),
-                _IconBtn(icon: Icons.settings_outlined, c: c),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(lang.tr('profile'), style: AppTextStyles.brand(c)),
+                Text(lang.tr('your_islamic_journey'), style: AppTextStyles.brandTag(c)),
               ]),
             ),
 
@@ -73,7 +75,7 @@ class ProfileScreen extends StatelessWidget {
               ),
               _MenuItem(icon: Icons.location_on_outlined,
                   label: lang.tr('location'),
-                  sub: lang.tr('location_default'),
+                  sub: location.hasLocation ? location.locationLabel : lang.tr('location_default'),
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LocationSettingsScreen())),
               ),
             ]),
@@ -90,12 +92,12 @@ class ProfileScreen extends StatelessWidget {
               ),
               _MenuItem(icon: Icons.language_outlined,
                   label: lang.tr('language'),
-                  sub:   lang.tr('language_english'),
+                  sub:   _languageDisplayName(lang.langCode),
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LanguageSettingsScreen())),
               ),
               _MenuItem(icon: Icons.calculate_outlined,
                   label: lang.tr('prayer_method'),
-                  sub:   lang.tr('prayer_method_sub'),
+                  sub:   '${calcMethodShortLabel(adhanSettings.calcMethodIndex)} · ${madhabShortLabel(adhanSettings.madhabIndex)}',
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrayerMethodScreen())),
               ),
             ]),
@@ -112,6 +114,11 @@ class ProfileScreen extends StatelessWidget {
                   label: lang.tr('rate_app'),
                   sub:   lang.tr('rate_app_sub'),
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RateAppScreen())),
+              ),
+              _MenuItem(icon: Icons.volunteer_activism_outlined,
+                  label: lang.tr('support_us'),
+                  sub:   lang.tr('support_us_sub'),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SupportUsScreen())),
               ),
             ]),
 
@@ -288,11 +295,13 @@ class _ProfileCard extends StatelessWidget {
               style: AppTextStyles.bodyMuted(c, size: 10),
             ),
             const SizedBox(height: 7),
-            Row(children: [
-              SgPill(label: lang.tr('pro_member'), variant: 'gold'),
-              const SizedBox(width: 6),
-              SgPill(label: lang.tr('active'), variant: 'green'),
-            ]),
+            // There's no real membership tier yet — don't claim "Pro" for
+            // every guest and signed-in user alike. A signed-in (non-
+            // anonymous) account is genuinely active; a guest gets no pill.
+            if (auth.firebaseUser?.isAnonymous != true)
+              Row(children: [
+                SgPill(label: lang.tr('active'), variant: 'green'),
+              ]),
           ],
         )),
       ]),
@@ -455,16 +464,12 @@ class _ThemeToggle extends StatelessWidget {
   }
 }
 
-// ── Icon Btn ──────────────────────────────────────────────────────────────────
-class _IconBtn extends StatelessWidget {
-  const _IconBtn({required this.icon, required this.c});
-  final IconData icon;
-  final AppColors c;
-  @override
-  Widget build(BuildContext context) => Container(
-    width: 34, height: 34,
-    decoration: BoxDecoration(color: c.surf, borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: c.bd2)),
-    child: Icon(icon, color: c.gold, size: 18),
-  );
+// Real current language name — matches the codes used by LanguageProvider
+// and LanguageSettingsScreen ('en' / 'ar' / 'bn').
+String _languageDisplayName(String code) {
+  switch (code) {
+    case 'ar': return 'Arabic';
+    case 'bn': return 'Bangla';
+    default:   return 'English';
+  }
 }

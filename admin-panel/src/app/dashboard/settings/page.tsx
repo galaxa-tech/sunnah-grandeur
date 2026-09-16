@@ -8,9 +8,9 @@ import { db } from "@/lib/firebase";
 
 export default function SettingsPage() {
   const [storeName, setStoreName] = useState("Sunnah Grandeur");
-  const [currency, setCurrency] = useState("BDT");
+  const [currency, setCurrency] = useState("USD");
   const [supportEmail, setSupportEmail] = useState("support@sunnahgrandeur.com");
-  const [taxRate, setTaxRate] = useState("5");
+  const [taxRate, setTaxRate] = useState("0");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
@@ -23,7 +23,14 @@ export default function SettingsPage() {
           if (data.storeName) setStoreName(data.storeName);
           if (data.currency) setCurrency(data.currency);
           if (data.supportEmail) setSupportEmail(data.supportEmail);
-          if (data.taxRate) setTaxRate(data.taxRate.toString());
+        }
+        // The tax rate actually charged on real orders lives on
+        // settings/app_config.taxRateBps (backend/functions/src/domains/orders) —
+        // settings/general is display-only, so read the real value from there.
+        const configSnap = await getDoc(doc(db, "settings", "app_config"));
+        if (configSnap.exists()) {
+          const configData = configSnap.data();
+          if (typeof configData.taxRateBps === "number") setTaxRate((configData.taxRateBps / 100).toString());
         }
       } catch (err) {
         console.error("Error loading store settings:", err);
@@ -36,15 +43,22 @@ export default function SettingsPage() {
     setSaving(true);
     setMessage(null);
     try {
+      const taxRatePercent = parseFloat(taxRate) || 0;
       await setDoc(doc(db, "settings", "general"), {
         storeName,
         currency,
         supportEmail,
-        taxRate: parseFloat(taxRate) || 5,
+        taxRate: taxRatePercent,
         updatedAt: new Date().toISOString(),
       }, { merge: true });
 
-      setMessage({ text: "Store settings saved successfully to Firestore!", type: "success" });
+      // Write the value that actually drives checkout tax, in basis points,
+      // without touching the other app_config fields (shipping thresholds etc).
+      await setDoc(doc(db, "settings", "app_config"), {
+        taxRateBps: Math.round(taxRatePercent * 100),
+      }, { merge: true });
+
+      setMessage({ text: "Store settings saved — this tax rate now applies to real checkout orders.", type: "success" });
     } catch (err: any) {
       console.error("Error saving settings:", err);
       setMessage({ text: err.message || "Failed to save settings.", type: "error" });
@@ -56,7 +70,7 @@ export default function SettingsPage() {
   return (
     <div className="flex">
       <Sidebar />
-      <main className="ml-64 flex-1 flex flex-col min-h-screen relative bento-pattern overflow-hidden">
+      <main className="ml-0 md:ml-64 flex-1 flex flex-col min-h-screen relative bento-pattern overflow-hidden">
         <Header title="Store Settings" />
 
         <div className="p-8 max-w-[1000px] mx-auto w-full relative z-10 space-y-8">
@@ -94,8 +108,8 @@ export default function SettingsPage() {
                   onChange={(e) => setCurrency(e.target.value)}
                   className="w-full bg-[#1A1A1A] border border-outline-variant rounded px-4 py-3 text-on-surface focus:outline-none focus:border-primary text-xs"
                 >
-                  <option value="BDT">BDT (৳) - Bangladeshi Taka</option>
                   <option value="USD">USD ($) - US Dollar</option>
+                  <option value="BDT">BDT (৳) - Bangladeshi Taka</option>
                   <option value="SAR">SAR (﷼) - Saudi Riyal</option>
                 </select>
               </div>

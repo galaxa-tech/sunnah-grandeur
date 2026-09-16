@@ -6,6 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/store_provider.dart';
+import '../../providers/language_provider.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import '../../services/functions/payment_service.dart';
 import '../../services/functions/order_service.dart';
@@ -231,8 +233,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
+    final lang = context.watch<LanguageProvider>();
     final w    = MediaQuery.of(context).size.width;
-    final tax  = cart.subtotal * 0.05;
+    // Same settings/app_config.taxRateBps createOrder charges from server-side
+    // — keeps this estimate from ever silently diverging from the real charge.
+    final taxRate = context.watch<StoreProvider>().taxRate;
+    final tax  = cart.subtotal * taxRate;
     final total = cart.subtotal + tax;
 
     return AuthGate(
@@ -250,7 +256,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
           title: Row(
             children: [
-              Text('Secure Checkout',
+              Text(lang.tr('secure_checkout_title'),
                 style: GoogleFonts.notoSerif(
                   fontSize: 18, fontWeight: FontWeight.bold, color: _t1)),
               const SizedBox(width: 8),
@@ -328,14 +334,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   // ── Section: Contact Information ───────────────────────────────────────────
   Widget _buildContactSection() {
+    final lang = context.watch<LanguageProvider>();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionHeader('Contact Information'),
+        _sectionHeader(lang.tr('contact_information')),
         const SizedBox(height: 16),
         _FormField(
           controller: _nameCtrl,
-          label: 'Full Name',
+          label: lang.tr('full_name'),
           hint: 'Muhammad Abdullah',
           prefixIcon: Icons.person_outline_rounded,
           textCapitalization: TextCapitalization.words,
@@ -351,7 +358,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         _FormField(
           controller: _emailCtrl,
           focusNode: _emailFocus,
-          label: 'Email Address',
+          label: lang.tr('email_address'),
           hint: 'your@email.com',
           prefixIcon: Icons.email_outlined,
           keyboardType: TextInputType.emailAddress,
@@ -368,7 +375,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         _FormField(
           controller: _phoneCtrl,
           focusNode: _phoneFocus,
-          label: 'Phone Number',
+          label: lang.tr('phone_number'),
           hint: '+1 (555) 000-0000',
           prefixIcon: Icons.phone_outlined,
           keyboardType: TextInputType.phone,
@@ -389,15 +396,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   // ── Section: Shipping Address ──────────────────────────────────────────────
   Widget _buildAddressSection() {
+    final lang = context.watch<LanguageProvider>();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionHeader('Shipping Address'),
+        _sectionHeader(lang.tr('shipping_address')),
         const SizedBox(height: 16),
         _FormField(
           controller: _addressCtrl,
           focusNode: _addressFocus,
-          label: 'Street Address',
+          label: lang.tr('street_address'),
           hint: '123 Main Street, Apt 4B',
           prefixIcon: Icons.home_outlined,
           textCapitalization: TextCapitalization.sentences,
@@ -417,7 +425,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               child: _FormField(
                 controller: _cityCtrl,
                 focusNode: _cityFocus,
-                label: 'City',
+                label: lang.tr('city'),
                 hint: 'New York',
                 prefixIcon: Icons.location_city_outlined,
                 textCapitalization: TextCapitalization.words,
@@ -434,7 +442,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               child: _FormField(
                 controller: _stateCtrl,
                 focusNode: _stateFocus,
-                label: 'State',
+                label: lang.tr('state_label'),
                 hint: 'NY',
                 textCapitalization: TextCapitalization.characters,
                 textInputAction: TextInputAction.next,
@@ -454,7 +462,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               child: _FormField(
                 controller: _zipCtrl,
                 focusNode: _zipFocus,
-                label: 'ZIP / Postal Code',
+                label: lang.tr('zip_postal_code'),
                 hint: '10001',
                 prefixIcon: Icons.markunread_mailbox_outlined,
                 keyboardType: TextInputType.number,
@@ -485,14 +493,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   // ── Payment method selector ────────────────────────────────────────────────
   Widget _buildPaymentNote() {
+    final lang = context.watch<LanguageProvider>();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionHeader('Payment Method'),
+        _sectionHeader(lang.tr('payment_method')),
         const SizedBox(height: 16),
         _PaymentMethodOption(
           icon: Icons.local_shipping_outlined,
-          title: 'Cash on Delivery',
+          title: lang.tr('cash_on_delivery'),
           subtitle: 'Pay in cash when your order arrives.',
           selected: _paymentMethod == 'cod',
           onTap: () => setState(() => _paymentMethod = 'cod'),
@@ -514,10 +523,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   // ── Cart items inline (mobile only) ───────────────────────────────────────
   Widget _buildCartItemsInline(CartProvider cart) {
+    final lang = context.watch<LanguageProvider>();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionHeader('Your Items (${cart.items.length})'),
+        _sectionHeader('${lang.tr('your_items')} (${cart.items.length})'),
         const SizedBox(height: 12),
         ...cart.items.map((item) => Container(
           margin: const EdgeInsets.only(bottom: 10),
@@ -569,6 +579,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   // ── Order summary card (wide layout) ──────────────────────────────────────
   Widget _buildOrderSummary(CartProvider cart, double tax, double total) {
+    final lang = context.watch<LanguageProvider>();
     return Container(
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
@@ -582,7 +593,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Order Summary',
+          Text(lang.tr('order_summary'),
             style: GoogleFonts.notoSerif(
               fontSize: 20, fontWeight: FontWeight.bold, color: _gold)),
           const SizedBox(height: 8),
@@ -631,16 +642,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           const Divider(color: _bd),
           const SizedBox(height: 12),
 
-          _SummaryRow('Subtotal', '\$${cart.subtotal.toStringAsFixed(2)}'),
+          _SummaryRow(lang.tr('subtotal'), '\$${cart.subtotal.toStringAsFixed(2)}'),
           const SizedBox(height: 10),
-          _SummaryRow('Estimated Tax (5%)', '\$${tax.toStringAsFixed(2)}'),
+          _SummaryRow(
+              '${lang.tr('estimated_tax')} (${(context.watch<StoreProvider>().taxRate * 100).toStringAsFixed(1)}%)',
+              '\$${tax.toStringAsFixed(2)}'),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Shipping',
+              Text(lang.tr('shipping'),
                 style: GoogleFonts.manrope(fontSize: 13, color: _t2)),
-              Text('Free — Across the USA',
+              Text(lang.tr('free_shipping_usa'),
                 style: GoogleFonts.manrope(
                   fontSize: 13, fontWeight: FontWeight.w600, color: _grn)),
             ],
@@ -655,7 +668,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text('Total',
+              Text(lang.tr('total'),
                 style: GoogleFonts.manrope(fontSize: 15, color: _t1)),
               Text('\$${total.toStringAsFixed(2)}',
                 style: GoogleFonts.notoSerif(
@@ -674,6 +687,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   // ── Sticky footer (mobile) ─────────────────────────────────────────────────
   Widget _buildStickyFooter(CartProvider cart, double tax, double total) {
+    final lang = context.watch<LanguageProvider>();
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: const BoxDecoration(
@@ -690,7 +704,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
-                Text('Subtotal + 5% Tax',
+                Text(
+                  '${lang.tr('subtotal_plus')} '
+                  '${(context.watch<StoreProvider>().taxRate * 100).toStringAsFixed(1)}% '
+                  '${lang.tr('tax_suffix')}',
                   style: GoogleFonts.manrope(fontSize: 12, color: _t2)),
                 Text('\$${total.toStringAsFixed(2)}',
                   style: GoogleFonts.notoSerif(
@@ -700,7 +717,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             const SizedBox(height: 2),
             Align(
               alignment: Alignment.centerRight,
-              child: Text('Free Shipping Included',
+              child: Text(lang.tr('free_shipping_included'),
                 style: GoogleFonts.manrope(fontSize: 11, color: _grn)),
             ),
             const SizedBox(height: 14),
@@ -715,6 +732,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   // ── Shared widgets ─────────────────────────────────────────────────────────
   Widget _buildCompleteOrderButton(double total) {
+    final lang = context.watch<LanguageProvider>();
     return GestureDetector(
       onTap: _isProcessing ? null : _handleCompleteOrder,
       child: Container(
@@ -732,7 +750,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(_paymentMethod == 'cod' ? 'PLACE ORDER — PAY ON DELIVERY' : 'COMPLETE ORDER',
+                  Text(_paymentMethod == 'cod' ? lang.tr('place_order_cod') : lang.tr('complete_order'),
                     style: GoogleFonts.manrope(
                       fontSize: 12, fontWeight: FontWeight.bold,
                       color: _bg, letterSpacing: 1.5)),
@@ -745,19 +763,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _buildSecureBadge() {
+    final lang = context.watch<LanguageProvider>();
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const Icon(Icons.security_rounded, color: _t2, size: 13),
         const SizedBox(width: 5),
-        Text('256-bit SSL Encryption',
+        Text(lang.tr('ssl_encryption'),
           style: GoogleFonts.manrope(
             fontSize: 10, fontWeight: FontWeight.bold,
             color: _t2, letterSpacing: 1.0)),
         const SizedBox(width: 10),
         const Icon(Icons.verified_outlined, color: _t2, size: 13),
         const SizedBox(width: 5),
-        Text('Powered by Stripe',
+        Text(lang.tr('powered_by_stripe'),
           style: GoogleFonts.manrope(
             fontSize: 10, fontWeight: FontWeight.bold,
             color: _t2, letterSpacing: 1.0)),
@@ -878,9 +897,10 @@ class _CountryDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>();
     return InputDecorator(
       decoration: InputDecoration(
-        labelText: 'Country',
+        labelText: lang.tr('country_label'),
         labelStyle: GoogleFonts.manrope(fontSize: 12, color: _t2),
         filled: true,
         fillColor: _surf,
