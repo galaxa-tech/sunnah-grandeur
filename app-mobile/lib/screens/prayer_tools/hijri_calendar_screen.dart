@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../utils/hijri_converter.dart';
+import '../../providers/language_provider.dart';
 
 /// Hijri (Islamic lunar) calendar — self-contained local state, matching
 /// the pattern of other single-purpose prayer tool screens in this app.
@@ -35,6 +37,7 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final lang = context.watch<LanguageProvider>();
     final todayGregorian = _today.toGregorian();
 
     return Scaffold(
@@ -50,8 +53,8 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
               Expanded(child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Hijri Calendar', style: AppTextStyles.heading(c, fontSize: 19)),
-                  Text('ISLAMIC LUNAR CALENDAR', style: AppTextStyles.brandTag(c)),
+                  Text(lang.tr('hijri_calendar'), style: AppTextStyles.heading(c, fontSize: 19)),
+                  Text(lang.tr('islamic_lunar_calendar_caps'), style: AppTextStyles.brandTag(c)),
                 ],
               )),
               GestureDetector(
@@ -63,7 +66,7 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: c.bd2),
                   ),
-                  child: Text('Today', style: AppTextStyles.bodyMuted(c, size: 10)),
+                  child: Text(lang.tr('today'), style: AppTextStyles.bodyMuted(c, size: 10)),
                 ),
               ),
             ]),
@@ -79,7 +82,7 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
                   padding: const EdgeInsets.all(18),
                   decoration: c.goldCardDecoration,
                   child: Column(children: [
-                    Text('TODAY', style: AppTextStyles.brandTag(c)),
+                    Text(lang.tr('today').toUpperCase(), style: AppTextStyles.brandTag(c)),
                     const SizedBox(height: 10),
                     Text(_today.toString(), style: AppTextStyles.displaySm(c).copyWith(fontSize: 24)),
                     const SizedBox(height: 4),
@@ -89,7 +92,7 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
                     ),
                     if (_today.isRamadan || _today.isEid) ...[
                       const SizedBox(height: 10),
-                      _EventChip(c: c, label: _today.isEid ? _today.eidLabel! : 'Ramadan Mubarak'),
+                      _EventChip(c: c, label: _today.isEid ? _today.eidLabel! : lang.tr('ramadan_mubarak')),
                     ],
                   ]),
                 ),
@@ -99,7 +102,7 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
                   _NavBtn(c: c, icon: Icons.chevron_left_rounded, onTap: () => _goToMonth(-1)),
                   Column(children: [
                     Text(_viewedMonth.monthName, style: AppTextStyles.heading(c, fontSize: 17)),
-                    Text('${_viewedMonth.year} AH', style: AppTextStyles.bodyMuted(c, size: 10.5)),
+                    Text('${_viewedMonth.year} ${lang.tr('ah_suffix')}', style: AppTextStyles.bodyMuted(c, size: 10.5)),
                   ]),
                   _NavBtn(c: c, icon: Icons.chevron_right_rounded, onTap: () => _goToMonth(1)),
                 ]),
@@ -108,7 +111,7 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
                 _MonthGrid(c: c, viewedMonth: _viewedMonth, today: _today),
 
                 const SizedBox(height: 16),
-                _LegendRow(c: c),
+                _LegendRow(c: c, lang: lang),
               ]),
             ),
           ),
@@ -245,8 +248,9 @@ class _DayCell extends StatelessWidget {
 
 // ── Legend ────────────────────────────────────────────────────────────────
 class _LegendRow extends StatelessWidget {
-  const _LegendRow({required this.c});
+  const _LegendRow({required this.c, required this.lang});
   final AppColors c;
+  final LanguageProvider lang;
 
   @override
   Widget build(BuildContext context) {
@@ -255,9 +259,9 @@ class _LegendRow extends StatelessWidget {
       runSpacing: 8,
       alignment: WrapAlignment.center,
       children: [
-        _LegendItem(c: c, color: c.gold, label: 'Today'),
-        _LegendItem(c: c, color: c.gold.withValues(alpha: 0.4), icon: Icons.star_rounded, label: 'Eid'),
-        _LegendItem(c: c, color: c.green.withValues(alpha: 0.5), icon: Icons.nightlight_round, label: 'Ramadan'),
+        _LegendItem(c: c, color: c.gold, label: lang.tr('today')),
+        _LegendItem(c: c, color: c.gold.withValues(alpha: 0.4), icon: Icons.star_rounded, label: lang.tr('eid')),
+        _LegendItem(c: c, color: c.green.withValues(alpha: 0.5), icon: Icons.nightlight_round, label: lang.tr('ramadan')),
       ],
     );
   }

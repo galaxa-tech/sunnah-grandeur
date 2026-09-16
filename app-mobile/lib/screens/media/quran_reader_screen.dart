@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../providers/quran_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../models/quran_model.dart';
 
 /// Displays a single surah's ayahs — Arabic text (right-to-left) followed
@@ -48,6 +49,7 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final lang = context.watch<LanguageProvider>();
     final quran = context.watch<QuranProvider>();
     final detail = quran.cachedSurah(widget.surahNumber);
 
@@ -65,14 +67,14 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      detail?.meta.englishName ?? 'Surah',
+                      detail?.meta.englishName ?? lang.tr('surah'),
                       style: AppTextStyles.brandSmall(c),
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
                       detail != null
-                          ? '${detail.meta.englishNameTranslation} · ${detail.meta.revelationType} · ${detail.meta.numberOfAyahs} ayahs'
-                          : 'Loading…',
+                          ? '${detail.meta.englishNameTranslation} · ${detail.meta.revelationType} · ${detail.meta.numberOfAyahs} ${lang.tr('ayahs')}'
+                          : lang.tr('loading'),
                       style: AppTextStyles.brandTag(c),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -89,13 +91,13 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
             ]),
           ),
           const SizedBox(height: 4),
-          Expanded(child: _buildBody(c, quran, detail)),
+          Expanded(child: _buildBody(c, lang, quran, detail)),
         ]),
       ),
     );
   }
 
-  Widget _buildBody(AppColors c, QuranProvider quran, SurahDetail? detail) {
+  Widget _buildBody(AppColors c, LanguageProvider lang, QuranProvider quran, SurahDetail? detail) {
     if (detail == null && quran.isLoadingSurahDetail) {
       return Center(child: CircularProgressIndicator(color: c.gold));
     }
@@ -124,7 +126,7 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                 ),
-                child: const Text('Retry'),
+                child: Text(lang.tr('retry')),
               ),
             ]),
           ),

@@ -19,6 +19,12 @@ build/
 _archive/
 *.log
 
+# Local QA debug scripts/screenshots (not part of the app, never committed)
+qa-tests/
+
+# Stray/legacy scaffold predating app-web — not wired into the build
+website/
+
 # Environment variables
 .env
 .env.local

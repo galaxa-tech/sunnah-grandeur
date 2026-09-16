@@ -10,16 +10,9 @@ import '../../models/product_model.dart';
 import '../../models/store_category_model.dart';
 import '../../widgets/shop/product_card.dart';
 import '../../widgets/shop/banner_carousel.dart';
+import '../../theme/app_colors.dart';
 import 'shop_product_detail_screen.dart';
 import 'shop_cart_screen.dart';
-
-// ─── Website colour tokens ────────────────────────────────────────────────────
-const _bg     = Color(0xFF0A0A0A);
-const _surf   = Color(0xFF141414);
-const _bd     = Color(0xFF1F1F1F);
-const _gold   = Color(0xFFC9A84C);
-const _t1     = Color(0xFFFFFFFF);
-const _t2     = Color(0xFFA0A0A0);
 
 // ─── Subcategories per category (matches website categories.ts) ───────────────
 const _kSubcategories = <String, List<String>>{
@@ -52,13 +45,14 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final store = context.watch<StoreProvider>();
     final cart  = context.watch<CartProvider>();
     final w     = MediaQuery.of(context).size.width;
     final isWide = w > 900;
 
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: c.bg,
       body: Stack(
         children: [
           SafeArea(
@@ -148,14 +142,15 @@ class _PageHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final catName = store.selectedCategoryName;
     final count   = store.products.length;
 
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(isWide ? 48 : 20, 52, isWide ? 48 : 20, 24),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: _bd)),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: c.bd)),
       ),
       child: Stack(
         children: [
@@ -166,10 +161,10 @@ class _PageHeader extends StatelessWidget {
             child: Container(
               width: 400, height: 200,
               decoration: BoxDecoration(
-                color:        _gold.withValues(alpha: 0.05),
+                color:        c.gold.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(200),
                 boxShadow: [
-                  BoxShadow(color: _gold.withValues(alpha: 0.05), blurRadius: 80, spreadRadius: 40)
+                  BoxShadow(color: c.gold.withValues(alpha: 0.05), blurRadius: 80, spreadRadius: 40)
                 ],
               ),
             ),
@@ -181,7 +176,7 @@ class _PageHeader extends StatelessWidget {
                 'Islamic Lifestyle',
                 style: GoogleFonts.manrope(
                   fontSize: 11, fontWeight: FontWeight.bold,
-                  color: _gold, letterSpacing: 3.2,
+                  color: c.gold, letterSpacing: 3.2,
                 ),
               ),
               const SizedBox(height: 8),
@@ -239,6 +234,7 @@ class _CartIconBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Stack(
@@ -247,23 +243,23 @@ class _CartIconBtn extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: _surf, borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: _bd),
+              color: c.surf, borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: c.bd),
             ),
-            child: const Icon(Icons.shopping_bag_outlined, color: _gold, size: 18),
+            child: Icon(Icons.shopping_bag_outlined, color: c.gold, size: 18),
           ),
           if (count > 0)
             Positioned(
               top: -4, right: -4,
               child: Container(
                 width: 18, height: 18,
-                decoration: const BoxDecoration(
-                  color: _gold, shape: BoxShape.circle,
+                decoration: BoxDecoration(
+                  color: c.gold, shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
                 child: Text('$count',
                     style: GoogleFonts.manrope(
-                      fontSize: 9, fontWeight: FontWeight.bold, color: _bg)),
+                      fontSize: 9, fontWeight: FontWeight.bold, color: c.bg)),
               ),
             ),
         ],
@@ -280,6 +276,7 @@ class _ShopTitleBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -290,13 +287,13 @@ class _ShopTitleBlock extends StatelessWidget {
           style: GoogleFonts.notoSerif(
             fontSize: fontSize,
             fontWeight: FontWeight.bold,
-            color: _t1, height: 1.2,
+            color: c.t1, height: 1.2,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           '$count product${count != 1 ? 's' : ''} found',
-          style: GoogleFonts.manrope(fontSize: 12, color: _t2),
+          style: GoogleFonts.manrope(fontSize: 12, color: c.t2),
         ),
       ],
     );
@@ -311,22 +308,23 @@ class _HeaderBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: _surf, borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: _bd),
+          color: c.surf, borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: c.bd),
         ),
         child: Row(
           children: [
-            Icon(icon, color: _t1, size: 14),
+            Icon(icon, color: c.t1, size: 14),
             const SizedBox(width: 6),
             Text(label,
                 style: GoogleFonts.manrope(
                   fontSize: 11, fontWeight: FontWeight.bold,
-                  color: _t1, letterSpacing: 1.0,
+                  color: c.t1, letterSpacing: 1.0,
                 )),
           ],
         ),
@@ -341,18 +339,19 @@ class _SortDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: _surf, borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: _bd),
+        color: c.surf, borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: c.bd),
       ),
       child: DropdownButton<StoreSort>(
         value: store.sort,
         dropdownColor: const Color(0xFF141414),
         underline: const SizedBox.shrink(),
         isDense: true,
-        icon: const Icon(Icons.keyboard_arrow_down_rounded, color: _t2, size: 16),
+        icon: Icon(Icons.keyboard_arrow_down_rounded, color: c.t2, size: 16),
         items: const [
           DropdownMenuItem(value: StoreSort.featured,  child: _SortLabel('FEATURED')),
           DropdownMenuItem(value: StoreSort.priceLow,  child: _SortLabel('PRICE: LOW')),
@@ -374,7 +373,7 @@ class _SortLabel extends StatelessWidget {
     child: Text(text,
       style: GoogleFonts.manrope(
         fontSize: 11, fontWeight: FontWeight.bold,
-        color: _t1, letterSpacing: 1.0,
+        color: AppColors.of(context).t1, letterSpacing: 1.0,
       )),
   );
 }
@@ -396,6 +395,7 @@ class _DesktopSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final lang = context.watch<LanguageProvider>();
     return SizedBox(
       width: 208,
@@ -408,7 +408,7 @@ class _DesktopSidebar extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(lang.tr('browse'),
                 style: GoogleFonts.manrope(
-                  fontSize: 10, color: _t2,
+                  fontSize: 10, color: c.t2,
                   fontWeight: FontWeight.bold, letterSpacing: 2.0,
                 )),
             ),
@@ -453,7 +453,7 @@ class _DesktopSidebar extends StatelessWidget {
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color:        const Color(0xFF0e0e0e),
-                            border:       Border.all(color: _bd),
+                            border:       Border.all(color: c.bd),
                             borderRadius: BorderRadius.circular(4),
                             boxShadow:    const [
                               BoxShadow(
@@ -467,18 +467,18 @@ class _DesktopSidebar extends StatelessWidget {
                               Text(cat.name.toUpperCase(),
                                 style: GoogleFonts.manrope(
                                   fontSize: 9, fontWeight: FontWeight.bold,
-                                  color: _gold, letterSpacing: 1.5,
+                                  color: c.gold, letterSpacing: 1.5,
                                 )),
                               const SizedBox(height: 8),
                               ...subs.map((s) => Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 3),
                                 child: Row(children: [
-                                  const Icon(Icons.chevron_right_rounded,
-                                      size: 12, color: _t2),
+                                  Icon(Icons.chevron_right_rounded,
+                                      size: 12, color: c.t2),
                                   const SizedBox(width: 4),
                                   Text(s,
                                     style: GoogleFonts.manrope(
-                                      fontSize: 12, color: _t2)),
+                                      fontSize: 12, color: c.t2)),
                                 ]),
                               )),
                             ],
@@ -532,33 +532,34 @@ class _SidebarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin:  const EdgeInsets.symmetric(vertical: 1),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color:        isActive ? _gold.withValues(alpha: 0.10) : Colors.transparent,
+          color:        isActive ? c.gold.withValues(alpha: 0.10) : Colors.transparent,
           borderRadius: BorderRadius.circular(4),
         ),
         child: Row(
           children: [
             Icon(icon,
               size:  14,
-              color: isActive ? _gold : (accentColor?.withValues(alpha: 0.50) ?? _t2)),
+              color: isActive ? c.gold : (accentColor?.withValues(alpha: 0.50) ?? c.t2)),
             const SizedBox(width: 8),
             Expanded(
               child: Text(label,
                 style: GoogleFonts.manrope(
                   fontSize: 12, fontWeight: FontWeight.bold,
-                  color: isActive ? _gold : _t2,
+                  color: isActive ? c.gold : c.t2,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             if (count > 0)
               Text('$count',
-                style: GoogleFonts.manrope(fontSize: 11, color: _t2)),
+                style: GoogleFonts.manrope(fontSize: 11, color: c.t2)),
           ],
         ),
       ),
@@ -581,14 +582,15 @@ class _ProductGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final products = store.products;
     final w        = MediaQuery.of(context).size.width;
     final lang     = context.watch<LanguageProvider>();
 
     if (store.isLoading) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(_gold),
+          valueColor: AlwaysStoppedAnimation<Color>(c.gold),
           strokeWidth: 2,
         ),
       );
@@ -599,19 +601,19 @@ class _ProductGrid extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.inventory_2_outlined, size: 52, color: _bd),
+            Icon(Icons.inventory_2_outlined, size: 52, color: c.bd),
             const SizedBox(height: 16),
             Text(lang.tr('no_products_category'),
-              style: GoogleFonts.manrope(fontSize: 14, color: _t2)),
+              style: GoogleFonts.manrope(fontSize: 14, color: c.t2)),
             const SizedBox(height: 12),
             GestureDetector(
               onTap: () => store.setCategory(null),
               child: Text(lang.tr('view_all_products'),
                 style: GoogleFonts.manrope(
                   fontSize: 14, fontWeight: FontWeight.bold,
-                  color: _gold,
+                  color: c.gold,
                   decoration: TextDecoration.underline,
-                  decorationColor: _gold,
+                  decorationColor: c.gold,
                 )),
             ),
           ],
@@ -663,20 +665,21 @@ class _ProductGrid extends StatelessWidget {
 
   void _addToCart(BuildContext context, ProductModel p) {
     if (p.stockQuantity == 0) return;
+    final c = AppColors.of(context);
     HapticFeedback.lightImpact();
     cart.addToCart(p, 'Standard', 1);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        backgroundColor: _surf,
+        backgroundColor: c.surf,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         content: Row(children: [
-          const Icon(Icons.check_circle_outline_rounded, color: _gold, size: 18),
+          Icon(Icons.check_circle_outline_rounded, color: c.gold, size: 18),
           const SizedBox(width: 10),
           Expanded(
             child: Text('${p.name} added to cart',
-              style: GoogleFonts.manrope(color: _t1, fontSize: 13)),
+              style: GoogleFonts.manrope(color: c.t1, fontSize: 13)),
           ),
         ]),
         duration: const Duration(seconds: 2),
@@ -704,6 +707,7 @@ class _MobileDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final lang = context.watch<LanguageProvider>();
     return Stack(
       children: [
@@ -719,27 +723,27 @@ class _MobileDrawer extends StatelessWidget {
           left: 0, top: 0, bottom: 0,
           child: Container(
             width: 280,
-            color: _bg,
+            color: c.bg,
             child: SafeArea(
               child: Column(
                 children: [
                   // Header
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: const BoxDecoration(
-                        border: Border(bottom: BorderSide(color: _bd))),
+                    decoration: BoxDecoration(
+                        border: Border(bottom: BorderSide(color: c.bd))),
                     child: Row(
                       children: [
                         Text(lang.tr('categories_caps'),
                           style: GoogleFonts.manrope(
                             fontSize: 13, fontWeight: FontWeight.bold,
-                            color: _t1, letterSpacing: 1.5,
+                            color: c.t1, letterSpacing: 1.5,
                           )),
                         const Spacer(),
                         GestureDetector(
                           onTap: onClose,
-                          child: const Icon(Icons.close_rounded,
-                              color: _t2, size: 22),
+                          child: Icon(Icons.close_rounded,
+                              color: c.t2, size: 22),
                         ),
                       ],
                     ),
@@ -784,9 +788,9 @@ class _MobileDrawer extends StatelessWidget {
                                         child: AnimatedRotation(
                                           turns: isOpen ? 0.5 : 0,
                                           duration: const Duration(milliseconds: 200),
-                                          child: const Icon(
+                                          child: Icon(
                                             Icons.expand_more_rounded,
-                                            size: 18, color: _t2),
+                                            size: 18, color: c.t2),
                                         ),
                                       ),
                                     ),
@@ -796,24 +800,24 @@ class _MobileDrawer extends StatelessWidget {
                                 Container(
                                   margin: const EdgeInsets.only(left: 16),
                                   padding: const EdgeInsets.only(left: 12),
-                                  decoration: const BoxDecoration(
+                                  decoration: BoxDecoration(
                                     border: Border(
-                                      left: BorderSide(color: _bd))),
+                                      left: BorderSide(color: c.bd))),
                                   child: Column(
                                     children: subs.map((s) => Padding(
                                       padding: const EdgeInsets.symmetric(vertical: 4),
                                       child: Row(children: [
                                         Container(
                                           width: 4, height: 4,
-                                          decoration: const BoxDecoration(
-                                            color: _bd,
+                                          decoration: BoxDecoration(
+                                            color: c.bd,
                                             shape: BoxShape.circle,
                                           ),
                                         ),
                                         const SizedBox(width: 8),
                                         Text(s,
                                           style: GoogleFonts.manrope(
-                                            fontSize: 12, color: _t2)),
+                                            fontSize: 12, color: c.t2)),
                                       ]),
                                     )).toList(),
                                   ),
@@ -852,31 +856,32 @@ class _MobItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         margin:  const EdgeInsets.symmetric(vertical: 1),
         decoration: BoxDecoration(
-          color:        isActive ? _gold.withValues(alpha: 0.10) : Colors.transparent,
+          color:        isActive ? c.gold.withValues(alpha: 0.10) : Colors.transparent,
           borderRadius: BorderRadius.circular(4),
         ),
         child: Row(
           children: [
             Icon(icon,
               size: 16,
-              color: isActive ? _gold : (accentColor?.withValues(alpha: 0.5) ?? _t2)),
+              color: isActive ? c.gold : (accentColor?.withValues(alpha: 0.5) ?? c.t2)),
             const SizedBox(width: 10),
             Expanded(
               child: Text(label,
                 style: GoogleFonts.manrope(
                   fontSize: 13, fontWeight: FontWeight.bold,
-                  color: isActive ? _gold : _t2,
+                  color: isActive ? c.gold : c.t2,
                 )),
             ),
             if (count > 0)
               Text('$count',
-                style: GoogleFonts.manrope(fontSize: 11, color: _t2)),
+                style: GoogleFonts.manrope(fontSize: 11, color: c.t2)),
           ],
         ),
       ),

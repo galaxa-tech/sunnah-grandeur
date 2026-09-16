@@ -6,6 +6,7 @@ import '../../widgets/eye_row.dart';
 import '../../widgets/video_row_item.dart';
 import '../../providers/media_provider.dart';
 import '../../providers/quran_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../services/local/quran_bookmark_service.dart';
 import '../../models/video_model.dart';
 import 'video_player_screen.dart';
@@ -45,6 +46,7 @@ class _QuranScreenState extends State<QuranScreen>
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final lang = context.watch<LanguageProvider>();
 
     return Scaffold(
       backgroundColor: c.bg,
@@ -57,8 +59,8 @@ class _QuranScreenState extends State<QuranScreen>
               _BackBtn(c: c),
               const SizedBox(width: 10),
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Quran', style: AppTextStyles.brandSmall(c)),
-                Text('Tilawah · Tajweed · Memorization',
+                Text(lang.tr('quran'), style: AppTextStyles.brandSmall(c)),
+                Text(lang.tr('quran_tab_sub'),
                     style: AppTextStyles.brandTag(c)),
               ]),
             ]),
@@ -88,9 +90,9 @@ class _QuranScreenState extends State<QuranScreen>
               unselectedLabelColor: c.t2,
               labelStyle: AppTextStyles.pill(c, size: 12),
               unselectedLabelStyle: AppTextStyles.pill(c, size: 12, color: c.t2),
-              tabs: const [
-                Tab(text: 'Read'),
-                Tab(text: 'Watch'),
+              tabs: [
+                Tab(text: lang.tr('read_tab')),
+                Tab(text: lang.tr('watch_tab')),
               ],
             ),
           ),
@@ -120,13 +122,14 @@ class _ReadTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final lang = context.watch<LanguageProvider>();
     final quran = context.watch<QuranProvider>();
 
     return Column(children: [
       if (quran.bookmarkLoaded && quran.lastRead != null)
         Padding(
           padding: const EdgeInsets.fromLTRB(18, 8, 18, 2),
-          child: _ContinueReadingCard(c: c, bookmark: quran.lastRead!),
+          child: _ContinueReadingCard(c: c, lang: lang, bookmark: quran.lastRead!),
         ),
       const Expanded(child: QuranSurahListScreen()),
     ]);
@@ -134,8 +137,9 @@ class _ReadTab extends StatelessWidget {
 }
 
 class _ContinueReadingCard extends StatelessWidget {
-  const _ContinueReadingCard({required this.c, required this.bookmark});
+  const _ContinueReadingCard({required this.c, required this.lang, required this.bookmark});
   final AppColors c;
+  final LanguageProvider lang;
   final QuranBookmark bookmark;
 
   @override
@@ -169,12 +173,12 @@ class _ContinueReadingCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Continue Reading', style: AppTextStyles.pill(c, size: 10)),
+                Text(lang.tr('continue_reading'), style: AppTextStyles.pill(c, size: 10)),
                 const SizedBox(height: 2),
                 Text(
                   bookmark.surahName.isNotEmpty
-                      ? 'Surah ${bookmark.surahName} · Ayah ${bookmark.ayahNumber}'
-                      : 'Ayah ${bookmark.ayahNumber}',
+                      ? '${lang.tr('surah')} ${bookmark.surahName} · ${lang.tr('ayah')} ${bookmark.ayahNumber}'
+                      : '${lang.tr('ayah')} ${bookmark.ayahNumber}',
                   style: AppTextStyles.label(c, size: 13),
                 ),
               ],
@@ -195,6 +199,7 @@ class _WatchTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final lang = context.watch<LanguageProvider>();
     final media = context.watch<MediaProvider>();
 
     return media.isLoadingQuran
@@ -214,10 +219,10 @@ class _WatchTab extends StatelessWidget {
                               video: media.quranMedia.first)),
                     ),
                     child: _FeaturedQuranCard(
-                        c: c, video: media.quranMedia.first),
+                        c: c, lang: lang, video: media.quranMedia.first),
                   ),
 
-                const EyeRow(label: 'All Recitations'),
+                EyeRow(label: lang.tr('all_recitations')),
 
                 if (media.quranMedia.isEmpty)
                   Padding(
@@ -227,10 +232,10 @@ class _WatchTab extends StatelessWidget {
                       children: [
                         Icon(Icons.menu_book_outlined, color: c.t3, size: 40),
                         const SizedBox(height: 12),
-                        Text('No recitations available',
+                        Text(lang.tr('no_recitations_available'),
                             style: AppTextStyles.bodyMuted(c)),
                         const SizedBox(height: 6),
-                        Text('Pull down to refresh or check your connection.',
+                        Text(lang.tr('pull_refresh_hint'),
                             style: AppTextStyles.bodyMuted(c, size: 11),
                             textAlign: TextAlign.center),
                       ],
@@ -260,8 +265,9 @@ class _WatchTab extends StatelessWidget {
 }
 
 class _FeaturedQuranCard extends StatelessWidget {
-  const _FeaturedQuranCard({required this.c, required this.video});
+  const _FeaturedQuranCard({required this.c, required this.lang, required this.video});
   final AppColors c;
+  final LanguageProvider lang;
   final VideoModel video;
 
   @override
@@ -330,7 +336,7 @@ class _FeaturedQuranCard extends StatelessWidget {
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                Text('Featured Tilawah',
+                Text(lang.tr('featured_tilawah'),
                     style: AppTextStyles.cinzelSm(c,
                         color: const Color(0xFF6EE8A8), size: 8)
                         .copyWith(letterSpacing: 1.8)),
@@ -367,7 +373,7 @@ class _FeaturedQuranCard extends StatelessWidget {
             Text(video.author,
                 style: AppTextStyles.body(c, size: 11)),
             const Spacer(),
-            Text('${video.views} views',
+            Text('${video.views} ${lang.tr('views')}',
                 style: AppTextStyles.bodyMuted(c, size: 10)),
           ]),
         ),

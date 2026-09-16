@@ -5,6 +5,7 @@ import '../../theme/app_text_styles.dart';
 import '../../widgets/eye_row.dart';
 import '../../widgets/video_row_item.dart';
 import '../../providers/media_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../models/video_model.dart';
 import 'video_player_screen.dart';
 
@@ -14,6 +15,7 @@ class RuqyahScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c     = AppColors.of(context);
+    final lang  = context.watch<LanguageProvider>();
     final media = context.watch<MediaProvider>();
 
     return Scaffold(
@@ -27,8 +29,8 @@ class RuqyahScreen extends StatelessWidget {
               _BackBtn(c: c),
               const SizedBox(width: 10),
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Ruqyah', style: AppTextStyles.brandSmall(c)),
-                Text('Healing · Protection · Evil Eye',
+                Text(lang.tr('ruqyah'), style: AppTextStyles.brandSmall(c)),
+                Text(lang.tr('ruqyah_tab_sub'),
                     style: AppTextStyles.brandTag(c)),
               ]),
             ]),
@@ -75,12 +77,12 @@ class RuqyahScreen extends StatelessWidget {
                                 crossAxisAlignment:
                                     CrossAxisAlignment.start,
                                 children: [
-                                  Text('Healing through the Quran',
+                                  Text(lang.tr('healing_through_quran'),
                                       style: AppTextStyles.heading(c,
                                           fontSize: 14)),
                                   const SizedBox(height: 3),
                                   Text(
-                                    'Listen in a quiet place. Recitations are based on authentic Sunnah for healing and protection.',
+                                    lang.tr('ruqyah_info_body'),
                                     style: AppTextStyles.bodyMuted(c,
                                             size: 10)
                                         .copyWith(height: 1.5),
@@ -102,10 +104,11 @@ class RuqyahScreen extends StatelessWidget {
                             ),
                             child: _FeaturedCard(
                                 c: c,
+                                lang: lang,
                                 video: media.ruqyahMedia.first),
                           ),
 
-                        const EyeRow(label: 'All Recitations'),
+                        EyeRow(label: lang.tr('all_recitations')),
 
                         if (media.ruqyahMedia.isEmpty)
                           Padding(
@@ -116,12 +119,12 @@ class RuqyahScreen extends StatelessWidget {
                                 Icon(Icons.healing_rounded,
                                     color: c.t3, size: 36),
                                 const SizedBox(height: 12),
-                                Text('No recitations available',
+                                Text(lang.tr('no_recitations_available'),
                                     style:
                                         AppTextStyles.bodyMuted(c)),
                                 const SizedBox(height: 6),
                                 Text(
-                                    'Pull down to refresh or check your connection.',
+                                    lang.tr('pull_refresh_hint'),
                                     style: AppTextStyles.bodyMuted(c,
                                         size: 11),
                                     textAlign: TextAlign.center),
@@ -159,8 +162,9 @@ class RuqyahScreen extends StatelessWidget {
 }
 
 class _FeaturedCard extends StatelessWidget {
-  const _FeaturedCard({required this.c, required this.video});
+  const _FeaturedCard({required this.c, required this.lang, required this.video});
   final AppColors c;
+  final LanguageProvider lang;
   final VideoModel video;
 
   @override
@@ -226,7 +230,7 @@ class _FeaturedCard extends StatelessWidget {
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                Text('FEATURED',
+                Text(lang.tr('featured_caps'),
                     style: AppTextStyles.cinzelSm(c,
                         color: const Color(0xFFFFAA9A), size: 8)
                         .copyWith(letterSpacing: 1.8)),
@@ -262,7 +266,7 @@ class _FeaturedCard extends StatelessWidget {
             Text(video.author,
                 style: AppTextStyles.body(c, size: 11)),
             const Spacer(),
-            Text('${video.views} listens',
+            Text('${video.views} ${lang.tr('listens')}',
                 style: AppTextStyles.bodyMuted(c, size: 10)),
           ]),
         ),

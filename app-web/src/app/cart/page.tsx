@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useCartStore } from '@/store/useCartStore';
 import { formatUsd, formatUsdRaw, toDisplayUsd } from '@/lib/currency';
+import { useCurrency } from '@/context/CurrencyContext';
 
 // Mirrors backend/functions/src/domains/orders — settings/app_config defaults
 // (freeShippingThreshold: 5000 cents, standardShippingCents: 999) — shown here
@@ -11,9 +12,10 @@ const STANDARD_SHIPPING_USD = 9.99;
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, clearCart, getSubtotal } = useCartStore();
+  const { usdRate } = useCurrency();
 
   const subtotal = getSubtotal();
-  const subtotalUsd = toDisplayUsd(subtotal);
+  const subtotalUsd = toDisplayUsd(subtotal, usdRate);
   const qualifiesForFreeShipping = subtotalUsd >= FREE_SHIPPING_THRESHOLD_USD;
   const shippingUsd = qualifiesForFreeShipping ? 0 : STANDARD_SHIPPING_USD;
   const totalUsd = subtotalUsd + shippingUsd;
@@ -120,7 +122,7 @@ export default function CartPage() {
 
                     {/* Price */}
                     <div className="text-headline-md font-headline-md text-primary">
-                      {formatUsd(item.price * item.quantity)}
+                      {formatUsd(item.price * item.quantity, usdRate)}
                     </div>
                   </div>
                 </div>
@@ -137,7 +139,7 @@ export default function CartPage() {
               <div className="space-y-4 text-body-md font-body-md">
                 <div className="flex justify-between">
                   <span className="text-text-secondary">Subtotal</span>
-                  <span className="text-on-surface">{formatUsd(subtotal)}</span>
+                  <span className="text-on-surface">{formatUsd(subtotal, usdRate)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-text-secondary">Shipping</span>

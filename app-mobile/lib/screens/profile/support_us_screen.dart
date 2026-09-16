@@ -45,8 +45,8 @@ class SupportUsScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Support Us', style: AppTextStyles.heading(c, fontSize: 19)),
-                      Text('HELP US GROW', style: AppTextStyles.brandTag(c)),
+                      Text(lang.tr('support_us'), style: AppTextStyles.heading(c, fontSize: 19)),
+                      Text(lang.tr('help_us_grow_caps'), style: AppTextStyles.brandTag(c)),
                     ],
                   ),
                 ),
@@ -68,14 +68,12 @@ class SupportUsScreen extends StatelessWidget {
                       child: Icon(Icons.volunteer_activism_outlined, color: c.gold, size: 32),
                     ),
                     const SizedBox(height: 16),
-                    Text('Support ${lang.tr('app_name')}',
+                    Text('${lang.tr('support_prefix')}${lang.tr('app_name')}',
                         style: AppTextStyles.displayMd(c).copyWith(fontSize: 24),
                         textAlign: TextAlign.center),
                     const SizedBox(height: 10),
                     Text(
-                      'Every purchase from our shop and every friend you tell '
-                      'about the app directly supports our mission to build '
-                      'thoughtful tools for the Muslim community.',
+                      lang.tr('support_body'),
                       textAlign: TextAlign.center,
                       style: AppTextStyles.bodyMuted(c, size: 13).copyWith(height: 1.65),
                     ),
@@ -84,8 +82,8 @@ class SupportUsScreen extends StatelessWidget {
                     _SupportCard(
                       c: c,
                       icon: Icons.storefront_outlined,
-                      title: 'Shop With Us',
-                      subtitle: 'Every order funds the products we build next.',
+                      title: lang.tr('shop_with_us'),
+                      subtitle: lang.tr('shop_with_us_sub'),
                       onTap: () => Navigator.push(context,
                           MaterialPageRoute(builder: (_) => const ShopHomeScreen())),
                     ),
@@ -93,17 +91,16 @@ class SupportUsScreen extends StatelessWidget {
                     _SupportCard(
                       c: c,
                       icon: Icons.share_outlined,
-                      title: 'Share the App',
-                      subtitle: 'Tell a friend or family member about us.',
+                      title: lang.tr('share_the_app'),
+                      subtitle: lang.tr('share_the_app_sub'),
                       onTap: () => Share.share(
-                        'I use ${lang.tr('app_name')} for prayer times, Qibla, and '
-                        'daily reminders — check it out!',
+                        '${lang.tr('share_message_prefix')}${lang.tr('app_name')}${lang.tr('share_message_suffix')}',
                         subject: lang.tr('app_name'),
                       ),
                     ),
                     const SizedBox(height: 28),
                     GoldButton(
-                      label: 'Browse the Shop',
+                      label: lang.tr('browse_the_shop'),
                       onTap: () => Navigator.push(context,
                           MaterialPageRoute(builder: (_) => const ShopHomeScreen())),
                     ),

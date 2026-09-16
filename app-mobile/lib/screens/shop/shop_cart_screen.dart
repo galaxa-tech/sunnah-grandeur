@@ -7,14 +7,7 @@ import '../../providers/cart_provider.dart';
 import '../../providers/store_provider.dart';
 import '../../providers/language_provider.dart';
 import '../store/checkout_screen.dart';
-
-// ─── Website colour tokens ────────────────────────────────────────────────────
-const _bg   = Color(0xFF0A0A0A);
-const _surf = Color(0xFF141414);
-const _bd   = Color(0xFF1F1F1F);
-const _gold = Color(0xFFC9A84C);
-const _t1   = Color(0xFFFFFFFF);
-const _t2   = Color(0xFFA0A0A0);
+import '../../theme/app_colors.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ShopCartScreen
@@ -26,25 +19,26 @@ class ShopCartScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final cart   = context.watch<CartProvider>();
     final lang   = context.watch<LanguageProvider>();
     final w      = MediaQuery.of(context).size.width;
     final isWide = w > 900;
 
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: c.bg,
       appBar: AppBar(
-        backgroundColor: _bg,
+        backgroundColor: c.bg,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: _t2, size: 18),
+          icon: Icon(Icons.arrow_back_ios_new_rounded,
+              color: c.t2, size: 18),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(lang.tr('cart'),
           style: GoogleFonts.notoSerif(
-            fontSize: 18, fontWeight: FontWeight.bold, color: _t1)),
+            fontSize: 18, fontWeight: FontWeight.bold, color: c.t1)),
       ),
       body: cart.items.isEmpty
           ? _buildEmptyCart(context, lang)
@@ -53,18 +47,19 @@ class ShopCartScreen extends StatelessWidget {
   }
 
   Widget _buildEmptyCart(BuildContext context, LanguageProvider lang) {
+    final c = AppColors.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.shopping_bag_outlined, size: 72, color: _bd),
+          Icon(Icons.shopping_bag_outlined, size: 72, color: c.bd),
           const SizedBox(height: 20),
           Text(lang.tr('cart_empty_title'),
             style: GoogleFonts.notoSerif(
-              fontSize: 22, fontWeight: FontWeight.bold, color: _t1)),
+              fontSize: 22, fontWeight: FontWeight.bold, color: c.t1)),
           const SizedBox(height: 8),
           Text(lang.tr('cart_empty_sub'),
-            style: GoogleFonts.manrope(fontSize: 14, color: _t2)),
+            style: GoogleFonts.manrope(fontSize: 14, color: c.t2)),
           const SizedBox(height: 24),
           _GoldButton(
             label: lang.tr('continue_shopping').toUpperCase(),
@@ -77,6 +72,7 @@ class ShopCartScreen extends StatelessWidget {
 
   Widget _buildCartContent(
       BuildContext context, CartProvider cart, bool isWide, LanguageProvider lang) {
+    final c = AppColors.of(context);
     final headerPad = isWide ? 48.0 : 20.0;
 
     final header = Padding(
@@ -86,10 +82,10 @@ class ShopCartScreen extends StatelessWidget {
         children: [
           Text(lang.tr('your_cart'),
             style: GoogleFonts.notoSerif(
-              fontSize: 28, fontWeight: FontWeight.bold, color: _gold)),
+              fontSize: 28, fontWeight: FontWeight.bold, color: c.gold)),
           const SizedBox(height: 4),
           Text(lang.tr('cart_review_sub'),
-            style: GoogleFonts.manrope(fontSize: 13, color: _t2)),
+            style: GoogleFonts.manrope(fontSize: 13, color: c.t2)),
         ],
       ),
     );
@@ -141,14 +137,15 @@ class _CartItemsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Column(
       children: cart.items.map((item) => Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: _surf,
+          color: c.surf,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: _bd),
+          border: Border.all(color: c.bd),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,15 +155,15 @@ class _CartItemsList extends StatelessWidget {
               width: 96, height: 96,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: _bd),
+                border: Border.all(color: c.bd),
               ),
               clipBehavior: Clip.antiAlias,
               child: item.product.primaryImage.isNotEmpty
                   ? Image.network(item.product.primaryImage,
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) =>
-                          _fallback(item.product.categoryId))
-                  : _fallback(item.product.categoryId),
+                          _fallback(item.product.categoryId, c.gold))
+                  : _fallback(item.product.categoryId, c.gold),
             ),
             const SizedBox(width: 16),
 
@@ -185,19 +182,19 @@ class _CartItemsList extends StatelessWidget {
                             Text(item.product.name,
                               style: GoogleFonts.manrope(
                                 fontSize: 14, fontWeight: FontWeight.w600,
-                                color: _t1)),
+                                color: c.t1)),
                             const SizedBox(height: 2),
                             Text(
                               '${item.product.category} / ${item.variant}',
                               style: GoogleFonts.manrope(
-                                  fontSize: 12, color: _t2)),
+                                  fontSize: 12, color: c.t2)),
                           ],
                         ),
                       ),
                       GestureDetector(
                         onTap: () => cart.removeFromCart(item),
-                        child: const Icon(Icons.delete_outline_rounded,
-                            color: _t2, size: 20),
+                        child: Icon(Icons.delete_outline_rounded,
+                            color: c.t2, size: 20),
                       ),
                     ],
                   ),
@@ -209,9 +206,9 @@ class _CartItemsList extends StatelessWidget {
                       // Qty stepper
                       Container(
                         decoration: BoxDecoration(
-                          border: Border.all(color: _bd),
+                          border: Border.all(color: c.bd),
                           borderRadius: BorderRadius.circular(4),
-                          color: _bg,
+                          color: c.bg,
                         ),
                         child: Row(mainAxisSize: MainAxisSize.min, children: [
                           _QtyBtn(Icons.remove_rounded,
@@ -225,7 +222,7 @@ class _CartItemsList extends StatelessWidget {
                             child: Text('${item.quantity}',
                               textAlign: TextAlign.center,
                               style: GoogleFonts.manrope(
-                                  fontSize: 13, color: _t1)),
+                                  fontSize: 13, color: c.t1)),
                           ),
                           _QtyBtn(Icons.add_rounded,
                               () {
@@ -238,7 +235,7 @@ class _CartItemsList extends StatelessWidget {
                       Text('\$${item.totalPrice.toStringAsFixed(2)}',
                         style: GoogleFonts.manrope(
                           fontSize: 18, fontWeight: FontWeight.bold,
-                          color: _gold)),
+                          color: c.gold)),
                     ],
                   ),
                 ],
@@ -250,7 +247,7 @@ class _CartItemsList extends StatelessWidget {
     );
   }
 
-  Widget _fallback(String catId) {
+  Widget _fallback(String catId, Color gold) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -263,7 +260,7 @@ class _CartItemsList extends StatelessWidget {
         ),
       ),
       child: Icon(Icons.shopping_bag_outlined,
-          color: _gold.withValues(alpha: 0.3), size: 28),
+          color: gold.withValues(alpha: 0.3), size: 28),
     );
   }
 }
@@ -276,7 +273,7 @@ class _QtyBtn extends StatelessWidget {
   Widget build(BuildContext context) => GestureDetector(
     onTap: onTap,
     child: SizedBox(width: 32, height: 36,
-        child: Icon(icon, size: 14, color: _t2)),
+        child: Icon(icon, size: 14, color: AppColors.of(context).t2)),
   );
 }
 
@@ -292,6 +289,7 @@ class _OrderSummary extends StatelessWidget {
     // Same settings/app_config.taxRateBps createOrder charges from
     // server-side — keeps this estimate from ever silently diverging from
     // the real charge.
+    final c = AppColors.of(context);
     final taxRate = context.watch<StoreProvider>().taxRate;
     final lang  = context.watch<LanguageProvider>();
     final tax   = cart.subtotal * taxRate;
@@ -300,9 +298,9 @@ class _OrderSummary extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: _surf,
+        color: c.surf,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _bd),
+        border: Border.all(color: c.bd),
         boxShadow: const [
           BoxShadow(color: Colors.black54, blurRadius: 24, offset: Offset(0, 8)),
         ],
@@ -312,9 +310,9 @@ class _OrderSummary extends StatelessWidget {
         children: [
           Text(lang.tr('order_summary'),
             style: GoogleFonts.notoSerif(
-              fontSize: 20, fontWeight: FontWeight.bold, color: _gold)),
+              fontSize: 20, fontWeight: FontWeight.bold, color: c.gold)),
           const SizedBox(height: 8),
-          const Divider(color: _bd),
+          Divider(color: c.bd),
           const SizedBox(height: 16),
 
           _Row(lang.tr('subtotal'), '\$${cart.subtotal.toStringAsFixed(2)}'),
@@ -326,7 +324,7 @@ class _OrderSummary extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(lang.tr('shipping'),
-                  style: GoogleFonts.manrope(fontSize: 13, color: _t2)),
+                  style: GoogleFonts.manrope(fontSize: 13, color: c.t2)),
               Text(lang.tr('free_shipping_usa'),
                 style: GoogleFonts.manrope(
                   fontSize: 13, fontWeight: FontWeight.w600,
@@ -335,7 +333,7 @@ class _OrderSummary extends StatelessWidget {
           ),
 
           const SizedBox(height: 20),
-          const Divider(color: _bd),
+          Divider(color: c.bd),
           const SizedBox(height: 16),
 
           Row(
@@ -344,10 +342,10 @@ class _OrderSummary extends StatelessWidget {
             textBaseline: TextBaseline.alphabetic,
             children: [
               Text(lang.tr('total'),
-                  style: GoogleFonts.manrope(fontSize: 15, color: _t1)),
+                  style: GoogleFonts.manrope(fontSize: 15, color: c.t1)),
               Text('\$${total.toStringAsFixed(2)}',
                 style: GoogleFonts.notoSerif(
-                  fontSize: 22, fontWeight: FontWeight.bold, color: _gold)),
+                  fontSize: 22, fontWeight: FontWeight.bold, color: c.gold)),
             ],
           ),
 
@@ -362,12 +360,12 @@ class _OrderSummary extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.lock_outline_rounded, color: _t2, size: 14),
+              Icon(Icons.lock_outline_rounded, color: c.t2, size: 14),
               const SizedBox(width: 6),
               Text(lang.tr('secure_checkout'),
                 style: GoogleFonts.manrope(
                   fontSize: 10, fontWeight: FontWeight.bold,
-                  color: _t2, letterSpacing: 1.2)),
+                  color: c.t2, letterSpacing: 1.2)),
             ],
           ),
         ],
@@ -380,13 +378,16 @@ class _Row extends StatelessWidget {
   const _Row(this.label, this.value);
   final String label, value;
   @override
-  Widget build(BuildContext context) => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Text(label, style: GoogleFonts.manrope(fontSize: 13, color: _t2)),
-      Text(value,  style: GoogleFonts.manrope(fontSize: 13, color: _t1)),
-    ],
-  );
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: GoogleFonts.manrope(fontSize: 13, color: c.t2)),
+        Text(value,  style: GoogleFonts.manrope(fontSize: 13, color: c.t1)),
+      ],
+    );
+  }
 }
 
 class _GoldButton extends StatelessWidget {
@@ -396,25 +397,28 @@ class _GoldButton extends StatelessWidget {
   final IconData? icon;
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      width: double.infinity, height: 52,
-      decoration: BoxDecoration(
-          color: _gold, borderRadius: BorderRadius.circular(4)),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(label,
-            style: GoogleFonts.manrope(
-              fontSize: 12, fontWeight: FontWeight.bold,
-              color: _bg, letterSpacing: 1.5)),
-          if (icon != null) ...[
-            const SizedBox(width: 8),
-            Icon(icon, color: _bg, size: 16),
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity, height: 52,
+        decoration: BoxDecoration(
+            color: c.gold, borderRadius: BorderRadius.circular(4)),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(label,
+              style: GoogleFonts.manrope(
+                fontSize: 12, fontWeight: FontWeight.bold,
+                color: c.bg, letterSpacing: 1.5)),
+            if (icon != null) ...[
+              const SizedBox(width: 8),
+              Icon(icon, color: c.bg, size: 16),
+            ],
           ],
-        ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }

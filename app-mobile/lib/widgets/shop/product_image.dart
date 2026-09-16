@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_colors.dart';
 
 /// Smart image loader for product images.
 ///
@@ -21,8 +22,6 @@ class ProductImage extends StatelessWidget {
   final String? bgGradient;
   final IconData? bgIcon;
   final bool isSoldOut;
-
-  static const _gold = Color(0xFFC9A84C);
 
   /// Map a website-style /products/... path to an assets/images/... path.
   static String? _assetPath(String raw) {
@@ -47,19 +46,19 @@ class ProductImage extends StatelessWidget {
         img = Image.asset(
           asset,
           fit: fit,
-          errorBuilder: (_, __, ___) => _fallback(),
+          errorBuilder: (_, __, ___) => _fallback(context),
         );
       } else if (_isNetworkUrl(imagePath)) {
         img = Image.network(
           imagePath,
           fit: fit,
-          errorBuilder: (_, __, ___) => _fallback(),
+          errorBuilder: (_, __, ___) => _fallback(context),
         );
       } else {
-        img = _fallback();
+        img = _fallback(context);
       }
     } else {
-      img = _fallback();
+      img = _fallback(context);
     }
 
     if (isSoldOut) {
@@ -77,7 +76,8 @@ class ProductImage extends StatelessWidget {
     return img;
   }
 
-  Widget _fallback() {
+  Widget _fallback(BuildContext context) {
+    final gold = AppColors.of(context).gold;
     return Container(
       decoration: BoxDecoration(
         gradient: bgGradient != null
@@ -90,8 +90,8 @@ class ProductImage extends StatelessWidget {
       ),
       child: Center(
         child: bgIcon != null
-            ? Icon(bgIcon, color: _gold.withValues(alpha: 0.25), size: 56)
-            : const Icon(Icons.spa_outlined, color: Color(0x40C9A84C), size: 40),
+            ? Icon(bgIcon, color: gold.withValues(alpha: 0.25), size: 56)
+            : Icon(Icons.spa_outlined, color: gold.withValues(alpha: 0.25), size: 40),
       ),
     );
   }

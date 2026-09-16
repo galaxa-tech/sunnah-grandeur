@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../providers/prayer_provider.dart';
 import '../../providers/location_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../widgets/sg_pill.dart';
@@ -21,6 +22,7 @@ class ForbiddenTimesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final lang = context.watch<LanguageProvider>();
     final prayer = context.watch<PrayerProvider>();
     final location = context.watch<LocationProvider>();
     final times = prayer.prayerTimes;
@@ -53,8 +55,8 @@ class ForbiddenTimesScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Forbidden Times', style: AppTextStyles.heading(c, fontSize: 19)),
-                        Text('MAKROOH PRAYER WINDOWS', style: AppTextStyles.brandTag(c)),
+                        Text(lang.tr('forbidden_times'), style: AppTextStyles.heading(c, fontSize: 19)),
+                        Text(lang.tr('makrooh_prayer_windows_caps'), style: AppTextStyles.brandTag(c)),
                       ],
                     ),
                   ),
@@ -66,7 +68,7 @@ class ForbiddenTimesScreen extends StatelessWidget {
               child: times == null
                   ? Center(
                       child: Text(
-                        prayer.isLoading ? 'Loading prayer times…' : 'Prayer times unavailable.',
+                        prayer.isLoading ? lang.tr('loading_prayer_times') : lang.tr('prayer_times_unavailable'),
                         style: AppTextStyles.bodyMuted(c, size: 13),
                       ),
                     )
@@ -82,16 +84,16 @@ class ForbiddenTimesScreen extends StatelessWidget {
 
                   final windows = [
                     (
-                      idx: '01', title: 'Sunrise Window', sub: 'After Fajr · avoid prayer',
-                      start: sunriseStart, end: sunriseEnd, durationLabel: '$_kSunriseWindowMinutes min',
+                      idx: '01', title: lang.tr('sunrise_window'), sub: lang.tr('after_fajr_avoid'),
+                      start: sunriseStart, end: sunriseEnd, durationLabel: '$_kSunriseWindowMinutes ${lang.tr('min_suffix')}',
                     ),
                     (
-                      idx: '02', title: 'Zawal · Solar Noon', sub: 'Before Dhuhr begins',
-                      start: zawalStart, end: zawalEnd, durationLabel: '$_kZawalWindowMinutes min',
+                      idx: '02', title: lang.tr('zawal_solar_noon'), sub: lang.tr('before_dhuhr_begins'),
+                      start: zawalStart, end: zawalEnd, durationLabel: '$_kZawalWindowMinutes ${lang.tr('min_suffix')}',
                     ),
                     (
-                      idx: '03', title: 'Sunset Window', sub: 'Before Maghrib · avoid prayer',
-                      start: sunsetStart, end: sunsetEnd, durationLabel: '$_kSunsetWindowMinutes min',
+                      idx: '03', title: lang.tr('sunset_window'), sub: lang.tr('before_maghrib_avoid'),
+                      start: sunsetStart, end: sunsetEnd, durationLabel: '$_kSunsetWindowMinutes ${lang.tr('min_suffix')}',
                     ),
                   ];
 
@@ -123,10 +125,10 @@ class ForbiddenTimesScreen extends StatelessWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('About Makrooh Times', style: AppTextStyles.displaySm(c).copyWith(fontSize: 14)),
+                                  Text(lang.tr('about_makrooh_times'), style: AppTextStyles.displaySm(c).copyWith(fontSize: 14)),
                                   const SizedBox(height: 3),
                                   Text(
-                                    'Praying during these windows is disliked (makrooh) in Islamic jurisprudence. These times are based on your current location and today\'s prayer schedule.',
+                                    lang.tr('makrooh_info_body'),
                                     style: AppTextStyles.bodyMuted(c, size: 10).copyWith(height: 1.55),
                                   ),
                                 ],
@@ -140,7 +142,7 @@ class ForbiddenTimesScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         child: Row(
                           children: [
-                            Text("TODAY'S WINDOWS", style: AppTextStyles.brandTag(c)),
+                            Text(lang.tr('todays_windows_caps'), style: AppTextStyles.brandTag(c)),
                             const SizedBox(width: 10),
                             Expanded(child: Container(height: 1, decoration: BoxDecoration(gradient: LinearGradient(colors: [c.gold.withValues(alpha: 0.2), Colors.transparent])))),
                             const SizedBox(width: 8),
@@ -155,17 +157,18 @@ class ForbiddenTimesScreen extends StatelessWidget {
 
                       for (final w in windows) ...[
                         _ForbiddenCard(
-                          idx: w.idx == '03' && now.isBefore(w.start) ? '${w.idx} · Upcoming' : w.idx,
+                          idx: w.idx == '03' && now.isBefore(w.start) ? '${w.idx} · ${lang.tr('upcoming')}' : w.idx,
                           title: w.title,
                           sub: w.sub,
                           timeStart: prayer.formatTime(w.start),
-                          timeEnd: 'to ${prayer.formatTime(w.end)}',
+                          timeEnd: '${lang.tr('to_prefix')} ${prayer.formatTime(w.end)}',
                           duration: now.isBefore(w.start)
-                              ? 'Duration: ${w.durationLabel} · in ${_countdown(now, w.start)}'
-                              : 'Duration: ${w.durationLabel}',
+                              ? '${lang.tr('duration_prefix')} ${w.durationLabel} · ${lang.tr('in')} ${_countdown(now, w.start)}'
+                              : '${lang.tr('duration_prefix')} ${w.durationLabel}',
                           isPassed: now.isAfter(w.end),
                           isUpcoming: now.isBefore(w.start),
                           c: c,
+                          lang: lang,
                         ),
                       ],
 
@@ -181,7 +184,7 @@ class ForbiddenTimesScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('SCHOLARLY REFERENCE', style: AppTextStyles.brandTag(c).copyWith(fontSize: 8, color: c.t3)),
+                            Text(lang.tr('scholarly_reference_caps'), style: AppTextStyles.brandTag(c).copyWith(fontSize: 8, color: c.t3)),
                             const SizedBox(height: 8),
                             Text(
                               '"Three times at which the Messenger of Allah ﷺ forbade us to pray...at sunrise until the sun has risen...when it is directly overhead at noon until it has passed the meridian...when the sun turns yellow until it sets."',
@@ -218,11 +221,12 @@ class _ForbiddenCard extends StatelessWidget {
     required this.idx, required this.title, required this.sub,
     required this.timeStart, required this.timeEnd, required this.duration,
     required this.isPassed, this.isUpcoming = false,
-    required this.c,
+    required this.c, required this.lang,
   });
   final String idx, title, sub, timeStart, timeEnd, duration;
   final bool isPassed, isUpcoming;
   final AppColors c;
+  final LanguageProvider lang;
 
   @override
   Widget build(BuildContext context) {
@@ -246,7 +250,7 @@ class _ForbiddenCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('WINDOW $idx', style: AppTextStyles.brandTag(c).copyWith(fontSize: 8, color: color)),
+                    Text('${lang.tr('window_prefix')} $idx', style: AppTextStyles.brandTag(c).copyWith(fontSize: 8, color: color)),
                     const SizedBox(height: 6),
                     Text(title, style: AppTextStyles.displaySm(c).copyWith(fontSize: 20)),
                     const SizedBox(height: 3),
@@ -289,7 +293,7 @@ class _ForbiddenCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(duration, style: AppTextStyles.bodyMuted(c, size: 9.5)),
-              SgPill(label: isPassed ? 'Passed today' : 'Upcoming', variant: isPassed ? 'red' : 'gold', fontSize: 7.5),
+              SgPill(label: isPassed ? lang.tr('passed_today') : lang.tr('upcoming'), variant: isPassed ? 'red' : 'gold', fontSize: 7.5),
             ],
           ),
         ],

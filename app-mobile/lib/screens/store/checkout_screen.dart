@@ -13,16 +13,7 @@ import '../../services/functions/payment_service.dart';
 import '../../services/functions/order_service.dart';
 import '../../widgets/auth_gate.dart';
 import 'order_confirmed_screen.dart';
-
-// ─── Colour tokens (matches shop dark theme) ──────────────────────────────────
-const _bg   = Color(0xFF0A0A0A);
-const _surf = Color(0xFF141414);
-const _bd   = Color(0xFF1F1F1F);
-const _gold = Color(0xFFC9A84C);
-const _t1   = Color(0xFFFFFFFF);
-const _t2   = Color(0xFFA0A0A0);
-const _err  = Color(0xFFDC2626);
-const _grn  = Color(0xFF4ade80);
+import '../../theme/app_colors.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CheckoutScreen — full address form + Stripe payment
@@ -218,12 +209,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     // On success the screen is replaced and dispose() handles cleanup.
   }
 
-  void _showSnack(String msg, {Color bg = _err}) {
+  void _showSnack(String msg, {Color? bg}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg,
           style: GoogleFonts.manrope(fontSize: 13, color: Colors.white)),
-      backgroundColor: bg,
+      backgroundColor: bg ?? AppColors.of(context).red,
       behavior: SnackBarBehavior.floating,
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -232,6 +223,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final cart = context.watch<CartProvider>();
     final lang = context.watch<LanguageProvider>();
     final w    = MediaQuery.of(context).size.width;
@@ -245,22 +237,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       feature: 'checkout',
       icon: Icons.shopping_cart_outlined,
       child: Scaffold(
-        backgroundColor: _bg,
+        backgroundColor: c.bg,
         appBar: AppBar(
-          backgroundColor: _bg,
+          backgroundColor: c.bg,
           elevation: 0,
           surfaceTintColor: Colors.transparent,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: _t2, size: 18),
+            icon: Icon(Icons.arrow_back_ios_new_rounded, color: c.t2, size: 18),
             onPressed: () => Navigator.pop(context),
           ),
           title: Row(
             children: [
               Text(lang.tr('secure_checkout_title'),
                 style: GoogleFonts.notoSerif(
-                  fontSize: 18, fontWeight: FontWeight.bold, color: _t1)),
+                  fontSize: 18, fontWeight: FontWeight.bold, color: c.t1)),
               const SizedBox(width: 8),
-              const Icon(Icons.lock_outline_rounded, color: _t2, size: 16),
+              Icon(Icons.lock_outline_rounded, color: c.t2, size: 16),
             ],
           ),
         ),
@@ -523,6 +515,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   // ── Cart items inline (mobile only) ───────────────────────────────────────
   Widget _buildCartItemsInline(CartProvider cart) {
+    final c = AppColors.of(context);
     final lang = context.watch<LanguageProvider>();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -533,9 +526,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: _surf,
+            color: c.surf,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: _bd),
+            border: Border.all(color: c.bd),
           ),
           child: Row(
             children: [
@@ -543,15 +536,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 width: 56, height: 56,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(6),
-                  color: _bg,
-                  border: Border.all(color: _bd),
+                  color: c.bg,
+                  border: Border.all(color: c.bd),
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: item.product.primaryImage.isNotEmpty
                     ? Image.network(item.product.primaryImage, fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(
-                            Icons.shopping_bag_outlined, color: _gold, size: 20))
-                    : const Icon(Icons.shopping_bag_outlined, color: _gold, size: 20),
+                        errorBuilder: (_, __, ___) => Icon(
+                            Icons.shopping_bag_outlined, color: c.gold, size: 20))
+                    : Icon(Icons.shopping_bag_outlined, color: c.gold, size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -560,16 +553,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   children: [
                     Text(item.product.name,
                       style: GoogleFonts.manrope(fontSize: 12,
-                          fontWeight: FontWeight.w600, color: _t1),
+                          fontWeight: FontWeight.w600, color: c.t1),
                       maxLines: 1, overflow: TextOverflow.ellipsis),
                     Text('Qty: ${item.quantity}',
-                      style: GoogleFonts.manrope(fontSize: 11, color: _t2)),
+                      style: GoogleFonts.manrope(fontSize: 11, color: c.t2)),
                   ],
                 ),
               ),
               Text('\$${item.totalPrice.toStringAsFixed(2)}',
                 style: GoogleFonts.manrope(
-                  fontSize: 13, fontWeight: FontWeight.bold, color: _gold)),
+                  fontSize: 13, fontWeight: FontWeight.bold, color: c.gold)),
             ],
           ),
         )),
@@ -579,13 +572,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   // ── Order summary card (wide layout) ──────────────────────────────────────
   Widget _buildOrderSummary(CartProvider cart, double tax, double total) {
+    final c = AppColors.of(context);
     final lang = context.watch<LanguageProvider>();
     return Container(
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: _surf,
+        color: c.surf,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _bd),
+        border: Border.all(color: c.bd),
         boxShadow: const [
           BoxShadow(color: Colors.black54, blurRadius: 24, offset: Offset(0, 8)),
         ],
@@ -595,9 +589,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         children: [
           Text(lang.tr('order_summary'),
             style: GoogleFonts.notoSerif(
-              fontSize: 20, fontWeight: FontWeight.bold, color: _gold)),
+              fontSize: 20, fontWeight: FontWeight.bold, color: c.gold)),
           const SizedBox(height: 8),
-          const Divider(color: _bd),
+          Divider(color: c.bd),
           const SizedBox(height: 16),
 
           // Items
@@ -609,15 +603,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   width: 44, height: 44,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(4),
-                    color: _bg,
-                    border: Border.all(color: _bd),
+                    color: c.bg,
+                    border: Border.all(color: c.bd),
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: item.product.primaryImage.isNotEmpty
                       ? Image.network(item.product.primaryImage, fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(
-                              Icons.shopping_bag_outlined, color: _gold, size: 16))
-                      : const Icon(Icons.shopping_bag_outlined, color: _gold, size: 16),
+                          errorBuilder: (_, __, ___) => Icon(
+                              Icons.shopping_bag_outlined, color: c.gold, size: 16))
+                      : Icon(Icons.shopping_bag_outlined, color: c.gold, size: 16),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -626,20 +620,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     children: [
                       Text(item.product.name,
                         style: GoogleFonts.manrope(fontSize: 12,
-                            fontWeight: FontWeight.w600, color: _t1),
+                            fontWeight: FontWeight.w600, color: c.t1),
                         maxLines: 1, overflow: TextOverflow.ellipsis),
                       Text('× ${item.quantity}',
-                        style: GoogleFonts.manrope(fontSize: 11, color: _t2)),
+                        style: GoogleFonts.manrope(fontSize: 11, color: c.t2)),
                     ],
                   ),
                 ),
                 Text('\$${item.totalPrice.toStringAsFixed(2)}',
-                  style: GoogleFonts.manrope(fontSize: 13, color: _t1)),
+                  style: GoogleFonts.manrope(fontSize: 13, color: c.t1)),
               ],
             ),
           )),
 
-          const Divider(color: _bd),
+          Divider(color: c.bd),
           const SizedBox(height: 12),
 
           _SummaryRow(lang.tr('subtotal'), '\$${cart.subtotal.toStringAsFixed(2)}'),
@@ -652,15 +646,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(lang.tr('shipping'),
-                style: GoogleFonts.manrope(fontSize: 13, color: _t2)),
+                style: GoogleFonts.manrope(fontSize: 13, color: c.t2)),
               Text(lang.tr('free_shipping_usa'),
                 style: GoogleFonts.manrope(
-                  fontSize: 13, fontWeight: FontWeight.w600, color: _grn)),
+                  fontSize: 13, fontWeight: FontWeight.w600, color: c.green)),
             ],
           ),
 
           const SizedBox(height: 16),
-          const Divider(color: _bd),
+          Divider(color: c.bd),
           const SizedBox(height: 12),
 
           Row(
@@ -669,10 +663,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             textBaseline: TextBaseline.alphabetic,
             children: [
               Text(lang.tr('total'),
-                style: GoogleFonts.manrope(fontSize: 15, color: _t1)),
+                style: GoogleFonts.manrope(fontSize: 15, color: c.t1)),
               Text('\$${total.toStringAsFixed(2)}',
                 style: GoogleFonts.notoSerif(
-                  fontSize: 22, fontWeight: FontWeight.bold, color: _gold)),
+                  fontSize: 22, fontWeight: FontWeight.bold, color: c.gold)),
             ],
           ),
 
@@ -687,12 +681,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   // ── Sticky footer (mobile) ─────────────────────────────────────────────────
   Widget _buildStickyFooter(CartProvider cart, double tax, double total) {
+    final c = AppColors.of(context);
     final lang = context.watch<LanguageProvider>();
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: const BoxDecoration(
-        color: _surf,
-        border: Border(top: BorderSide(color: _bd)),
+      decoration: BoxDecoration(
+        color: c.surf,
+        border: Border(top: BorderSide(color: c.bd)),
       ),
       child: SafeArea(
         top: false,
@@ -708,17 +703,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   '${lang.tr('subtotal_plus')} '
                   '${(context.watch<StoreProvider>().taxRate * 100).toStringAsFixed(1)}% '
                   '${lang.tr('tax_suffix')}',
-                  style: GoogleFonts.manrope(fontSize: 12, color: _t2)),
+                  style: GoogleFonts.manrope(fontSize: 12, color: c.t2)),
                 Text('\$${total.toStringAsFixed(2)}',
                   style: GoogleFonts.notoSerif(
-                    fontSize: 20, fontWeight: FontWeight.bold, color: _gold)),
+                    fontSize: 20, fontWeight: FontWeight.bold, color: c.gold)),
               ],
             ),
             const SizedBox(height: 2),
             Align(
               alignment: Alignment.centerRight,
               child: Text(lang.tr('free_shipping_included'),
-                style: GoogleFonts.manrope(fontSize: 11, color: _grn)),
+                style: GoogleFonts.manrope(fontSize: 11, color: c.green)),
             ),
             const SizedBox(height: 14),
             _buildCompleteOrderButton(total),
@@ -732,13 +727,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   // ── Shared widgets ─────────────────────────────────────────────────────────
   Widget _buildCompleteOrderButton(double total) {
+    final c = AppColors.of(context);
     final lang = context.watch<LanguageProvider>();
     return GestureDetector(
       onTap: _isProcessing ? null : _handleCompleteOrder,
       child: Container(
         width: double.infinity, height: 52,
         decoration: BoxDecoration(
-          color: _isProcessing ? _gold.withValues(alpha: 0.5) : _gold,
+          color: _isProcessing ? c.gold.withValues(alpha: 0.5) : c.gold,
           borderRadius: BorderRadius.circular(4),
         ),
         alignment: Alignment.center,
@@ -753,9 +749,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   Text(_paymentMethod == 'cod' ? lang.tr('place_order_cod') : lang.tr('complete_order'),
                     style: GoogleFonts.manrope(
                       fontSize: 12, fontWeight: FontWeight.bold,
-                      color: _bg, letterSpacing: 1.5)),
+                      color: c.bg, letterSpacing: 1.5)),
                   const SizedBox(width: 8),
-                  const Icon(Icons.lock_rounded, color: _bg, size: 16),
+                  Icon(Icons.lock_rounded, color: c.bg, size: 16),
                 ],
               ),
       ),
@@ -763,34 +759,36 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _buildSecureBadge() {
+    final c = AppColors.of(context);
     final lang = context.watch<LanguageProvider>();
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(Icons.security_rounded, color: _t2, size: 13),
+        Icon(Icons.security_rounded, color: c.t2, size: 13),
         const SizedBox(width: 5),
         Text(lang.tr('ssl_encryption'),
           style: GoogleFonts.manrope(
             fontSize: 10, fontWeight: FontWeight.bold,
-            color: _t2, letterSpacing: 1.0)),
+            color: c.t2, letterSpacing: 1.0)),
         const SizedBox(width: 10),
-        const Icon(Icons.verified_outlined, color: _t2, size: 13),
+        Icon(Icons.verified_outlined, color: c.t2, size: 13),
         const SizedBox(width: 5),
         Text(lang.tr('powered_by_stripe'),
           style: GoogleFonts.manrope(
             fontSize: 10, fontWeight: FontWeight.bold,
-            color: _t2, letterSpacing: 1.0)),
+            color: c.t2, letterSpacing: 1.0)),
       ],
     );
   }
 
   Widget _sectionHeader(String title) {
+    final c = AppColors.of(context);
     return Row(
       children: [
         Text(title.toUpperCase(),
           style: GoogleFonts.manrope(
             fontSize: 10, fontWeight: FontWeight.bold,
-            color: _gold, letterSpacing: 1.5)),
+            color: c.gold, letterSpacing: 1.5)),
         const SizedBox(width: 12),
         Expanded(
           child: Container(
@@ -837,6 +835,7 @@ class _FormField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return TextFormField(
       controller: controller,
       focusNode: focusNode,
@@ -846,36 +845,36 @@ class _FormField extends StatelessWidget {
       inputFormatters: inputFormatters,
       onFieldSubmitted: onFieldSubmitted,
       validator: validator,
-      style: GoogleFonts.manrope(fontSize: 14, color: _t1),
-      cursorColor: _gold,
+      style: GoogleFonts.manrope(fontSize: 14, color: c.t1),
+      cursorColor: c.gold,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        labelStyle: GoogleFonts.manrope(fontSize: 12, color: _t2),
-        hintStyle: GoogleFonts.manrope(fontSize: 13, color: _t2.withValues(alpha: 0.5)),
+        labelStyle: GoogleFonts.manrope(fontSize: 12, color: c.t2),
+        hintStyle: GoogleFonts.manrope(fontSize: 13, color: c.t2.withValues(alpha: 0.5)),
         prefixIcon: prefixIcon != null
-            ? Icon(prefixIcon, color: _t2, size: 18)
+            ? Icon(prefixIcon, color: c.t2, size: 18)
             : null,
         filled: true,
-        fillColor: _surf,
+        fillColor: c.surf,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: _bd),
+          borderSide: BorderSide(color: c.bd),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: _gold, width: 1.5),
+          borderSide: BorderSide(color: c.gold, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: _err),
+          borderSide: BorderSide(color: c.red),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: _err, width: 1.5),
+          borderSide: BorderSide(color: c.red, width: 1.5),
         ),
-        errorStyle: GoogleFonts.manrope(fontSize: 11, color: _err),
+        errorStyle: GoogleFonts.manrope(fontSize: 11, color: c.red),
       ),
     );
   }
@@ -897,36 +896,37 @@ class _CountryDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final lang = context.watch<LanguageProvider>();
     return InputDecorator(
       decoration: InputDecoration(
         labelText: lang.tr('country_label'),
-        labelStyle: GoogleFonts.manrope(fontSize: 12, color: _t2),
+        labelStyle: GoogleFonts.manrope(fontSize: 12, color: c.t2),
         filled: true,
-        fillColor: _surf,
+        fillColor: c.surf,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: _bd),
+          borderSide: BorderSide(color: c.bd),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: _gold, width: 1.5),
+          borderSide: BorderSide(color: c.gold, width: 1.5),
         ),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
-          dropdownColor: _surf,
+          dropdownColor: c.surf,
           iconSize: 18,
-          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: _t2),
-          style: GoogleFonts.manrope(fontSize: 13, color: _t1),
+          icon: Icon(Icons.keyboard_arrow_down_rounded, color: c.t2),
+          style: GoogleFonts.manrope(fontSize: 13, color: c.t1),
           onChanged: onChanged,
-          items: countries.map((c) => DropdownMenuItem(
-            value: c.$1,
-            child: Text(c.$2,
-              style: GoogleFonts.manrope(fontSize: 13, color: _t1)),
+          items: countries.map((country) => DropdownMenuItem(
+            value: country.$1,
+            child: Text(country.$2,
+              style: GoogleFonts.manrope(fontSize: 13, color: c.t1)),
           )).toList(),
         ),
       ),
@@ -956,6 +956,7 @@ class _PaymentMethodOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Opacity(
@@ -963,19 +964,19 @@ class _PaymentMethodOption extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: _surf,
+            color: c.surf,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: selected ? _gold : _bd, width: selected ? 1.5 : 1),
+            border: Border.all(color: selected ? c.gold : c.bd, width: selected ? 1.5 : 1),
           ),
           child: Row(
             children: [
               Container(
                 width: 40, height: 40,
                 decoration: BoxDecoration(
-                  color: _gold.withOpacity(0.10),
+                  color: c.gold.withOpacity(0.10),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, color: _gold, size: 20),
+                child: Icon(icon, color: c.gold, size: 20),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -984,16 +985,16 @@ class _PaymentMethodOption extends StatelessWidget {
                   children: [
                     Text(title,
                       style: GoogleFonts.manrope(
-                        fontSize: 13, fontWeight: FontWeight.w600, color: _t1)),
+                        fontSize: 13, fontWeight: FontWeight.w600, color: c.t1)),
                     const SizedBox(height: 2),
                     Text(subtitle,
-                      style: GoogleFonts.manrope(fontSize: 11, color: _t2)),
+                      style: GoogleFonts.manrope(fontSize: 11, color: c.t2)),
                   ],
                 ),
               ),
               Icon(
                 selected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
-                color: selected ? _gold : _t2,
+                color: selected ? c.gold : c.t2,
                 size: 20,
               ),
             ],
@@ -1012,11 +1013,14 @@ class _SummaryRow extends StatelessWidget {
   final String label, value;
 
   @override
-  Widget build(BuildContext context) => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Text(label, style: GoogleFonts.manrope(fontSize: 13, color: _t2)),
-      Text(value,  style: GoogleFonts.manrope(fontSize: 13, color: _t1)),
-    ],
-  );
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: GoogleFonts.manrope(fontSize: 13, color: c.t2)),
+        Text(value,  style: GoogleFonts.manrope(fontSize: 13, color: c.t1)),
+      ],
+    );
+  }
 }

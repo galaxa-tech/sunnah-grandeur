@@ -4,6 +4,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../widgets/video_row_item.dart';
 import '../../providers/media_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../models/video_model.dart';
 import 'video_player_screen.dart';
 
@@ -13,6 +14,7 @@ class YoutubeFeedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final lang = context.watch<LanguageProvider>();
     final media = context.watch<MediaProvider>();
 
     return Scaffold(
@@ -26,8 +28,8 @@ class YoutubeFeedScreen extends StatelessWidget {
               _BackBtn(c: c),
               const SizedBox(width: 10),
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Islamic Videos', style: AppTextStyles.brandSmall(c)),
-                Text('Curated YouTube Feed', style: AppTextStyles.brandTag(c)),
+                Text(lang.tr('islamic_videos'), style: AppTextStyles.brandSmall(c)),
+                Text(lang.tr('curated_youtube_feed'), style: AppTextStyles.brandTag(c)),
               ]),
             ]),
           ),
@@ -41,9 +43,9 @@ class YoutubeFeedScreen extends StatelessWidget {
                 ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                     Icon(Icons.play_circle_outline_rounded, color: c.t3, size: 48),
                     const SizedBox(height: 12),
-                    Text('No videos yet', style: AppTextStyles.bodyMuted(c)),
+                    Text(lang.tr('no_videos_yet'), style: AppTextStyles.bodyMuted(c)),
                     const SizedBox(height: 6),
-                    Text('Videos will appear here once added.', style: AppTextStyles.bodyMuted(c, size: 11)),
+                    Text(lang.tr('videos_will_appear'), style: AppTextStyles.bodyMuted(c, size: 11)),
                   ]))
                 : SingleChildScrollView(
                   child: Column(children: [
@@ -51,7 +53,7 @@ class YoutubeFeedScreen extends StatelessWidget {
                     if (media.videos.isNotEmpty) ...[
                       GestureDetector(
                         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => VideoPlayerScreen(video: media.videos.first))),
-                        child: _FeaturedVideoCard(c: c, video: media.videos.first),
+                        child: _FeaturedVideoCard(c: c, lang: lang, video: media.videos.first),
                       ),
                       const SizedBox(height: 12),
                     ],
@@ -79,8 +81,9 @@ class YoutubeFeedScreen extends StatelessWidget {
 }
 
 class _FeaturedVideoCard extends StatelessWidget {
-  const _FeaturedVideoCard({required this.c, required this.video});
+  const _FeaturedVideoCard({required this.c, required this.lang, required this.video});
   final AppColors c;
+  final LanguageProvider lang;
   final VideoModel video;
 
   @override
@@ -139,7 +142,7 @@ class _FeaturedVideoCard extends StatelessWidget {
             Row(children: [
               Text(video.author, style: AppTextStyles.body(c, size: 12)),
               const Spacer(),
-              Text('${video.views} views', style: AppTextStyles.bodyMuted(c, size: 10)),
+              Text('${video.views} ${lang.tr('views')}', style: AppTextStyles.bodyMuted(c, size: 10)),
             ]),
           ]),
         ),

@@ -11,6 +11,7 @@ import '../../providers/masjid_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../widgets/app_snackbar.dart';
+import '../../providers/language_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Dark Islamic map style (matches app dark theme: bg #0D0D0F, gold #C8A55A)
@@ -196,7 +197,7 @@ class _MasjidFinderScreenState extends State<MasjidFinderScreen>
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
       if (mounted) {
-        showAppSnackbar(context, 'Could not open navigation.',
+        showAppSnackbar(context, context.read<LanguageProvider>().tr('could_not_open_navigation'),
             type: AppSnackbarType.error);
       }
     }
@@ -206,12 +207,13 @@ class _MasjidFinderScreenState extends State<MasjidFinderScreen>
 
   void _showDetailSheet(MasjidResult m) {
     final c = AppColors.of(context);
+    final lang = context.read<LanguageProvider>();
     showModalBottomSheet(
       context:    context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) =>
-          _MasjidDetailSheet(masjid: m, c: c, onNavigate: _navigate),
+          _MasjidDetailSheet(masjid: m, c: c, lang: lang, onNavigate: _navigate),
     ).whenComplete(() {
       if (mounted) {
         context.read<MasjidProvider>().select(null);
@@ -226,6 +228,7 @@ class _MasjidFinderScreenState extends State<MasjidFinderScreen>
   @override
   Widget build(BuildContext context) {
     final c      = AppColors.of(context);
+    final lang   = context.watch<LanguageProvider>();
     final isDark = c.isDark;
 
     if (!ApiConfig.isPlacesConfigured) {
@@ -242,7 +245,7 @@ class _MasjidFinderScreenState extends State<MasjidFinderScreen>
                   onTap: () => Navigator.pop(context),
                 ),
                 const SizedBox(width: 10),
-                Text('Masjid Finder', style: GoogleFonts.manrope(
+                Text(lang.tr('masjid_finder'), style: GoogleFonts.manrope(
                     fontSize: 16, fontWeight: FontWeight.w700, color: c.t1)),
               ]),
             ),
@@ -253,12 +256,12 @@ class _MasjidFinderScreenState extends State<MasjidFinderScreen>
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
                     Icon(Icons.mosque_outlined, color: c.gold, size: 56),
                     const SizedBox(height: 20),
-                    Text('Masjid Finder — Coming Soon',
+                    Text(lang.tr('masjid_finder_coming_soon'),
                         style: GoogleFonts.manrope(fontSize: 18,
                             fontWeight: FontWeight.w700, color: c.t1)),
                     const SizedBox(height: 10),
                     Text(
-                      'Nearby mosque search is being set up and will be available shortly.',
+                      lang.tr('masjid_coming_soon_body'),
                       textAlign: TextAlign.center,
                       style: GoogleFonts.manrope(fontSize: 13, color: c.t3),
                     ),
@@ -334,6 +337,7 @@ class _MasjidFinderScreenState extends State<MasjidFinderScreen>
                       children: [
                         _TopBar(
                           c:            c,
+                          lang:         lang,
                           searchCtrl:   _searchCtrl,
                           searchFocus:  _searchFocus,
                           searchActive: _searchActive,
@@ -381,6 +385,7 @@ class _MasjidFinderScreenState extends State<MasjidFinderScreen>
                   child: _ErrorBanner(
                     message: mp.errorMessage!,
                     c: c,
+                    lang: lang,
                     onRetry: mp.retry,
                   ),
                 ),
@@ -395,6 +400,7 @@ class _MasjidFinderScreenState extends State<MasjidFinderScreen>
                 snapSizes:        const [0.12, 0.32, 0.65, 0.88],
                 builder: (ctx, scrollCtrl) => _BottomSheet(
                   c:          c,
+                  lang:       lang,
                   masjids:    mp.masjids,
                   selected:   mp.selected,
                   isLoading:  mp.isBusy,
@@ -417,6 +423,7 @@ class _MasjidFinderScreenState extends State<MasjidFinderScreen>
 class _TopBar extends StatelessWidget {
   const _TopBar({
     required this.c,
+    required this.lang,
     required this.searchCtrl,
     required this.searchFocus,
     required this.searchActive,
@@ -426,6 +433,7 @@ class _TopBar extends StatelessWidget {
     required this.onRefresh,
   });
   final AppColors              c;
+  final LanguageProvider       lang;
   final TextEditingController  searchCtrl;
   final FocusNode              searchFocus;
   final bool                   searchActive;
@@ -454,6 +462,7 @@ class _TopBar extends StatelessWidget {
                 ? _SearchField(
                     key: const ValueKey('search'),
                     c: c,
+                    lang: lang,
                     ctrl: searchCtrl,
                     focus: searchFocus,
                     onSubmit: onSearchSubmit,
@@ -462,7 +471,7 @@ class _TopBar extends StatelessWidget {
                       onSearchSubmit('');
                     },
                   )
-                : _TitleBar(key: const ValueKey('title'), c: c),
+                : _TitleBar(key: const ValueKey('title'), c: c, lang: lang),
           ),
         ),
         const SizedBox(width: 8),
@@ -498,8 +507,9 @@ class _TopBar extends StatelessWidget {
 }
 
 class _TitleBar extends StatelessWidget {
-  const _TitleBar({super.key, required this.c});
+  const _TitleBar({super.key, required this.c, required this.lang});
   final AppColors c;
+  final LanguageProvider lang;
 
   @override
   Widget build(BuildContext context) {
@@ -522,7 +532,7 @@ class _TitleBar extends StatelessWidget {
           Icon(Icons.mosque_rounded, color: c.gold, size: 16),
           const SizedBox(width: 8),
           Text(
-            'Masjid Finder',
+            lang.tr('masjid_finder'),
             style: GoogleFonts.inter(
               color:      c.t1,
               fontSize:   14,
@@ -539,12 +549,14 @@ class _SearchField extends StatelessWidget {
   const _SearchField({
     super.key,
     required this.c,
+    required this.lang,
     required this.ctrl,
     required this.focus,
     required this.onSubmit,
     required this.onClear,
   });
   final AppColors             c;
+  final LanguageProvider      lang;
   final TextEditingController ctrl;
   final FocusNode             focus;
   final void Function(String) onSubmit;
@@ -578,7 +590,7 @@ class _SearchField extends StatelessWidget {
               decoration: InputDecoration(
                 border:      InputBorder.none,
                 isDense:     true,
-                hintText:    'Search mosques, city…',
+                hintText:    lang.tr('search_mosques_hint'),
                 hintStyle:   GoogleFonts.inter(color: c.t3, fontSize: 13),
                 contentPadding: EdgeInsets.zero,
               ),
@@ -638,9 +650,10 @@ class _MapBtn extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 class _ErrorBanner extends StatelessWidget {
   const _ErrorBanner(
-      {required this.message, required this.c, required this.onRetry});
+      {required this.message, required this.c, required this.lang, required this.onRetry});
   final String       message;
   final AppColors    c;
+  final LanguageProvider lang;
   final VoidCallback onRetry;
 
   @override
@@ -674,7 +687,7 @@ class _ErrorBanner extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
                   color: c.gold, borderRadius: BorderRadius.circular(8)),
-              child: Text('Retry',
+              child: Text(lang.tr('retry'),
                   style: GoogleFonts.inter(
                       color:      Colors.white,
                       fontSize:   11,
@@ -693,6 +706,7 @@ class _ErrorBanner extends StatelessWidget {
 class _BottomSheet extends StatelessWidget {
   const _BottomSheet({
     required this.c,
+    required this.lang,
     required this.masjids,
     required this.selected,
     required this.isLoading,
@@ -701,6 +715,7 @@ class _BottomSheet extends StatelessWidget {
     required this.onNavigate,
   });
   final AppColors                        c;
+  final LanguageProvider                 lang;
   final List<MasjidResult>               masjids;
   final MasjidResult?                    selected;
   final bool                             isLoading;
@@ -742,10 +757,10 @@ class _BottomSheet extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 isLoading
-                    ? 'Searching mosques…'
+                    ? lang.tr('searching_mosques')
                     : masjids.isEmpty
-                        ? 'No mosques found'
-                        : '${masjids.length} mosque${masjids.length == 1 ? '' : 's'} nearby',
+                        ? lang.tr('no_mosques_found')
+                        : '${masjids.length} ${masjids.length == 1 ? lang.tr('mosque_singular_nearby') : lang.tr('mosques_plural_nearby')}',
                 style: GoogleFonts.inter(
                   color:      c.t1,
                   fontSize:   14,
@@ -755,7 +770,7 @@ class _BottomSheet extends StatelessWidget {
               const Spacer(),
               if (!isLoading && masjids.isNotEmpty)
                 Text(
-                  'Sorted by distance',
+                  lang.tr('sorted_by_distance'),
                   style: GoogleFonts.inter(color: c.t3, fontSize: 10),
                 ),
             ]),
@@ -774,7 +789,7 @@ class _BottomSheet extends StatelessWidget {
                               AlwaysStoppedAnimation<Color>(c.gold),
                         ),
                         const SizedBox(height: 16),
-                        Text('Finding nearby mosques…',
+                        Text(lang.tr('finding_nearby_mosques'),
                             style: GoogleFonts.inter(
                                 color: c.t3, fontSize: 12)),
                       ],
@@ -788,11 +803,11 @@ class _BottomSheet extends StatelessWidget {
                             Icon(Icons.mosque_outlined,
                                 color: c.t3.withValues(alpha: 0.4), size: 52),
                             const SizedBox(height: 14),
-                            Text('No mosques found nearby',
+                            Text(lang.tr('no_mosques_found_nearby'),
                                 style:
                                     AppTextStyles.heading(c, fontSize: 16)),
                             const SizedBox(height: 6),
-                            Text('Try searching a different area or city',
+                            Text(lang.tr('try_different_area'),
                                 style: AppTextStyles.bodyMuted(c, size: 12)),
                           ],
                         ),
@@ -808,6 +823,7 @@ class _BottomSheet extends StatelessWidget {
                           isSelected:
                               selected?.placeId == masjids[i].placeId,
                           c:          c,
+                          lang:       lang,
                           isFirst:    i == 0,
                           onTap:      () => onCardTap(masjids[i]),
                           onNavigate: () => onNavigate(masjids[i]),
@@ -828,6 +844,7 @@ class _MasjidCard extends StatelessWidget {
     required this.masjid,
     required this.isSelected,
     required this.c,
+    required this.lang,
     required this.isFirst,
     required this.onTap,
     required this.onNavigate,
@@ -835,6 +852,7 @@ class _MasjidCard extends StatelessWidget {
   final MasjidResult masjid;
   final bool         isSelected;
   final AppColors    c;
+  final LanguageProvider lang;
   final bool         isFirst;
   final VoidCallback onTap;
   final VoidCallback onNavigate;
@@ -931,7 +949,7 @@ class _MasjidCard extends StatelessWidget {
                     // Open status
                     if (masjid.openNow != null) ...[
                       _Pill(
-                        label: masjid.openNow! ? 'Open' : 'Closed',
+                        label: masjid.openNow! ? lang.tr('open_status') : lang.tr('closed_status'),
                         icon:  masjid.openNow!
                             ? Icons.check_circle_outline_rounded
                             : Icons.cancel_outlined,
@@ -1029,10 +1047,12 @@ class _MasjidDetailSheet extends StatelessWidget {
   const _MasjidDetailSheet({
     required this.masjid,
     required this.c,
+    required this.lang,
     required this.onNavigate,
   });
   final MasjidResult                    masjid;
   final AppColors                       c;
+  final LanguageProvider                lang;
   final Future<void> Function(MasjidResult) onNavigate;
 
   @override
@@ -1129,15 +1149,15 @@ class _MasjidDetailSheet extends StatelessWidget {
           // Details
           _DetailRow(
             icon:  Icons.place_rounded,
-            label: 'Address',
-            value: masjid.vicinity.isNotEmpty ? masjid.vicinity : 'Unknown',
+            label: lang.tr('address_label'),
+            value: masjid.vicinity.isNotEmpty ? masjid.vicinity : lang.tr('unknown_label'),
             c:     c,
           ),
           const SizedBox(height: 12),
           if (masjid.distanceText.isNotEmpty) ...[
             _DetailRow(
               icon:  Icons.directions_walk_rounded,
-              label: 'Distance',
+              label: lang.tr('distance_label'),
               value: masjid.distanceText,
               c:     c,
             ),
@@ -1148,8 +1168,8 @@ class _MasjidDetailSheet extends StatelessWidget {
               icon:  masjid.openNow!
                   ? Icons.check_circle_outline_rounded
                   : Icons.cancel_outlined,
-              label: 'Status',
-              value: masjid.openNow! ? 'Open now' : 'Closed',
+              label: lang.tr('status_label'),
+              value: masjid.openNow! ? lang.tr('open_now_label') : lang.tr('closed_status'),
               valueColor: masjid.openNow! ? c.green : c.red,
               c:    c,
             ),
@@ -1182,7 +1202,7 @@ class _MasjidDetailSheet extends StatelessWidget {
                       color: Colors.white, size: 20),
                   const SizedBox(width: 10),
                   Text(
-                    'Get Directions',
+                    lang.tr('get_directions'),
                     style: GoogleFonts.inter(
                       color:      Colors.white,
                       fontSize:   15,
@@ -1200,7 +1220,7 @@ class _MasjidDetailSheet extends StatelessWidget {
           Center(
             child: TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Close',
+              child: Text(lang.tr('close'),
                   style: GoogleFonts.inter(color: c.t3, fontSize: 13)),
             ),
           ),

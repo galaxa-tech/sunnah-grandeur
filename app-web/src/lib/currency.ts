@@ -1,17 +1,18 @@
-// Single source of truth for how a price is shown to a customer. The
-// storefront's launch market is the USA (USD) — see the market strategy
-// plan. Existing catalog prices were entered as plain BDT numbers by the
-// admin panel; this converts them to a clean USD retail figure for display.
-// TODO: once the owner sets real USD prices per product in the admin panel,
-// drop BDT_TO_USD_RATE and just format the stored number directly.
-const BDT_TO_USD_RATE = 1 / 118;
+// Mirrors admin-panel/src/lib/currency.ts. The rate lives in Firestore
+// (`settings/app_config.usdToLocalRate`) so app-web, app-mobile, admin-panel,
+// and backend/functions all read the SAME value at runtime instead of each
+// hardcoding their own copy — previously all four independently hardcoded
+// `1/118`, which only stayed correct by coincidence. Callers should pass the
+// live rate from useCurrency(); DEFAULT_BDT_TO_USD_RATE is only the fallback
+// used before that doc loads / if it's ever missing a value.
+export const DEFAULT_BDT_TO_USD_RATE = 1 / 118;
 
-export function toDisplayUsd(bdtAmount: number): number {
-  return bdtAmount * BDT_TO_USD_RATE;
+export function toDisplayUsd(bdtAmount: number, rate: number = DEFAULT_BDT_TO_USD_RATE): number {
+  return bdtAmount * rate;
 }
 
-export function formatUsd(bdtAmount: number): string {
-  const usd = toDisplayUsd(bdtAmount);
+export function formatUsd(bdtAmount: number, rate: number = DEFAULT_BDT_TO_USD_RATE): string {
+  const usd = toDisplayUsd(bdtAmount, rate);
   return `$${usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 

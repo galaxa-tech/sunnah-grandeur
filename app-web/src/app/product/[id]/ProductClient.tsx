@@ -10,6 +10,7 @@ import { products, Product } from '@/data/products';
 import { doc, getDoc, collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { formatUsd } from '@/lib/currency';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface Review {
   id: string;
@@ -26,6 +27,7 @@ export default function ProductClient() {
   const { language } = useLanguageStore();
   const { addItem } = useCartStore();
   const { user } = useAuth();
+  const { usdRate } = useCurrency();
   const t = translations[language];
 
   const [product, setProduct] = useState<Product | null>(null);
@@ -202,15 +204,15 @@ export default function ProductClient() {
                   <span className="text-red-400 text-xl font-bold">-{discount}%</span>
                 )}
                 <span className="text-3xl font-bold text-text-primary">
-                  {formatUsd(product.price)}
+                  {formatUsd(product.price, usdRate)}
                 </span>
               </div>
               {product.originalPrice && !product.isSoldOut && (
                 <p className="text-sm text-text-secondary">
                   List Price:{' '}
-                  <span className="line-through">{formatUsd(product.originalPrice)}</span>
+                  <span className="line-through">{formatUsd(product.originalPrice, usdRate)}</span>
                   <span className="text-green-400 ml-2">
-                    You save {formatUsd(savings)} ({discount}%)
+                    You save {formatUsd(savings, usdRate)} ({discount}%)
                   </span>
                 </p>
               )}
@@ -262,7 +264,7 @@ export default function ProductClient() {
 
               <div>
                 <p className="text-xs text-text-secondary mb-0.5">{t.pdp.buyNew}</p>
-                <p className="text-2xl font-bold text-text-primary">{formatUsd(product.price)}</p>
+                <p className="text-2xl font-bold text-text-primary">{formatUsd(product.price, usdRate)}</p>
               </div>
 
               {!product.isSoldOut && (

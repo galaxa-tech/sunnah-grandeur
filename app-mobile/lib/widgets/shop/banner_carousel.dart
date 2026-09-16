@@ -2,9 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/store_category_model.dart';
+import '../../theme/app_colors.dart';
 
-const _bg = Color(0xFF0A0A0A);
-const _gold = Color(0xFFC9A84C);
 
 /// Auto-advancing promo banner carousel — the admin-managed
 /// `StoreProvider.banners` feed finally has somewhere to render. Matches the
@@ -49,6 +48,7 @@ class _BannerCarouselState extends State<BannerCarousel> {
   @override
   Widget build(BuildContext context) {
     if (widget.banners.isEmpty) return const SizedBox.shrink();
+    final c = AppColors.of(context);
 
     return Column(
       children: [
@@ -71,7 +71,7 @@ class _BannerCarouselState extends State<BannerCarousel> {
                       children: [
                         if (banner.imageUrl != null && banner.imageUrl!.isNotEmpty)
                           Image.network(banner.imageUrl!, fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(color: _bg))
+                              errorBuilder: (_, __, ___) => Container(color: c.bg))
                         else
                           Container(
                             decoration: const BoxDecoration(
@@ -88,7 +88,7 @@ class _BannerCarouselState extends State<BannerCarousel> {
                             gradient: LinearGradient(
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
-                              colors: [_bg.withValues(alpha: 0.85), _bg.withValues(alpha: 0.25)],
+                              colors: [c.bg.withValues(alpha: 0.85), c.bg.withValues(alpha: 0.25)],
                             ),
                           ),
                         ),
@@ -112,12 +112,12 @@ class _BannerCarouselState extends State<BannerCarousel> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: _gold,
+                                  color: c.gold,
                                   borderRadius: BorderRadius.circular(100),
                                 ),
                                 child: Text(banner.cta.toUpperCase(),
                                     style: GoogleFonts.manrope(
-                                        fontSize: 9, fontWeight: FontWeight.bold, color: _bg, letterSpacing: 0.5)),
+                                        fontSize: 9, fontWeight: FontWeight.bold, color: c.bg, letterSpacing: 0.5)),
                               ),
                             ],
                           ),
@@ -142,7 +142,7 @@ class _BannerCarouselState extends State<BannerCarousel> {
                 width: active ? 16 : 6,
                 height: 6,
                 decoration: BoxDecoration(
-                  color: active ? _gold : _gold.withValues(alpha: 0.25),
+                  color: active ? c.gold : c.gold.withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(3),
                 ),
               );

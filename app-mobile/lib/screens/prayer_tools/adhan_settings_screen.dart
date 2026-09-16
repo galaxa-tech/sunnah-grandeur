@@ -7,6 +7,7 @@ import '../../services/notification_service.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../widgets/app_snackbar.dart';
+import '../../providers/language_provider.dart';
 
 class AdhanSettingsScreen extends StatefulWidget {
   const AdhanSettingsScreen({super.key});
@@ -30,8 +31,8 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
     final played = await AdhanService.instance.previewSound(key, volume: volume);
     if (!played && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('This Adhan sound isn\'t available yet — coming soon.'),
+        SnackBar(
+          content: Text(context.read<LanguageProvider>().tr('adhan_sound_coming_soon')),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -40,10 +41,10 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
     if (mounted) setState(() => _previewingKey = null);
   }
 
-  Future<void> _requestPermissionsAndSave(AppColors c) async {
+  Future<void> _requestPermissionsAndSave(AppColors c, LanguageProvider lang) async {
     await NotificationService.instance.requestPermissions();
     if (mounted) {
-      showAppSnackbar(context, 'Adhan alarms activated.',
+      showAppSnackbar(context, lang.tr('adhan_alarms_activated'),
           type: AppSnackbarType.success, duration: const Duration(seconds: 2));
     }
   }
@@ -51,6 +52,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final c         = AppColors.of(context);
+    final lang      = context.watch<LanguageProvider>();
     final sp        = context.watch<AdhanSettingsProvider>();
     final settings  = sp.settings;
 
@@ -59,18 +61,18 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
       body: CustomScrollView(
         slivers: [
           // ── Premium header ─────────────────────────────────────────────
-          SliverToBoxAdapter(child: _buildHeader(c, settings, sp)),
+          SliverToBoxAdapter(child: _buildHeader(c, lang, settings, sp)),
 
           // ── Master toggle ──────────────────────────────────────────────
-          SliverToBoxAdapter(child: _buildMasterToggle(c, settings, sp)),
+          SliverToBoxAdapter(child: _buildMasterToggle(c, lang, settings, sp)),
 
           // ── Prayer toggles ─────────────────────────────────────────────
           SliverToBoxAdapter(
             child: _buildSection(
               c:     c,
-              title: 'Prayer Alarms',
+              title: lang.tr('prayer_alarms'),
               icon:  Icons.access_alarm_rounded,
-              child: _PrayerTogglesCard(c: c, settings: settings, sp: sp),
+              child: _PrayerTogglesCard(c: c, lang: lang, settings: settings, sp: sp),
             ),
           ),
 
@@ -78,7 +80,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
           SliverToBoxAdapter(
             child: _buildSection(
               c:     c,
-              title: 'Adhan Sound',
+              title: lang.tr('adhan_sound'),
               icon:  Icons.music_note_rounded,
               child: _SoundPickerCard(
                 c:             c,
@@ -94,7 +96,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
           SliverToBoxAdapter(
             child: _buildSection(
               c:     c,
-              title: 'Volume',
+              title: lang.tr('volume_label'),
               icon:  Icons.volume_up_rounded,
               child: _VolumeCard(c: c, settings: settings, sp: sp),
             ),
@@ -104,7 +106,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
           SliverToBoxAdapter(
             child: _buildSection(
               c:     c,
-              title: 'Calculation Method',
+              title: lang.tr('calculation_method'),
               icon:  Icons.calculate_rounded,
               child: _CalcMethodCard(c: c, settings: settings, sp: sp),
             ),
@@ -114,9 +116,9 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
           SliverToBoxAdapter(
             child: _buildSection(
               c:     c,
-              title: 'Madhab / School',
+              title: lang.tr('madhab_school'),
               icon:  Icons.menu_book_rounded,
-              child: _MadhabCard(c: c, settings: settings, sp: sp),
+              child: _MadhabCard(c: c, lang: lang, settings: settings, sp: sp),
             ),
           ),
 
@@ -124,9 +126,9 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
           SliverToBoxAdapter(
             child: _buildSection(
               c:     c,
-              title: 'Additional Options',
+              title: lang.tr('additional_options'),
               icon:  Icons.tune_rounded,
-              child: _ExtrasCard(c: c, settings: settings, sp: sp),
+              child: _ExtrasCard(c: c, lang: lang, settings: settings, sp: sp),
             ),
           ),
 
@@ -136,9 +138,9 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
               padding: const EdgeInsets.fromLTRB(18, 8, 18, 32),
               child: _GoldButton(
                 c:       c,
-                label:   'Activate Adhan Alarms',
+                label:   lang.tr('activate_adhan_alarms'),
                 icon:    Icons.notifications_active_rounded,
-                onTap:   () => _requestPermissionsAndSave(c),
+                onTap:   () => _requestPermissionsAndSave(c, lang),
               ),
             ),
           ),
@@ -150,7 +152,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
   // ── Header ────────────────────────────────────────────────────────────────
 
   Widget _buildHeader(
-      AppColors c, AdhanSettings settings, AdhanSettingsProvider sp) {
+      AppColors c, LanguageProvider lang, AdhanSettings settings, AdhanSettingsProvider sp) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -176,10 +178,10 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Adhan Settings',
+                    Text(lang.tr('adhan_settings_title'),
                         style: AppTextStyles.brandSmall(c)
                             .copyWith(color: Colors.white)),
-                    Text('Prayer alarms & preferences',
+                    Text(lang.tr('prayer_alarms_preferences_sub'),
                         style: AppTextStyles.brandTag(c)
                             .copyWith(color: Colors.white60)),
                   ],
@@ -201,7 +203,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
                   ),
                 ),
                 child: Text(
-                  settings.enabled ? 'ON' : 'OFF',
+                  settings.enabled ? lang.tr('on_label') : lang.tr('off_label'),
                   style: AppTextStyles.cinzelSm(c,
                       color: settings.enabled ? c.gold : Colors.white38,
                       size: 10),
@@ -215,7 +217,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
           Icon(Icons.mosque_rounded,
               color: c.gold.withValues(alpha: 0.55), size: 52),
           const SizedBox(height: 6),
-          Text('5 Daily Prayers',
+          Text(lang.tr('five_daily_prayers'),
               style: AppTextStyles.cinzelSm(c,
                   color: c.gold, size: 11)
                   .copyWith(letterSpacing: 2.5)),
@@ -228,7 +230,7 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
   // ── Master toggle ─────────────────────────────────────────────────────────
 
   Widget _buildMasterToggle(
-      AppColors c, AdhanSettings settings, AdhanSettingsProvider sp) {
+      AppColors c, LanguageProvider lang, AdhanSettings settings, AdhanSettingsProvider sp) {
     return Container(
       margin: const EdgeInsets.fromLTRB(18, 16, 18, 4),
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
@@ -256,12 +258,12 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Adhan Alarms',
+              Text(lang.tr('adhan_alarms_label'),
                   style: AppTextStyles.heading(c, fontSize: 15)),
               Text(
                 settings.enabled
-                    ? 'Adhan will ring at each prayer time'
-                    : 'Tap to enable Adhan notifications',
+                    ? lang.tr('adhan_ring_each_prayer')
+                    : lang.tr('tap_enable_adhan'),
                 style: AppTextStyles.bodyMuted(c, size: 11),
               ),
             ],
@@ -309,10 +311,11 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
 
 class _PrayerTogglesCard extends StatelessWidget {
   final AppColors              c;
+  final LanguageProvider       lang;
   final AdhanSettings          settings;
   final AdhanSettingsProvider  sp;
   const _PrayerTogglesCard(
-      {required this.c, required this.settings, required this.sp});
+      {required this.c, required this.lang, required this.settings, required this.sp});
 
   @override
   Widget build(BuildContext context) {
@@ -338,10 +341,10 @@ class _PrayerTogglesCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(name,
+                      Text(lang.tr(name.toLowerCase()),
                           style: AppTextStyles.heading(c, fontSize: 14)),
                       Text(
-                        isOn ? 'Alarm enabled' : 'Alarm disabled',
+                        isOn ? lang.tr('alarm_enabled') : lang.tr('alarm_disabled'),
                         style: AppTextStyles.bodyMuted(c, size: 10),
                       ),
                     ],
@@ -607,18 +610,18 @@ class _CalcMethodCard extends StatelessWidget {
 
 class _MadhabCard extends StatelessWidget {
   final AppColors             c;
+  final LanguageProvider      lang;
   final AdhanSettings         settings;
   final AdhanSettingsProvider sp;
   const _MadhabCard(
-      {required this.c, required this.settings, required this.sp});
-
-  static const _options = [
-    (label: 'Hanafi', sub: 'Later Asr time'),
-    (label: 'Shafi / Maliki / Hanbali', sub: 'Earlier Asr time'),
-  ];
+      {required this.c, required this.lang, required this.settings, required this.sp});
 
   @override
   Widget build(BuildContext context) {
+    final options = [
+      (label: 'Hanafi', sub: lang.tr('later_asr_time')),
+      (label: 'Shafi / Maliki / Hanbali', sub: lang.tr('earlier_asr_time')),
+    ];
     return Container(
       decoration: BoxDecoration(
         color:        c.surf,
@@ -626,10 +629,10 @@ class _MadhabCard extends StatelessWidget {
         border:       Border.all(color: c.bd),
       ),
       child: Column(
-        children: List.generate(_options.length, (i) {
+        children: List.generate(options.length, (i) {
           final selected = settings.madhabIndex == i;
-          final isLast   = i == _options.length - 1;
-          final opt      = _options[i];
+          final isLast   = i == options.length - 1;
+          final opt      = options[i];
           return Column(children: [
             InkWell(
               onTap: () => sp.setMadhab(i),
@@ -682,10 +685,11 @@ class _MadhabCard extends StatelessWidget {
 
 class _ExtrasCard extends StatelessWidget {
   final AppColors             c;
+  final LanguageProvider      lang;
   final AdhanSettings         settings;
   final AdhanSettingsProvider sp;
   const _ExtrasCard(
-      {required this.c, required this.settings, required this.sp});
+      {required this.c, required this.lang, required this.settings, required this.sp});
 
   @override
   Widget build(BuildContext context) {
@@ -699,8 +703,8 @@ class _ExtrasCard extends StatelessWidget {
         _OptionRow(
           c:       c,
           icon:    Icons.vibration_rounded,
-          label:   'Vibration',
-          sub:     'Vibrate device when alarm fires',
+          label:   lang.tr('vibration_label'),
+          sub:     lang.tr('vibrate_device_sub'),
           value:   settings.vibrate,
           onChanged: sp.setVibrate,
         ),
@@ -708,8 +712,8 @@ class _ExtrasCard extends StatelessWidget {
         _OptionRow(
           c:        c,
           icon:     Icons.alarm_rounded,
-          label:    'Pre-Prayer Reminder',
-          sub:      'Notification 10 minutes before each prayer',
+          label:    lang.tr('pre_prayer_reminder'),
+          sub:      lang.tr('pre_prayer_reminder_sub'),
           value:    settings.preAdhanReminder,
           onChanged: sp.setPreAdhanReminder,
         ),

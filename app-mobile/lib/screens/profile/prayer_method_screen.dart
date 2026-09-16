@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../providers/adhan_settings_provider.dart';
+import '../../providers/language_provider.dart';
 
 // Maps this screen's method labels to AdhanSettings.calcMethodIndex, which
 // indexes into kCalcMethods (see models/adhan_settings.dart).
@@ -59,7 +60,7 @@ class _PrayerMethodScreenState extends State<PrayerMethodScreen> {
     await provider.setMadhab(_madhabIndexFromKey(_asrMadhab));
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Prayer method saved.'), duration: Duration(seconds: 2)),
+      SnackBar(content: Text(context.read<LanguageProvider>().tr('prayer_method_saved')), duration: const Duration(seconds: 2)),
     );
     Future.delayed(const Duration(milliseconds: 400), () {
       if (mounted) Navigator.pop(context);
@@ -69,6 +70,7 @@ class _PrayerMethodScreenState extends State<PrayerMethodScreen> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final lang = context.watch<LanguageProvider>();
     return Scaffold(
       backgroundColor: c.bg,
       body: SafeArea(
@@ -96,8 +98,8 @@ class _PrayerMethodScreenState extends State<PrayerMethodScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Prayer Method', style: AppTextStyles.heading(c, fontSize: 19)),
-                        Text('CALCULATION & MADHAB', style: AppTextStyles.brandTag(c)),
+                        Text(lang.tr('prayer_method'), style: AppTextStyles.heading(c, fontSize: 19)),
+                        Text(lang.tr('calculation_madhab_caps'), style: AppTextStyles.brandTag(c)),
                       ],
                     ),
                   ),
@@ -122,14 +124,14 @@ class _PrayerMethodScreenState extends State<PrayerMethodScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Current: ${_methodLabel(_calcMethod)} · $_asrMadhab', style: AppTextStyles.heading(c, fontSize: 15)),
+                          Text('${lang.tr('current_prefix')}${_methodLabel(_calcMethod)} · $_asrMadhab', style: AppTextStyles.heading(c, fontSize: 15)),
                           const SizedBox(height: 4),
-                          Text('Affects Asr timing and twilight calculations for your region.', style: AppTextStyles.bodyMuted(c, size: 10.5).copyWith(height: 1.5)),
+                          Text(lang.tr('affects_asr_twilight'), style: AppTextStyles.bodyMuted(c, size: 10.5).copyWith(height: 1.5)),
                         ],
                       ),
                     ),
 
-                    _EyeRow(label: 'Calculation Method', c: c),
+                    _EyeRow(label: lang.tr('calculation_method'), c: c),
 
                     Column(
                       children: [
@@ -141,7 +143,7 @@ class _PrayerMethodScreenState extends State<PrayerMethodScreen> {
                       ],
                     ),
 
-                    _EyeRow(label: 'Asr Madhab', c: c),
+                    _EyeRow(label: lang.tr('asr_madhab_caps'), c: c),
                     
                     Row(
                       children: [
@@ -165,7 +167,7 @@ class _PrayerMethodScreenState extends State<PrayerMethodScreen> {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text("Shafi'i", style: AppTextStyles.body(c, size: 12).copyWith(fontWeight: _asrMadhab == "Shafi'i" ? FontWeight.w500 : FontWeight.normal)),
-                                        Text('Earlier Asr', style: AppTextStyles.bodyMuted(c, size: 9.5)),
+                                        Text(lang.tr('earlier_asr'), style: AppTextStyles.bodyMuted(c, size: 9.5)),
                                       ],
                                     ),
                                   ),
@@ -193,7 +195,7 @@ class _PrayerMethodScreenState extends State<PrayerMethodScreen> {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text("Hanafi", style: AppTextStyles.body(c, size: 12).copyWith(fontWeight: _asrMadhab == "Hanafi" ? FontWeight.w500 : FontWeight.normal)),
-                                        Text('Later Asr', style: AppTextStyles.bodyMuted(c, size: 9.5)),
+                                        Text(lang.tr('later_asr'), style: AppTextStyles.bodyMuted(c, size: 9.5)),
                                       ],
                                     ),
                                   ),
@@ -218,7 +220,7 @@ class _PrayerMethodScreenState extends State<PrayerMethodScreen> {
                           boxShadow: [BoxShadow(color: c.gold.withValues(alpha: 0.22), blurRadius: 20, offset: const Offset(0, 4))],
                         ),
                         alignment: Alignment.center,
-                        child: Text('Save Prayer Method', style: AppTextStyles.button(c).copyWith(color: const Color(0xFF0D0D0F))),
+                        child: Text(lang.tr('save_prayer_method'), style: AppTextStyles.button(c).copyWith(color: const Color(0xFF0D0D0F))),
                       ),
                     ),
                     const SizedBox(height: 20),

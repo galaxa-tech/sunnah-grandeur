@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/product_model.dart';
+import '../../theme/app_colors.dart';
 
 /// ProductCard — pixel-for-pixel match of the website ProductCard component.
 ///
@@ -26,19 +27,20 @@ class ProductCard extends StatefulWidget {
 class _ProductCardState extends State<ProductCard> {
   bool _hovered = false;
 
-  static const _bg          = Color(0xFF0A0A0A);
-  static const _surf        = Color(0xFF141414);
-  static const _border      = Color(0xFF1F1F1F);
-  static const _borderHov   = Color(0xFF3D3020);
-  static const _gold        = Color(0xFFC9A84C);
-  static const _textPri     = Color(0xFFFFFFFF);
-  static const _textSec     = Color(0xFFA0A0A0);
-  static const _red         = Color(0xFFDC2626);
-
   bool get _isSoldOut => widget.product.stockQuantity == 0;
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final bg        = c.bg;
+    final surf      = c.surf;
+    final border    = c.bd;
+    final borderHov = c.gold.withValues(alpha: c.isDark ? 0.45 : 0.35);
+    final gold      = c.gold;
+    final textPri   = c.t1;
+    final textSec   = c.t2;
+    final red       = c.red;
+
     final p = widget.product;
     final savings = p.originalPrice != null ? (p.originalPrice! - p.price) : 0.0;
 
@@ -50,10 +52,10 @@ class _ProductCardState extends State<ProductCard> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           decoration: BoxDecoration(
-            color:        _surf,
+            color:        surf,
             borderRadius: BorderRadius.circular(4),
             border: Border.all(
-              color: _hovered && !_isSoldOut ? _borderHov : _border,
+              color: _hovered && !_isSoldOut ? borderHov : border,
             ),
           ),
           clipBehavior: Clip.antiAlias,
@@ -89,7 +91,7 @@ class _ProductCardState extends State<ProductCard> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: _red,
+                            color: red,
                             borderRadius: BorderRadius.circular(100),
                           ),
                           child: Text(
@@ -114,7 +116,7 @@ class _ProductCardState extends State<ProductCard> {
                           gradient: LinearGradient(
                             begin: Alignment.bottomCenter,
                             end:   Alignment.topCenter,
-                            colors: [_bg.withValues(alpha: 0.95), Colors.transparent],
+                            colors: [bg.withValues(alpha: 0.95), Colors.transparent],
                           ),
                         ),
                         child: GestureDetector(
@@ -122,10 +124,10 @@ class _ProductCardState extends State<ProductCard> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             decoration: BoxDecoration(
-                              color: _isSoldOut ? _surf : _gold,
+                              color: _isSoldOut ? surf : gold,
                               borderRadius: BorderRadius.circular(4),
                               border: _isSoldOut
-                                  ? Border.all(color: _border)
+                                  ? Border.all(color: border)
                                   : null,
                             ),
                             alignment: Alignment.center,
@@ -136,7 +138,7 @@ class _ProductCardState extends State<ProductCard> {
                               style: GoogleFonts.manrope(
                                 fontSize:   10,
                                 fontWeight: FontWeight.bold,
-                                color: _isSoldOut ? _textSec : _bg,
+                                color: _isSoldOut ? textSec : bg,
                                 letterSpacing: 0.5,
                               ),
                             ),
@@ -160,7 +162,7 @@ class _ProductCardState extends State<ProductCard> {
                         p.category.toUpperCase(),
                         style: GoogleFonts.manrope(
                           fontSize: 9, fontWeight: FontWeight.bold,
-                          color: _gold.withValues(alpha: 0.60),
+                          color: gold.withValues(alpha: 0.60),
                           letterSpacing: 1.5,
                         ),
                       ),
@@ -169,7 +171,7 @@ class _ProductCardState extends State<ProductCard> {
                         p.name,
                         style: GoogleFonts.notoSerif(
                           fontSize: 12, fontWeight: FontWeight.bold,
-                          color: _textPri, height: 1.2,
+                          color: textPri, height: 1.2,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -178,7 +180,7 @@ class _ProductCardState extends State<ProductCard> {
                       Text(
                         p.description,
                         style: GoogleFonts.manrope(
-                          fontSize: 11, color: _textSec, height: 1.5,
+                          fontSize: 11, color: textSec, height: 1.5,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -190,7 +192,7 @@ class _ProductCardState extends State<ProductCard> {
                             '\$${p.price.toInt()}',
                             style: GoogleFonts.manrope(
                               fontSize: 14, fontWeight: FontWeight.bold,
-                              color: _gold,
+                              color: gold,
                             ),
                           ),
                           if (p.originalPrice != null) ...[
@@ -198,9 +200,9 @@ class _ProductCardState extends State<ProductCard> {
                             Text(
                               '\$${p.originalPrice!.toInt()}',
                               style: GoogleFonts.manrope(
-                                fontSize: 11, color: _textSec,
+                                fontSize: 11, color: textSec,
                                 decoration: TextDecoration.lineThrough,
-                                decorationColor: _textSec,
+                                decorationColor: textSec,
                               ),
                             ),
                           ],
@@ -240,6 +242,7 @@ class _ProductCardState extends State<ProductCard> {
   }
 
   Widget _buildGradientFallback(ProductModel p) {
+    final gold = AppColors.of(context).gold;
     final colors = _categoryGradient(p.categoryId);
     return Container(
       decoration: BoxDecoration(
@@ -256,7 +259,7 @@ class _ProductCardState extends State<ProductCard> {
             opacity: 0.25,
             child: Icon(
               _categoryIcon(p.categoryId),
-              size: 56, color: _gold,
+              size: 56, color: gold,
             ),
           ),
           const SizedBox(height: 8),
@@ -264,7 +267,7 @@ class _ProductCardState extends State<ProductCard> {
             p.category.toUpperCase(),
             style: GoogleFonts.manrope(
               fontSize: 9, fontWeight: FontWeight.bold,
-              color: _gold.withValues(alpha: 0.40),
+              color: gold.withValues(alpha: 0.40),
               letterSpacing: 1.5,
             ),
           ),
@@ -314,18 +317,19 @@ class _Badge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color:  gold ? const Color(0xFFC9A84C) : const Color(0xFF141414),
-        border: onSurf ? Border.all(color: const Color(0xFF1F1F1F)) : null,
+        color:  gold ? c.gold : c.surf,
+        border: onSurf ? Border.all(color: c.bd) : null,
         borderRadius: BorderRadius.circular(100),
       ),
       child: Text(
         label.toUpperCase(),
         style: GoogleFonts.manrope(
           fontSize: 9, fontWeight: FontWeight.bold,
-          color: gold ? const Color(0xFF0A0A0A) : const Color(0xFFA0A0A0),
+          color: gold ? c.bg : c.t2,
           letterSpacing: 0.5,
         ),
       ),

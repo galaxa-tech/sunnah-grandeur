@@ -6,6 +6,7 @@ import ThemeInitializer from "@/components/ThemeInitializer";
 import LanguageInitializer from "@/components/LanguageInitializer";
 import AppDownloadBanner from "@/components/AppDownloadBanner";
 import { AuthProvider } from "@/context/AuthContext";
+import { CurrencyProvider } from "@/context/CurrencyContext";
 
 export const metadata: Metadata = {
   title: "Sunnah Grandeur | Premium Islamic Lifestyle",
@@ -32,14 +33,16 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen flex flex-col bg-bg-primary text-text-primary antialiased">
         <AuthProvider>
-          <ThemeInitializer />
-          <LanguageInitializer />
-          <Navbar />
-          <main className="flex-grow">
-            {children}
-          </main>
-          <AppDownloadBanner />
-          <Footer />
+          <CurrencyProvider>
+            <ThemeInitializer />
+            <LanguageInitializer />
+            <Navbar />
+            <main className="flex-grow">
+              {children}
+            </main>
+            <AppDownloadBanner />
+            <Footer />
+          </CurrencyProvider>
         </AuthProvider>
       </body>
     </html>

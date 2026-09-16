@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { useCartStore } from '@/store/useCartStore';
 import { formatUsd, toDisplayUsd } from '@/lib/currency';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -11,12 +12,13 @@ interface CartDrawerProps {
 
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { items, removeItem, updateQuantity, getSubtotal, getTotalItems } = useCartStore();
+  const { usdRate } = useCurrency();
   const subtotal = getSubtotal();
   const totalCount = getTotalItems();
 
   // Free shipping & gift threshold — mirrors settings/app_config.freeShippingThreshold ($50).
   const FREE_SHIPPING_THRESHOLD_USD = 50;
-  const subtotalUsd = toDisplayUsd(subtotal);
+  const subtotalUsd = toDisplayUsd(subtotal, usdRate);
   const remainingForFreeUsd = Math.max(0, FREE_SHIPPING_THRESHOLD_USD - subtotalUsd);
   const progressPercent = Math.min(100, (subtotalUsd / FREE_SHIPPING_THRESHOLD_USD) * 100);
 
@@ -163,7 +165,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
                     {/* Price */}
                     <span className="font-mono font-bold text-sm text-primary">
-                      {formatUsd(item.price * item.quantity)}
+                      {formatUsd(item.price * item.quantity, usdRate)}
                     </span>
                   </div>
                 </div>
@@ -187,7 +189,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             <div className="space-y-1.5 text-xs">
               <div className="flex justify-between text-text-secondary">
                 <span>Subtotal</span>
-                <span className="font-mono text-text-primary">{formatUsd(subtotal)}</span>
+                <span className="font-mono text-text-primary">{formatUsd(subtotal, usdRate)}</span>
               </div>
               <div className="flex justify-between text-text-secondary">
                 <span>Estimated Shipping</span>
@@ -197,7 +199,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               </div>
               <div className="flex justify-between text-sm font-bold text-text-primary pt-2 border-t border-border-subtle">
                 <span className="font-cinzel">Subtotal</span>
-                <span className="text-primary font-mono text-base">{formatUsd(subtotal)}</span>
+                <span className="text-primary font-mono text-base">{formatUsd(subtotal, usdRate)}</span>
               </div>
             </div>
 

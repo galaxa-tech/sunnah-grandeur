@@ -9,6 +9,7 @@ import { useCartStore } from '@/store/useCartStore';
 import { Product } from '@/data/products';
 import { formatUsd } from '@/lib/currency';
 import { useAuth } from '@/context/AuthContext';
+import { useCurrency } from '@/context/CurrencyContext';
 import AuthModal from '@/components/AuthModal';
 import CartDrawer from '@/components/CartDrawer';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
@@ -16,6 +17,7 @@ import { db } from '@/lib/firebase';
 
 export default function Navbar() {
   const pathname = usePathname();
+  const { usdRate } = useCurrency();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [isUserOpen, setIsUserOpen] = useState(false);
@@ -437,7 +439,7 @@ export default function Navbar() {
                         <p className="text-xs text-text-secondary line-clamp-1">{product.description}</p>
                       </div>
                       <div className="text-sm font-bold font-mono text-primary">
-                        {formatUsd(product.price)}
+                        {formatUsd(product.price, usdRate)}
                       </div>
                     </Link>
                   ));

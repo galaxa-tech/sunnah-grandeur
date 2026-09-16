@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 
@@ -36,7 +37,7 @@ class _RateAppScreenState extends State<RateAppScreen> {
   Future<void> _submit() async {
     if (_rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tap a star to choose a rating first.')),
+        SnackBar(content: Text(context.read<LanguageProvider>().tr('tap_star_first'))),
       );
       return;
     }
@@ -63,7 +64,7 @@ class _RateAppScreenState extends State<RateAppScreen> {
       if (!mounted) return;
       setState(() => _submitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not submit feedback: $e')),
+        SnackBar(content: Text('${context.read<LanguageProvider>().tr('could_not_submit_feedback')}: $e')),
       );
     }
   }
@@ -99,6 +100,7 @@ class _RateAppScreenState extends State<RateAppScreen> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final lang = context.watch<LanguageProvider>();
     return Scaffold(
       backgroundColor: c.bg,
       body: SafeArea(
@@ -126,8 +128,8 @@ class _RateAppScreenState extends State<RateAppScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Rate the App', style: AppTextStyles.heading(c, fontSize: 19)),
-                        Text('SPREAD THE KHAIR', style: AppTextStyles.brandTag(c)),
+                        Text(lang.tr('rate_app'), style: AppTextStyles.heading(c, fontSize: 19)),
+                        Text(lang.tr('spread_the_khair_caps'), style: AppTextStyles.brandTag(c)),
                       ],
                     ),
                   ),
@@ -152,10 +154,10 @@ class _RateAppScreenState extends State<RateAppScreen> {
                       child: Icon(Icons.star_outline_rounded, color: c.gold, size: 32),
                     ),
                     const SizedBox(height: 16),
-                    Text('Enjoying the App?', style: AppTextStyles.displayMd(c).copyWith(fontSize: 26)),
+                    Text(lang.tr('enjoying_the_app'), style: AppTextStyles.displayMd(c).copyWith(fontSize: 26)),
                     const SizedBox(height: 10),
                     Text(
-                      'Your rating helps other Muslims discover Sunnah Grandeur. It takes just 10 seconds.',
+                      lang.tr('rating_helps_discover'),
                       textAlign: TextAlign.center,
                       style: AppTextStyles.bodyMuted(c, size: 13).copyWith(height: 1.65),
                     ),
@@ -199,7 +201,7 @@ class _RateAppScreenState extends State<RateAppScreen> {
                         decoration: InputDecoration(
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.all(14),
-                          hintText: 'What do you love most about Sunnah Grandeur? (optional)',
+                          hintText: lang.tr('rate_app_hint'),
                           hintStyle: AppTextStyles.bodyMuted(c, size: 12).copyWith(height: 1.6),
                         ),
                       ),
@@ -228,7 +230,7 @@ class _RateAppScreenState extends State<RateAppScreen> {
                                   Icon(_submitted ? Icons.check_rounded : Icons.thumb_up_rounded, color: _submitted ? c.gold : c.bg, size: 18),
                                   const SizedBox(width: 8),
                                   Text(
-                                    _submitted ? 'Feedback Sent' : 'Submit Feedback',
+                                    _submitted ? lang.tr('feedback_sent') : lang.tr('submit_feedback'),
                                     style: AppTextStyles.button(c).copyWith(color: _submitted ? c.gold : const Color(0xFF0D0D0F)),
                                   ),
                                 ],
@@ -237,7 +239,7 @@ class _RateAppScreenState extends State<RateAppScreen> {
                     ),
                     const SizedBox(height: 14),
                     Text(
-                      _submitted ? 'JazakAllah Khair for the feedback 🤍' : 'Your feedback goes straight to our team.',
+                      _submitted ? lang.tr('jazakallah_khair') : lang.tr('feedback_goes_to_team'),
                       style: AppTextStyles.bodyMuted(c, size: 12),
                     ),
                     const SizedBox(height: 20),

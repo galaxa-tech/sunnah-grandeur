@@ -4,6 +4,7 @@ import '../../theme/app_text_styles.dart';
 
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../widgets/app_dialog.dart';
 
@@ -48,9 +49,10 @@ class _AccountIdentityScreenState extends State<AccountIdentityScreen> {
     setState(() => _isSaving = false);
 
     if (mounted) {
+      final lang = context.read<LanguageProvider>();
       showAppSnackbar(
         context,
-        success ? 'Profile updated successfully' : 'Failed to update profile',
+        success ? lang.tr('profile_updated_success') : lang.tr('profile_update_failed'),
         type: success ? AppSnackbarType.success : AppSnackbarType.error,
       );
     }
@@ -58,20 +60,21 @@ class _AccountIdentityScreenState extends State<AccountIdentityScreen> {
 
   Future<void> _handleChangePassword() async {
     final auth = context.read<AuthProvider>();
+    final lang = context.read<LanguageProvider>();
     final email = auth.firebaseUser?.email;
     if (email == null) return;
     final confirm = await showAppConfirmDialog(
       context,
-      title: 'Change Password',
-      message: 'Send a password reset link to $email?',
-      confirmLabel: 'Send Link',
+      title: lang.tr('change_password'),
+      message: '${lang.tr('send_reset_link_to_prefix')}$email?',
+      confirmLabel: lang.tr('send_link'),
     );
     if (confirm != true) return;
     final success = await auth.sendPasswordReset(email);
     if (!mounted) return;
     showAppSnackbar(
       context,
-      success ? 'Reset link sent to $email' : 'Failed to send reset link',
+      success ? '${lang.tr('reset_link_sent_to_prefix')}$email' : lang.tr('failed_send_reset_link'),
       type: success ? AppSnackbarType.success : AppSnackbarType.error,
     );
   }
@@ -79,6 +82,7 @@ class _AccountIdentityScreenState extends State<AccountIdentityScreen> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final lang = context.watch<LanguageProvider>();
     final auth = context.watch<AuthProvider>();
     return Scaffold(
       backgroundColor: c.bg,
@@ -107,8 +111,8 @@ class _AccountIdentityScreenState extends State<AccountIdentityScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Account & Identity', style: AppTextStyles.heading(c, fontSize: 19)),
-                        Text('PERSONAL INFORMATION', style: AppTextStyles.brandTag(c)),
+                        Text(lang.tr('account_identity'), style: AppTextStyles.heading(c, fontSize: 19)),
+                        Text(lang.tr('personal_information_caps'), style: AppTextStyles.brandTag(c)),
                       ],
                     ),
                   ),
@@ -123,7 +127,7 @@ class _AccountIdentityScreenState extends State<AccountIdentityScreen> {
                       ),
                       child: _isSaving 
                         ? SizedBox(width: 14, height: 14, child: CircularProgressIndicator(color: c.gold, strokeWidth: 2))
-                        : Text('Save', style: AppTextStyles.body(c, color: c.gold, size: 10).copyWith(fontWeight: FontWeight.w500)),
+                        : Text(lang.tr('save'), style: AppTextStyles.body(c, color: c.gold, size: 10).copyWith(fontWeight: FontWeight.w500)),
                     ),
                   ),
                 ],
@@ -151,45 +155,45 @@ class _AccountIdentityScreenState extends State<AccountIdentityScreen> {
                             child: Icon(Icons.person_outline_rounded, color: c.gold, size: 34),
                           ),
                           const SizedBox(height: 12),
-                          Text(auth.userData?.name ?? 'Guest', style: AppTextStyles.displaySm(c).copyWith(fontSize: 18)),
+                          Text(auth.userData?.name ?? lang.tr('guest_label'), style: AppTextStyles.displaySm(c).copyWith(fontSize: 18)),
                         ],
                       ),
                     ),
 
-                    _EyeRow(label: 'Personal Details', c: c),
+                    _EyeRow(label: lang.tr('personal_details_caps'), c: c),
                     const SizedBox(height: 10),
 
-                    _FormField(label: 'Full Name', controller: _nameCtrl, c: c, isFocused: true),
-                    _FormField(label: 'Email Address', controller: _emailCtrl, c: c, keyboardType: TextInputType.emailAddress, enabled: false),
-                    _FormField(label: 'Phone Number', controller: _phoneCtrl, c: c, keyboardType: TextInputType.phone),
+                    _FormField(label: lang.tr('full_name'), controller: _nameCtrl, c: c, isFocused: true),
+                    _FormField(label: lang.tr('email_address'), controller: _emailCtrl, c: c, keyboardType: TextInputType.emailAddress, enabled: false),
+                    _FormField(label: lang.tr('phone_number'), controller: _phoneCtrl, c: c, keyboardType: TextInputType.phone),
 
                     const SizedBox(height: 10),
-                    _EyeRow(label: 'Security', c: c),
+                    _EyeRow(label: lang.tr('security_caps'), c: c),
                     const SizedBox(height: 10),
 
                     GestureDetector(
                       onTap: _handleChangePassword,
                       child: _SettingsRow(
                         icon: Icons.password_rounded,
-                        title: 'Change Password',
+                        title: lang.tr('change_password'),
                         sub: auth.firebaseUser?.email != null
-                            ? 'Send a reset link to ${auth.firebaseUser!.email}'
-                            : 'No email on this account',
+                            ? '${lang.tr('send_reset_link_to_prefix')}${auth.firebaseUser!.email}'
+                            : lang.tr('no_email_on_account'),
                         c: c,
                       ),
                     ),
 
                     const SizedBox(height: 10),
-                    _EyeRow(label: 'Danger Zone', c: c),
+                    _EyeRow(label: lang.tr('danger_zone_caps'), c: c),
                     const SizedBox(height: 10),
 
                     GestureDetector(
                       onTap: () async {
                         final confirm = await showAppConfirmDialog(
                           context,
-                          title: 'Delete Account',
-                          message: 'Are you sure you want to permanently delete your account? This action cannot be undone.',
-                          confirmLabel: 'Delete',
+                          title: lang.tr('delete_account'),
+                          message: lang.tr('delete_account_confirm_body'),
+                          confirmLabel: lang.tr('delete'),
                           danger: true,
                         );
                         if (confirm == true) {
@@ -219,7 +223,7 @@ class _AccountIdentityScreenState extends State<AccountIdentityScreen> {
                             ),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: Text('Delete Account', style: AppTextStyles.body(c, color: c.red, size: 13)),
+                              child: Text(lang.tr('delete_account'), style: AppTextStyles.body(c, color: c.red, size: 13)),
                             ),
                             Icon(Icons.chevron_right_rounded, color: c.red, size: 18),
                           ],

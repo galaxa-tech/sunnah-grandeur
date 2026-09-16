@@ -7,6 +7,7 @@ import { httpsCallable } from 'firebase/functions';
 import { signInAnonymously, updateProfile } from 'firebase/auth';
 import { auth, functions } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
+import { useCurrency } from '@/context/CurrencyContext';
 import { formatUsd, formatUsdFromCents } from '@/lib/currency';
 
 const US_STATES = [
@@ -19,6 +20,7 @@ const US_STATES = [
 export default function CheckoutPage() {
   const { items, getSubtotal, clearCart } = useCartStore();
   const { user, linkGuestAccount } = useAuth();
+  const { usdRate } = useCurrency();
 
   // Estimate shown before the order is placed. The Cloud Function computes
   // the authoritative total server-side from real settings — this estimate
@@ -357,7 +359,7 @@ export default function CheckoutPage() {
                       <p className="font-bold text-text-primary">{i.name}</p>
                       <p className="text-[10px] text-text-secondary">Qty: {i.quantity}</p>
                     </div>
-                    <span className="font-mono font-semibold text-primary-container">{formatUsd(i.price * i.quantity)}</span>
+                    <span className="font-mono font-semibold text-primary-container">{formatUsd(i.price * i.quantity, usdRate)}</span>
                   </div>
                 ))}
               </div>
@@ -365,12 +367,12 @@ export default function CheckoutPage() {
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between">
                   <span className="text-text-secondary">Subtotal</span>
-                  <span className="text-text-primary font-semibold">{formatUsd(subtotal)}</span>
+                  <span className="text-text-primary font-semibold">{formatUsd(subtotal, usdRate)}</span>
                 </div>
                 <p className="text-[10px] text-text-secondary/70 -mt-1">Tax and any shipping fee are calculated at checkout confirmation.</p>
                 <div className="flex justify-between text-sm font-bold pt-2 border-t border-border-subtle">
                   <span className="text-text-primary">Estimated Total</span>
-                  <span className="text-primary-container">{formatUsd(total)}</span>
+                  <span className="text-primary-container">{formatUsd(total, usdRate)}</span>
                 </div>
               </div>
 

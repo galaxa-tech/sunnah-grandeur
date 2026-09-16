@@ -2,19 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:provider/provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../widgets/app_snackbar.dart';
+import '../../providers/language_provider.dart';
 
 // The app has no per-user referral-code system yet — every user shares the
 // same real, live link rather than a fabricated personalized one.
 const _shareLink = 'https://sunnah-grandeur-app.web.app';
-const _shareMsg  = 'Join me on Sunnah Grandeur — your Islamic lifestyle companion!\n$_shareLink';
+String _shareMsg(LanguageProvider lang) => '${lang.tr('share_msg_body')}\n$_shareLink';
 
 Future<void> _openShareUrl(BuildContext context, Uri uri) async {
   final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
   if (!ok && context.mounted) {
-    showAppSnackbar(context, 'Could not open that app.', type: AppSnackbarType.error);
+    showAppSnackbar(context, context.read<LanguageProvider>().tr('could_not_open_app'), type: AppSnackbarType.error);
   }
 }
 
@@ -24,6 +26,7 @@ class InviteFriendsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final lang = context.watch<LanguageProvider>();
     return Scaffold(
       backgroundColor: c.bg,
       body: SafeArea(
@@ -51,8 +54,8 @@ class InviteFriendsScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Invite Friends', style: AppTextStyles.heading(c, fontSize: 19)),
-                        Text('SHARE SUNNAH GRANDEUR', style: AppTextStyles.brandTag(c)),
+                        Text(lang.tr('invite_friends'), style: AppTextStyles.heading(c, fontSize: 19)),
+                        Text(lang.tr('share_sunnah_grandeur_caps'), style: AppTextStyles.brandTag(c)),
                       ],
                     ),
                   ),
@@ -84,9 +87,9 @@ class InviteFriendsScreen extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          Text('Spread the Khair', style: AppTextStyles.displayMd(c).copyWith(fontSize: 22)),
+                          Text(lang.tr('spread_the_khair'), style: AppTextStyles.displayMd(c).copyWith(fontSize: 22)),
                           const SizedBox(height: 8),
-                          Text('Share Sunnah Grandeur with friends and family. Every good deed starts with a reminder.', 
+                          Text(lang.tr('spread_khair_body'),
                             textAlign: TextAlign.center,
                             style: AppTextStyles.body(c, size: 12).copyWith(height: 1.6),
                           ),
@@ -94,7 +97,7 @@ class InviteFriendsScreen extends StatelessWidget {
                       ),
                     ),
 
-                    _EyeRow(label: 'Your Invite Link', c: c),
+                    _EyeRow(label: lang.tr('your_invite_link_caps'), c: c),
 
                     // Referral link
                     Row(
@@ -117,7 +120,7 @@ class InviteFriendsScreen extends StatelessWidget {
                           onTap: () {
                             HapticFeedback.lightImpact();
                             Clipboard.setData(const ClipboardData(text: _shareLink));
-                            showAppSnackbar(context, 'Link copied!',
+                            showAppSnackbar(context, lang.tr('link_copied'),
                                 type: AppSnackbarType.success,
                                 duration: const Duration(seconds: 1));
                           },
@@ -135,7 +138,7 @@ class InviteFriendsScreen extends StatelessWidget {
                     ),
 
                     const SizedBox(height: 6),
-                    _EyeRow(label: 'Share Via', c: c),
+                    _EyeRow(label: lang.tr('share_via_caps'), c: c),
 
                     // Share options
                     Row(
@@ -143,21 +146,21 @@ class InviteFriendsScreen extends StatelessWidget {
                         _ShareOption(
                           emoji: '💬', label: 'WhatsApp', c: c,
                           onTap: () => _openShareUrl(context,
-                              Uri.parse('https://wa.me/?text=${Uri.encodeComponent(_shareMsg)}')),
+                              Uri.parse('https://wa.me/?text=${Uri.encodeComponent(_shareMsg(lang))}')),
                         ),
                         const SizedBox(width: 8),
                         _ShareOption(
                           emoji: '✈️', label: 'Telegram', c: c,
                           onTap: () => _openShareUrl(context,
-                              Uri.parse('https://t.me/share/url?url=${Uri.encodeComponent(_shareLink)}&text=${Uri.encodeComponent('Join me on Sunnah Grandeur — your Islamic lifestyle companion!')}')),
+                              Uri.parse('https://t.me/share/url?url=${Uri.encodeComponent(_shareLink)}&text=${Uri.encodeComponent(lang.tr('share_msg_body'))}')),
                         ),
                         const SizedBox(width: 8),
                         _ShareOption(
                           emoji: '📧', label: 'Email', c: c,
                           onTap: () => _openShareUrl(context,
                               Uri(scheme: 'mailto', queryParameters: {
-                                'subject': 'Sunnah Grandeur App',
-                                'body': _shareMsg,
+                                'subject': lang.tr('sunnah_grandeur_app_label'),
+                                'body': _shareMsg(lang),
                               })),
                         ),
                       ],
@@ -166,7 +169,7 @@ class InviteFriendsScreen extends StatelessWidget {
 
                     // Share Button
                     GestureDetector(
-                      onTap: () => Share.share(_shareMsg, subject: 'Sunnah Grandeur App'),
+                      onTap: () => Share.share(_shareMsg(lang), subject: lang.tr('sunnah_grandeur_app_label')),
                       child: Container(
                         width: double.infinity,
                         height: 52,
@@ -180,7 +183,7 @@ class InviteFriendsScreen extends StatelessWidget {
                           children: [
                             Icon(Icons.share_rounded, color: c.bg, size: 18),
                             const SizedBox(width: 8),
-                            Text('Share App Link', style: AppTextStyles.button(c).copyWith(color: const Color(0xFF0D0D0F))),
+                            Text(lang.tr('share_app_link'), style: AppTextStyles.button(c).copyWith(color: const Color(0xFF0D0D0F))),
                           ],
                         ),
                       ),

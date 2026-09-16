@@ -9,11 +9,13 @@ import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useCartStore } from '@/store/useCartStore';
 import { formatUsd } from '@/lib/currency';
+import { useCurrency } from '@/context/CurrencyContext';
 import CartDrawer from '@/components/CartDrawer';
 
 export default function HomePage() {
   const { language } = useLanguageStore();
   const t = translations[language];
+  const { usdRate } = useCurrency();
 
   const [dbProducts, setDbProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -176,7 +178,7 @@ export default function HomePage() {
                   <h4 className="text-sm font-serif-luxury font-bold text-text-primary">Oud Al-Majd Extrait</h4>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs font-mono font-bold text-primary block">{formatUsd(1850)}</span>
+                  <span className="text-xs font-mono font-bold text-primary block">{formatUsd(1850, usdRate)}</span>
                   <span className="text-[9px] text-emerald-400 font-mono">In Stock • 50ml</span>
                 </div>
               </div>
@@ -332,7 +334,7 @@ export default function HomePage() {
 
                   {product.originalPrice && product.originalPrice > product.price && (
                     <span className="absolute top-3.5 right-3.5 z-10 bg-red-500/90 backdrop-blur-md text-white font-mono px-2.5 py-0.5 text-[9px] font-bold rounded-full">
-                      {formatUsd(product.originalPrice - product.price)} OFF
+                      {formatUsd(product.originalPrice - product.price, usdRate)} OFF
                     </span>
                   )}
 
@@ -361,7 +363,7 @@ export default function HomePage() {
                       onClick={() => handleQuickAdd(product)}
                       className="w-full bg-gradient-to-r from-[#E6C364] to-[#C9A84C] text-black font-cinzel font-bold py-2.5 px-4 rounded-lg text-xs uppercase tracking-widest hover:brightness-110 shadow-lg transition-all"
                     >
-                      Quick Add • {formatUsd(product.price)}
+                      Quick Add • {formatUsd(product.price, usdRate)}
                     </button>
                   </div>
                 </div>
@@ -386,11 +388,11 @@ export default function HomePage() {
                   <div className="mt-4 pt-3 border-t border-border-subtle flex items-center justify-between">
                     <div>
                       <span className="font-mono text-base font-bold text-primary">
-                        {formatUsd(product.price)}
+                        {formatUsd(product.price, usdRate)}
                       </span>
                       {product.originalPrice && (
                         <span className="font-mono text-xs text-text-secondary line-through ml-2">
-                          {formatUsd(product.originalPrice)}
+                          {formatUsd(product.originalPrice, usdRate)}
                         </span>
                       )}
                     </div>

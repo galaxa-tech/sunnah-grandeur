@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'package:provider/provider.dart';
 import '../../models/video_model.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
+import '../../providers/language_provider.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
   final VideoModel video;
@@ -123,7 +125,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   // ── Meta panel (scrollable info below player) ─────────────────────────────
 
-  Widget _buildMeta(AppColors c, BuildContext ctx) => Expanded(
+  Widget _buildMeta(AppColors c, LanguageProvider lang, BuildContext ctx) => Expanded(
         child: Container(
           width: double.infinity,
           color: c.bg,
@@ -138,7 +140,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                     Icon(Icons.arrow_back_ios_new_rounded,
                         size: 14, color: c.t3),
                     const SizedBox(width: 6),
-                    Text('Back', style: AppTextStyles.bodyMuted(c, size: 12)),
+                    Text(lang.tr('back'), style: AppTextStyles.bodyMuted(c, size: 12)),
                   ]),
                 ),
                 const SizedBox(height: 14),
@@ -175,7 +177,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   const SizedBox(width: 16),
                   Icon(Icons.visibility_outlined, size: 13, color: c.t3),
                   const SizedBox(width: 4),
-                  Text('${widget.video.views} views',
+                  Text('${widget.video.views} ${lang.tr('views')}',
                       style: AppTextStyles.bodyMuted(c, size: 12)),
                   if (widget.video.duration != '—') ...[
                     const SizedBox(width: 16),
@@ -193,8 +195,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                 Text(
                   widget.video.description.isNotEmpty
                       ? widget.video.description
-                      : 'A carefully curated piece of Islamic content from '
-                          '${widget.video.author}. Watch in-app for the full experience.',
+                      : '${lang.tr('curated_content_prefix')}'
+                          '${widget.video.author}${lang.tr('curated_content_suffix')}',
                   style: AppTextStyles.body(c, size: 13.5, color: c.t2)
                       .copyWith(height: 1.6),
                   maxLines: 6,
@@ -211,6 +213,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final lang = context.watch<LanguageProvider>();
 
     // Before player starts: show thumbnail
     if (!_started) {
@@ -218,7 +221,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         backgroundColor: Colors.black,
         body: Column(children: [
           _buildThumbnail(c),
-          _buildMeta(c, context),
+          _buildMeta(c, lang, context),
         ]),
       );
     }
@@ -245,7 +248,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         body: Column(children: [
           // Error overlay replaces player area
           if (_hasError)
-            _ErrorTile(c: c, onRetry: _retry)
+            _ErrorTile(c: c, lang: lang, onRetry: _retry)
           else
             // Overlay a loading screen until WebView is ready
             Stack(children: [
@@ -272,7 +275,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   ),
                 ),
             ]),
-          _buildMeta(c, ctx),
+          _buildMeta(c, lang, ctx),
         ]),
       ),
     );
@@ -282,8 +285,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 // ── Error tile ────────────────────────────────────────────────────────────────
 
 class _ErrorTile extends StatelessWidget {
-  const _ErrorTile({required this.c, required this.onRetry});
+  const _ErrorTile({required this.c, required this.lang, required this.onRetry});
   final AppColors c;
+  final LanguageProvider lang;
   final VoidCallback onRetry;
 
   @override
@@ -298,13 +302,13 @@ class _ErrorTile extends StatelessWidget {
             const Icon(Icons.error_outline_rounded,
                 color: Colors.redAccent, size: 36),
             const SizedBox(height: 10),
-            const Text('Video unavailable',
-                style: TextStyle(color: Colors.white,
+            Text(lang.tr('video_unavailable'),
+                style: const TextStyle(color: Colors.white,
                     fontSize: 14, fontWeight: FontWeight.w500)),
             const SizedBox(height: 6),
-            const Text(
-              'This video may be restricted or unavailable.',
-              style: TextStyle(color: Colors.white54, fontSize: 11),
+            Text(
+              lang.tr('video_unavailable_body'),
+              style: const TextStyle(color: Colors.white54, fontSize: 11),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -318,7 +322,7 @@ class _ErrorTile extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: c.gold.withValues(alpha: 0.35)),
                 ),
-                child: Text('Retry',
+                child: Text(lang.tr('retry'),
                     style: TextStyle(color: c.gold, fontSize: 12,
                         fontWeight: FontWeight.w500)),
               ),

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../main.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
+import '../../providers/language_provider.dart';
 
 class AppearanceSettingsScreen extends StatefulWidget {
   const AppearanceSettingsScreen({super.key});
@@ -12,16 +13,17 @@ class AppearanceSettingsScreen extends StatefulWidget {
 }
 
 class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
-  String textScaleLabel(double v) {
-    if (v <= 0.90) return 'Small';
-    if (v <= 1.05) return 'Default';
-    if (v <= 1.20) return 'Large';
-    return 'Extra Large';
+  String textScaleLabel(double v, LanguageProvider lang) {
+    if (v <= 0.90) return lang.tr('text_size_small');
+    if (v <= 1.05) return lang.tr('text_size_default');
+    if (v <= 1.20) return lang.tr('text_size_large');
+    return lang.tr('text_size_extra_large');
   }
 
   @override
   Widget build(BuildContext context) {
     final c             = AppColors.of(context);
+    final lang          = context.watch<LanguageProvider>();
     final themeNotifier = context.watch<ThemeNotifier>();
     final isDark        = themeNotifier.isDark;
     final useSystem     = themeNotifier.mode == ThemeMode.system;
@@ -53,8 +55,8 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Appearance', style: AppTextStyles.heading(c, fontSize: 19)),
-                        Text('THEME & DISPLAY', style: AppTextStyles.brandTag(c)),
+                        Text(lang.tr('appearance'), style: AppTextStyles.heading(c, fontSize: 19)),
+                        Text(lang.tr('theme_display_caps'), style: AppTextStyles.brandTag(c)),
                       ],
                     ),
                   ),
@@ -67,7 +69,7 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 18),
                 child: Column(
                   children: [
-                    _EyeRow(label: 'Theme Mode', c: c),
+                    _EyeRow(label: lang.tr('theme_mode_caps'), c: c),
 
                     // Theme cards
                     Row(
@@ -114,7 +116,7 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
                                         child: (isDark && !useSystem) ? Icon(Icons.check_rounded, size: 10, color: c.bg) : null,
                                       ),
                                       const SizedBox(width: 7),
-                                      Text('Dark Mode', style: AppTextStyles.body(c, size: 12).copyWith(color: (isDark && !useSystem) ? c.gold : c.t3, fontWeight: (isDark && !useSystem) ? FontWeight.w500 : null)),
+                                      Text(lang.tr('dark_mode'), style: AppTextStyles.body(c, size: 12).copyWith(color: (isDark && !useSystem) ? c.gold : c.t3, fontWeight: (isDark && !useSystem) ? FontWeight.w500 : null)),
                                     ],
                                   ),
                                 ],
@@ -165,7 +167,7 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
                                         child: (!isDark && !useSystem) ? Icon(Icons.check_rounded, size: 10, color: c.bg) : null,
                                       ),
                                       const SizedBox(width: 7),
-                                      Text('Light Mode', style: AppTextStyles.body(c, size: 12).copyWith(color: (!isDark && !useSystem) ? c.gold : c.t3, fontWeight: (!isDark && !useSystem) ? FontWeight.w500 : null)),
+                                      Text(lang.tr('light_mode'), style: AppTextStyles.body(c, size: 12).copyWith(color: (!isDark && !useSystem) ? c.gold : c.t3, fontWeight: (!isDark && !useSystem) ? FontWeight.w500 : null)),
                                     ],
                                   ),
                                 ],
@@ -202,8 +204,8 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Use System Default', style: AppTextStyles.body(c, size: 13)),
-                                Text('Match device appearance', style: AppTextStyles.bodyMuted(c, size: 10)),
+                                Text(lang.tr('use_system_default'), style: AppTextStyles.body(c, size: 13)),
+                                Text(lang.tr('match_device_appearance'), style: AppTextStyles.bodyMuted(c, size: 10)),
                               ],
                             ),
                           ),
@@ -218,7 +220,7 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
                       ),
                     ),
 
-                    _EyeRow(label: 'Text Size', c: c),
+                    _EyeRow(label: lang.tr('text_size_caps'), c: c),
 
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -233,7 +235,7 @@ class _AppearanceSettingsScreenState extends State<AppearanceSettingsScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text('A', style: AppTextStyles.bodyMuted(c, size: 10)),
-                              Text(textScaleLabel(textScale),
+                              Text(textScaleLabel(textScale, lang),
                                   style: AppTextStyles.body(c, size: 14)),
                               Text('A', style: AppTextStyles.bodyMuted(c, size: 18)),
                             ],

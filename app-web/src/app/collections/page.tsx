@@ -7,10 +7,12 @@ import { products, Product } from '@/data/products';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { formatUsd } from '@/lib/currency';
+import { useCurrency } from '@/context/CurrencyContext';
 
 export default function CollectionsPage() {
   const { language } = useLanguageStore();
   const t = translations[language];
+  const { usdRate } = useCurrency();
 
   const [dbProducts, setDbProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -116,7 +118,7 @@ export default function CollectionsPage() {
                 )}
                 {product.originalPrice && !product.isSoldOut && (
                   <span className="absolute top-4 right-4 z-10 bg-red-600 text-white px-2 py-1 text-[10px] font-bold rounded-full">
-                    {formatUsd(product.originalPrice - product.price)} Off
+                    {formatUsd(product.originalPrice - product.price, usdRate)} Off
                   </span>
                 )}
                 <button className="absolute top-4 right-4 z-10 text-text-secondary hover:text-primary-container transition-colors">
@@ -133,7 +135,7 @@ export default function CollectionsPage() {
                   {product.isSoldOut ? (
                     <button className="w-full bg-border-subtle text-text-secondary py-3 text-label-accent font-label-accent uppercase rounded-DEFAULT cursor-not-allowed">{t.cart.outOfStock}</button>
                   ) : (
-                    <button className="w-full bg-primary-container text-bg-primary py-3 text-label-accent font-label-accent uppercase rounded-DEFAULT hover:bg-primary-fixed transition-colors">{t.cart.addToCart} — {formatUsd(product.price)}</button>
+                    <button className="w-full bg-primary-container text-bg-primary py-3 text-label-accent font-label-accent uppercase rounded-DEFAULT hover:bg-primary-fixed transition-colors">{t.cart.addToCart} — {formatUsd(product.price, usdRate)}</button>
                   )}
                 </div>
               </Link>
@@ -145,9 +147,9 @@ export default function CollectionsPage() {
                   <p className="text-body-md font-body-md text-text-secondary text-sm line-clamp-2">{product.description}</p>
                 </div>
                 <div className="mt-4 flex items-center gap-3">
-                  <span className="text-body-lg font-body-lg text-primary-container">{formatUsd(product.price)}</span>
+                  <span className="text-body-lg font-body-lg text-primary-container">{formatUsd(product.price, usdRate)}</span>
                   {product.originalPrice && (
-                    <span className="text-sm text-text-secondary line-through">{formatUsd(product.originalPrice)}</span>
+                    <span className="text-sm text-text-secondary line-through">{formatUsd(product.originalPrice, usdRate)}</span>
                   )}
                 </div>
               </div>

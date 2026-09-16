@@ -8,14 +8,7 @@ import '../../providers/language_provider.dart';
 import '../../models/product_model.dart';
 import '../../widgets/shop/product_reviews_section.dart';
 import 'shop_cart_screen.dart';
-
-// ─── Website colour tokens ────────────────────────────────────────────────────
-const _bg    = Color(0xFF0A0A0A);
-const _surf  = Color(0xFF141414);
-const _bd    = Color(0xFF1F1F1F);
-const _gold  = Color(0xFFC9A84C);
-const _t1    = Color(0xFFFFFFFF);
-const _t2    = Color(0xFFA0A0A0);
+import '../../theme/app_colors.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ShopProductDetailScreen
@@ -57,31 +50,32 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final cart    = context.watch<CartProvider>();
     final w       = MediaQuery.of(context).size.width;
     final isWide  = w > 900;
 
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: c.bg,
       appBar: AppBar(
-        backgroundColor: _bg,
+        backgroundColor: c.bg,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: _t2, size: 18),
+          icon: Icon(Icons.arrow_back_ios_new_rounded,
+              color: c.t2, size: 18),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search_rounded, color: _gold),
+            icon: Icon(Icons.search_rounded, color: c.gold),
             onPressed: () {},
           ),
           Stack(
             alignment: Alignment.center,
             children: [
               IconButton(
-                icon: const Icon(Icons.shopping_bag_outlined, color: _gold),
+                icon: Icon(Icons.shopping_bag_outlined, color: c.gold),
                 onPressed: () => Navigator.push(context,
                     MaterialPageRoute(builder: (_) => const ShopCartScreen())),
               ),
@@ -90,13 +84,13 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
                   top: 6, right: 4,
                   child: Container(
                     width: 16, height: 16,
-                    decoration: const BoxDecoration(
-                      color: _gold, shape: BoxShape.circle),
+                    decoration: BoxDecoration(
+                      color: c.gold, shape: BoxShape.circle),
                     alignment: Alignment.center,
                     child: Text('${cart.itemCount}',
                       style: GoogleFonts.manrope(
                         fontSize: 8, fontWeight: FontWeight.bold,
-                        color: _bg)),
+                        color: c.bg)),
                   ),
                 ),
             ],
@@ -141,15 +135,15 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
                 ],
               ),
             const SizedBox(height: 32),
-            const Divider(color: _bd),
+            Divider(color: c.bd),
             const SizedBox(height: 20),
             ProductReviewsSection(
               productId: widget.product.id,
-              goldColor: _gold,
-              surfaceColor: _surf,
-              borderColor: _bd,
-              textPrimary: _t1,
-              textSecondary: _t2,
+              goldColor: c.gold,
+              surfaceColor: c.surf,
+              borderColor: c.bd,
+              textPrimary: c.t1,
+              textSecondary: c.t2,
             ),
             const SizedBox(height: 48),
           ],
@@ -160,6 +154,7 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
 
   // ── LEFT: Image Gallery ─────────────────────────────────────────────────────
   Widget _buildGallery() {
+    final c = AppColors.of(context);
     final p = widget.product;
     return Column(
       children: [
@@ -171,9 +166,9 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
             aspectRatio: 1,
             child: Container(
               decoration: BoxDecoration(
-                color: _surf,
+                color: c.surf,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: _bd),
+                border: Border.all(color: c.bd),
               ),
               clipBehavior: Clip.antiAlias,
               child: p.primaryImage.isNotEmpty
@@ -204,7 +199,7 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(6),
                     border: Border.all(
-                      color: _activeThumb == e.key ? _gold : _bd,
+                      color: _activeThumb == e.key ? c.gold : c.bd,
                       width: _activeThumb == e.key ? 2 : 1,
                     ),
                   ),
@@ -224,6 +219,7 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
   }
 
   Widget _buildGradientFallback(ProductModel p) {
+    final c = AppColors.of(context);
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -236,7 +232,7 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
         child: Opacity(
           opacity: 0.25,
           child: Icon(_categoryIcon(p.categoryId),
-              size: 64, color: _gold),
+              size: 64, color: c.gold),
         ),
       ),
     );
@@ -244,6 +240,7 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
 
   // ── CENTER: Product details ─────────────────────────────────────────────────
   Widget _buildDetails() {
+    final c = AppColors.of(context);
     final p = widget.product;
     final lang = context.watch<LanguageProvider>();
 
@@ -254,9 +251,9 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
         GestureDetector(
           child: Text(lang.tr('visit_store'),
             style: GoogleFonts.manrope(
-              fontSize: 13, color: _gold,
+              fontSize: 13, color: c.gold,
               decoration: TextDecoration.underline,
-              decorationColor: _gold,
+              decorationColor: c.gold,
             )),
         ),
         const SizedBox(height: 16),
@@ -265,7 +262,7 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
         Text(p.name,
           style: GoogleFonts.notoSerif(
             fontSize: 28, fontWeight: FontWeight.bold,
-            color: _t1, height: 1.2,
+            color: c.t1, height: 1.2,
           )),
         const SizedBox(height: 16),
 
@@ -273,7 +270,7 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
         // Reviews section below, not fabricated inline.
 
         const SizedBox(height: 16),
-        const Divider(color: _bd),
+        Divider(color: c.bd),
         const SizedBox(height: 16),
 
         // Price block
@@ -306,7 +303,7 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
                 RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}',
               style: GoogleFonts.manrope(
                 fontSize: 32, fontWeight: FontWeight.bold,
-                color: _t1,
+                color: c.t1,
               )),
           ],
         ),
@@ -316,12 +313,12 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
             child: Text.rich(
               TextSpan(children: [
                 TextSpan(text: 'List Price: ',
-                  style: GoogleFonts.manrope(fontSize: 13, color: _t2)),
+                  style: GoogleFonts.manrope(fontSize: 13, color: c.t2)),
                 TextSpan(text: '\$${p.originalPrice!.toInt()}',
                   style: GoogleFonts.manrope(
-                    fontSize: 13, color: _t2,
+                    fontSize: 13, color: c.t2,
                     decoration: TextDecoration.lineThrough,
-                    decorationColor: _t2,
+                    decorationColor: c.t2,
                   )),
                 TextSpan(text: '  You save \$${_savings.toInt()} ($_discount%)',
                   style: GoogleFonts.manrope(
@@ -331,7 +328,7 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
           ),
 
         const SizedBox(height: 16),
-        const Divider(color: _bd),
+        Divider(color: c.bd),
         const SizedBox(height: 16),
 
         // Description
@@ -347,25 +344,25 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
         _DeliverySection(),
 
         const SizedBox(height: 20),
-        const Divider(color: _bd),
+        Divider(color: c.bd),
         const SizedBox(height: 12),
 
         // Product meta
         Text.rich(TextSpan(children: [
           TextSpan(text: 'Category: ',
-            style: GoogleFonts.manrope(fontSize: 13, color: _t1)),
+            style: GoogleFonts.manrope(fontSize: 13, color: c.t1)),
           TextSpan(text: p.category,
-            style: GoogleFonts.manrope(fontSize: 13, color: _t2)),
+            style: GoogleFonts.manrope(fontSize: 13, color: c.t2)),
         ])),
         const SizedBox(height: 4),
         Text.rich(TextSpan(children: [
           TextSpan(text: 'Type: ',
-            style: GoogleFonts.manrope(fontSize: 13, color: _t1)),
+            style: GoogleFonts.manrope(fontSize: 13, color: c.t1)),
           TextSpan(
             text: p.categoryId == 'fragrance'
                 ? 'Artisanal Fragrance'
                 : 'Islamic Lifestyle',
-            style: GoogleFonts.manrope(fontSize: 13, color: _t2)),
+            style: GoogleFonts.manrope(fontSize: 13, color: c.t2)),
         ])),
       ],
     );
@@ -373,6 +370,7 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
 
   // ── RIGHT: Buy box ──────────────────────────────────────────────────────────
   Widget _buildBuyBox(CartProvider cart) {
+    final c = AppColors.of(context);
     final p = widget.product;
     final lang = context.watch<LanguageProvider>();
 
@@ -382,20 +380,20 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: _surf,
+            color: c.surf,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: _bd),
+            border: Border.all(color: c.bd),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(lang.tr('buy_new'),
-                style: GoogleFonts.manrope(fontSize: 11, color: _t2)),
+                style: GoogleFonts.manrope(fontSize: 11, color: c.t2)),
               const SizedBox(height: 4),
               Text('\$${p.price.toInt()}',
                 style: GoogleFonts.manrope(
                   fontSize: 26, fontWeight: FontWeight.bold,
-                  color: _t1)),
+                  color: c.t1)),
               const SizedBox(height: 14),
 
               if (!_isSoldOut) ...[
@@ -412,10 +410,10 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
                             fontSize: 13, fontWeight: FontWeight.w600,
                             color: const Color(0xFF4ade80))),
                         TextSpan(text: lang.tr('free_shipping_line'),
-                          style: GoogleFonts.manrope(fontSize: 13, color: _t2)),
+                          style: GoogleFonts.manrope(fontSize: 13, color: c.t2)),
                       ])),
                       Text(lang.tr('free_delivery_usa'),
-                        style: GoogleFonts.manrope(fontSize: 11, color: _t2)),
+                        style: GoogleFonts.manrope(fontSize: 11, color: c.t2)),
                     ],
                   )),
                 ]),
@@ -439,13 +437,13 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
                 Row(
                   children: [
                     Text(lang.tr('quantity_label'),
-                      style: GoogleFonts.manrope(fontSize: 11, color: _t2)),
+                      style: GoogleFonts.manrope(fontSize: 11, color: c.t2)),
                     const SizedBox(width: 12),
                     Container(
                       decoration: BoxDecoration(
                         color: const Color(0xFF1a1a1a),
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: _bd),
+                        border: Border.all(color: c.bd),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -464,7 +462,7 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
                             child: Text('$_quantity',
                               textAlign: TextAlign.center,
                               style: GoogleFonts.manrope(
-                                fontSize: 13, color: _t1)),
+                                fontSize: 13, color: c.t1)),
                           ),
                           _QtyBtn(
                             icon: Icons.add_rounded,
@@ -507,7 +505,7 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
                 ]),
 
               const SizedBox(height: 16),
-              const Divider(color: _bd),
+              Divider(color: c.bd),
               const SizedBox(height: 12),
 
               // Meta rows
@@ -524,17 +522,17 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
                       width: 88,
                       child: Text(row.$1,
                         style: GoogleFonts.manrope(
-                          fontSize: 11, color: _t2)),
+                          fontSize: 11, color: c.t2)),
                     ),
                     Expanded(
                       child: Text(row.$2,
                         style: GoogleFonts.manrope(
                           fontSize: 11,
-                          color: row.$3 ? _gold : _t1,
+                          color: row.$3 ? c.gold : c.t1,
                           decoration: row.$3
                               ? TextDecoration.underline
                               : null,
-                          decorationColor: row.$3 ? _gold : null,
+                          decorationColor: row.$3 ? c.gold : null,
                         )),
                     ),
                   ],
@@ -542,7 +540,7 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
               )),
 
               if (!_isSoldOut) ...[
-                const Divider(color: _bd),
+                Divider(color: c.bd),
                 const SizedBox(height: 8),
                 GestureDetector(
                   onTap: () => setState(() => _giftWrap = !_giftWrap),
@@ -553,16 +551,16 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
                         duration: const Duration(milliseconds: 150),
                         width: 16, height: 16,
                         decoration: BoxDecoration(
-                          color: _giftWrap ? _gold : Colors.transparent,
+                          color: _giftWrap ? c.gold : Colors.transparent,
                           borderRadius: BorderRadius.circular(3),
                           border: Border.all(
-                            color: _giftWrap ? _gold : _bd,
+                            color: _giftWrap ? c.gold : c.bd,
                             width: 1.5,
                           ),
                         ),
                         child: _giftWrap
-                            ? const Icon(Icons.check_rounded,
-                                size: 12, color: _bg)
+                            ? Icon(Icons.check_rounded,
+                                size: 12, color: c.bg)
                             : null,
                       ),
                       const SizedBox(width: 8),
@@ -570,10 +568,10 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
                         child: Text.rich(TextSpan(children: [
                           TextSpan(text: lang.tr('gift_wrap_prefix'),
                             style: GoogleFonts.manrope(
-                              fontSize: 11, color: _t2)),
+                              fontSize: 11, color: c.t2)),
                           TextSpan(text: '\$5',
                             style: GoogleFonts.manrope(
-                              fontSize: 11, color: _gold)),
+                              fontSize: 11, color: c.gold)),
                         ])),
                       ),
                     ],
@@ -600,18 +598,18 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
                 margin: EdgeInsets.only(left: e.key == 0 ? 0 : 6),
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: _surf,
+                  color: c.surf,
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: _bd.withValues(alpha: 0.5)),
+                  border: Border.all(color: c.bd.withValues(alpha: 0.5)),
                 ),
                 child: Column(
                   children: [
-                    Icon(_trustIcon(icon), color: _gold, size: 20),
+                    Icon(_trustIcon(icon), color: c.gold, size: 20),
                     const SizedBox(height: 4),
                     Text(label,
                       textAlign: TextAlign.center,
                       style: GoogleFonts.manrope(
-                        fontSize: 9, color: _t2, height: 1.3)),
+                        fontSize: 9, color: c.t2, height: 1.3)),
                   ],
                 ),
               ),
@@ -631,16 +629,17 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
   }
 
   void _doAddToCart(CartProvider cart) {
+    final c = AppColors.of(context);
     if (_isSoldOut) return;
     HapticFeedback.lightImpact();
     cart.addToCart(widget.product, 'Standard', _quantity);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      backgroundColor: _surf,
+      backgroundColor: c.surf,
       behavior: SnackBarBehavior.floating,
       margin: const EdgeInsets.all(16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       content: Text('${widget.product.name} added to cart',
-          style: GoogleFonts.manrope(color: _t1, fontSize: 13)),
+          style: GoogleFonts.manrope(color: c.t1, fontSize: 13)),
       duration: const Duration(seconds: 2),
     ));
   }
@@ -686,6 +685,7 @@ class _Breadcrumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Wrap(
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
@@ -696,7 +696,7 @@ class _Breadcrumb extends StatelessWidget {
         _BreadCrumbItem(product.category),
         const _BreadSep(),
         Text(product.name,
-          style: GoogleFonts.manrope(fontSize: 11, color: _gold),
+          style: GoogleFonts.manrope(fontSize: 11, color: c.gold),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -715,7 +715,7 @@ class _BreadCrumbItem extends StatelessWidget {
     onTap: onTap,
     child: Text(label,
       style: GoogleFonts.manrope(
-        fontSize: 11, color: _t2,
+        fontSize: 11, color: AppColors.of(context).t2,
         decoration: onTap != null ? TextDecoration.none : null,
       )),
   );
@@ -725,12 +725,13 @@ class _BreadSep extends StatelessWidget {
   const _BreadSep();
   @override
   Widget build(BuildContext context) =>
-      const Icon(Icons.chevron_right_rounded, size: 14, color: _t2);
+      Icon(Icons.chevron_right_rounded, size: 14, color: AppColors.of(context).t2);
 }
 
 class _DeliverySection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final lang = context.watch<LanguageProvider>();
     final items = [
       (Icons.local_shipping_outlined,    lang.tr('free_delivery'), lang.tr('across_usa')),
@@ -744,10 +745,10 @@ class _DeliverySection extends StatelessWidget {
         Text(lang.tr('delivery_support'),
           style: GoogleFonts.manrope(
             fontSize: 11, fontWeight: FontWeight.bold,
-            color: _t1, letterSpacing: 2.0)),
+            color: c.t1, letterSpacing: 2.0)),
         const SizedBox(height: 4),
         Text(lang.tr('select_to_learn_more'),
-          style: GoogleFonts.manrope(fontSize: 11, color: _t2)),
+          style: GoogleFonts.manrope(fontSize: 11, color: c.t2)),
         const SizedBox(height: 12),
         Wrap(
           spacing: 10, runSpacing: 10,
@@ -755,23 +756,23 @@ class _DeliverySection extends StatelessWidget {
             width: 80,
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: _surf,
+              color: c.surf,
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: _bd),
+              border: Border.all(color: c.bd),
             ),
             child: Column(
               children: [
-                Icon(item.$1, color: _gold, size: 22),
+                Icon(item.$1, color: c.gold, size: 22),
                 const SizedBox(height: 4),
                 Text(item.$2,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.manrope(
-                    fontSize: 10, color: _t1,
+                    fontSize: 10, color: c.t1,
                     fontWeight: FontWeight.w500, height: 1.3)),
                 Text(item.$3,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.manrope(
-                    fontSize: 10, color: _t2, height: 1.3)),
+                    fontSize: 10, color: c.t2, height: 1.3)),
               ],
             ),
           )).toList(),
@@ -791,7 +792,7 @@ class _QtyBtn extends StatelessWidget {
     onTap: onTap,
     child: SizedBox(
       width: 32, height: 36,
-      child: Icon(icon, size: 16, color: _t2),
+      child: Icon(icon, size: 16, color: AppColors.of(context).t2),
     ),
   );
 }
@@ -814,20 +815,21 @@ class _FilledBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     Color bg;
     Color fg;
     if (disabled) {
       bg = const Color(0xFF1f1f1f);
-      fg = _t2;
+      fg = c.t2;
     } else if (gold) {
-      bg = _gold;
-      fg = _bg;
+      bg = c.gold;
+      fg = c.bg;
     } else if (orange) {
       bg = const Color(0xFFf0a500);
       fg = const Color(0xFF0d0900);
     } else {
-      bg = _surf;
-      fg = _t1;
+      bg = c.surf;
+      fg = c.t1;
     }
 
     return GestureDetector(

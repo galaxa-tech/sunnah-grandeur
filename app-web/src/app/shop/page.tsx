@@ -5,6 +5,7 @@ import { useLanguageStore } from '@/store/useLanguageStore';
 import { translations } from '@/translations';
 import { products, Product } from '@/data/products';
 import { formatUsd } from '@/lib/currency';
+import { useCurrency } from '@/context/CurrencyContext';
 import { categories } from '@/data/categories';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -13,6 +14,7 @@ import CartDrawer from '@/components/CartDrawer';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ProductCard({ product, t, onQuickAdd }: { product: Product; t: any; onQuickAdd: (p: Product) => void }) {
+  const { usdRate } = useCurrency();
   return (
     <div className="group relative rounded-2xl glass-card glass-card-hover overflow-hidden flex flex-col justify-between h-full">
       {/* Image Area with Ambient Spotlight */}
@@ -34,7 +36,7 @@ function ProductCard({ product, t, onQuickAdd }: { product: Product; t: any; onQ
 
         {product.originalPrice && product.originalPrice > product.price && !product.isSoldOut && (
           <span className="absolute top-3 right-3 z-10 bg-red-500/90 backdrop-blur-md text-white font-mono px-2 py-0.5 text-[9px] font-bold rounded-full">
-            {formatUsd(product.originalPrice - product.price)} Off
+            {formatUsd(product.originalPrice - product.price, usdRate)} Off
           </span>
         )}
 
@@ -72,7 +74,7 @@ function ProductCard({ product, t, onQuickAdd }: { product: Product; t: any; onQ
               onClick={() => onQuickAdd(product)}
               className="w-full bg-gradient-to-r from-[#E6C364] to-[#C9A84C] text-black font-cinzel font-bold py-2 px-3 rounded text-[10px] uppercase tracking-widest hover:brightness-110 shadow transition-all"
             >
-              {t.cart.addToCart} • {formatUsd(product.price)}
+              {t.cart.addToCart} • {formatUsd(product.price, usdRate)}
             </button>
           </div>
         )}
@@ -97,11 +99,11 @@ function ProductCard({ product, t, onQuickAdd }: { product: Product; t: any; onQ
         <div className="mt-3 pt-2.5 border-t border-border-subtle flex items-center justify-between">
           <div className="flex items-baseline gap-1.5">
             <span className="font-mono text-sm font-bold text-primary">
-              {formatUsd(product.price)}
+              {formatUsd(product.price, usdRate)}
             </span>
             {product.originalPrice && (
               <span className="font-mono text-[10px] text-text-secondary line-through">
-                {formatUsd(product.originalPrice)}
+                {formatUsd(product.originalPrice, usdRate)}
               </span>
             )}
           </div>

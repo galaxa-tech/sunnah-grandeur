@@ -4,6 +4,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../widgets/eye_row.dart';
 import '../../providers/quran_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../models/quran_model.dart';
 import 'quran_reader_screen.dart';
 
@@ -29,6 +30,7 @@ class _QuranSurahListScreenState extends State<QuranSurahListScreen> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final lang = context.watch<LanguageProvider>();
     final quran = context.watch<QuranProvider>();
 
     return Scaffold(
@@ -37,13 +39,13 @@ class _QuranSurahListScreenState extends State<QuranSurahListScreen> {
         top: false,
         child: RefreshIndicator(
           onRefresh: () => quran.loadSurahList(forceRefresh: true),
-          child: _buildBody(c, quran),
+          child: _buildBody(c, lang, quran),
         ),
       ),
     );
   }
 
-  Widget _buildBody(AppColors c, QuranProvider quran) {
+  Widget _buildBody(AppColors c, LanguageProvider lang, QuranProvider quran) {
     if (quran.isLoadingSurahs && quran.surahs.isEmpty) {
       return Center(child: CircularProgressIndicator(color: c.gold));
     }
@@ -71,7 +73,7 @@ class _QuranSurahListScreenState extends State<QuranSurahListScreen> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                 ),
-                child: const Text('Retry'),
+                child: Text(lang.tr('retry')),
               ),
             ]),
           ),
@@ -85,12 +87,13 @@ class _QuranSurahListScreenState extends State<QuranSurahListScreen> {
       itemCount: quran.surahs.length + 1,
       itemBuilder: (context, index) {
         if (index == 0) {
-          return const EyeRow(label: '114 Surahs');
+          return EyeRow(label: lang.tr('surahs_114'));
         }
         final surah = quran.surahs[index - 1];
         return _SurahRow(
           c: c,
           surah: surah,
+          ayahsLabel: lang.tr('ayahs'),
           onTap: () => Navigator.push(
             context,
             MaterialPageRoute(
@@ -103,9 +106,10 @@ class _QuranSurahListScreenState extends State<QuranSurahListScreen> {
 }
 
 class _SurahRow extends StatelessWidget {
-  const _SurahRow({required this.c, required this.surah, required this.onTap});
+  const _SurahRow({required this.c, required this.surah, required this.ayahsLabel, required this.onTap});
   final AppColors c;
   final SurahMeta surah;
+  final String ayahsLabel;
   final VoidCallback onTap;
 
   @override
@@ -138,7 +142,7 @@ class _SurahRow extends StatelessWidget {
                     style: AppTextStyles.label(c, size: 14)),
                 const SizedBox(height: 2),
                 Text(
-                    '${surah.englishNameTranslation} · ${surah.numberOfAyahs} ayahs',
+                    '${surah.englishNameTranslation} · ${surah.numberOfAyahs} $ayahsLabel',
                     style: AppTextStyles.bodyMuted(c, size: 10.5)),
               ],
             ),

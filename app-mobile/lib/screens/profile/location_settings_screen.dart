@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/location_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../widgets/sg_pill.dart';
@@ -33,7 +34,7 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
     if (ok) {
       _searchCtrl.clear();
       setState(() => _suggestions = []);
-      showAppSnackbar(context, 'Location updated',
+      showAppSnackbar(context, context.read<LanguageProvider>().tr('location_updated'),
           type: AppSnackbarType.success, duration: const Duration(seconds: 2));
     } else if (loc.error != null) {
       showAppSnackbar(context, loc.error!,
@@ -46,13 +47,14 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
     if (!mounted) return;
     _searchCtrl.clear();
     setState(() => _suggestions = []);
-    showAppSnackbar(context, 'Location set to ${city.city}',
+    showAppSnackbar(context, '${context.read<LanguageProvider>().tr('location_set_to_prefix')}${city.city}',
         type: AppSnackbarType.success, duration: const Duration(seconds: 2));
   }
 
   @override
   Widget build(BuildContext context) {
     final c   = AppColors.of(context);
+    final lang = context.watch<LanguageProvider>();
     final loc = context.watch<LocationProvider>();
 
     return Scaffold(
@@ -79,8 +81,8 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
               Expanded(child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Location', style: AppTextStyles.heading(c, fontSize: 19)),
-                  Text('PRAYER TIME CALIBRATION', style: AppTextStyles.brandTag(c)),
+                  Text(lang.tr('location'), style: AppTextStyles.heading(c, fontSize: 19)),
+                  Text(lang.tr('prayer_time_calibration_caps'), style: AppTextStyles.brandTag(c)),
                 ],
               )),
               if (loc.isLoading)
@@ -121,25 +123,25 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            loc.hasLocation ? loc.locationLabel : 'No location set',
+                            loc.hasLocation ? loc.locationLabel : lang.tr('no_location_set'),
                             style: AppTextStyles.displaySm(c).copyWith(fontSize: 16),
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            loc.hasLocation ? loc.coordLabel : 'Using London fallback',
+                            loc.hasLocation ? loc.coordLabel : lang.tr('using_london_fallback'),
                             style: AppTextStyles.body(c, color: c.gold, size: 10),
                           ),
                         ],
                       )),
                       SgPill(
-                        label: loc.hasLocation ? 'Active' : 'Default',
+                        label: loc.hasLocation ? lang.tr('active_label') : lang.tr('default_label'),
                         variant: loc.hasLocation ? 'green' : 'gold',
                         fontSize: 8,
                       ),
                     ]),
                   ),
 
-                  _EyeRow(label: 'GPS', c: c),
+                  _EyeRow(label: lang.tr('gps_caps'), c: c),
 
                   // ── Use current location ──────────────────────────────────
                   GestureDetector(
@@ -171,8 +173,8 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
                         Expanded(child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Use Current Location', style: AppTextStyles.body(c, size: 13)),
-                            Text('Detects your city via GPS', style: AppTextStyles.bodyMuted(c, size: 10)),
+                            Text(lang.tr('use_current_location'), style: AppTextStyles.body(c, size: 13)),
+                            Text(lang.tr('detects_city_via_gps'), style: AppTextStyles.bodyMuted(c, size: 10)),
                           ],
                         )),
                         Icon(Icons.chevron_right_rounded, color: c.t3, size: 18),
@@ -180,7 +182,7 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
                     ),
                   ),
 
-                  _EyeRow(label: 'Search City', c: c),
+                  _EyeRow(label: lang.tr('search_city_caps'), c: c),
 
                   // ── Search field ──────────────────────────────────────────
                   Container(
@@ -203,7 +205,7 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
                           controller: _searchCtrl,
                           style: AppTextStyles.body(c, size: 13),
                           decoration: InputDecoration(
-                            hintText: 'Search for a city...',
+                            hintText: lang.tr('search_for_city_hint'),
                             hintStyle: AppTextStyles.bodyMuted(c, size: 13),
                             border: InputBorder.none,
                             isDense: true,
@@ -265,7 +267,7 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
 
                   // ── Popular cities (shown when search is empty) ────────────
                   if (_suggestions.isEmpty && _searchCtrl.text.isEmpty) ...[
-                    Text('POPULAR CITIES', style: AppTextStyles.brandTag(c).copyWith(fontSize: 8)),
+                    Text(lang.tr('popular_cities_caps'), style: AppTextStyles.brandTag(c).copyWith(fontSize: 8)),
                     const SizedBox(height: 10),
                     ..._popularCities.map((city) => GestureDetector(
                       onTap: () => _pickCity(city, loc),
@@ -301,7 +303,7 @@ class _LocationSettingsScreenState extends State<LocationSettingsScreen> {
                             ],
                           )),
                           if (loc.cityName == city.displayName)
-                            const SgPill(label: 'Active', variant: 'gold', fontSize: 8)
+                            SgPill(label: lang.tr('active_label'), variant: 'gold', fontSize: 8)
                           else
                             Icon(Icons.chevron_right_rounded, color: c.t3, size: 18),
                         ]),
