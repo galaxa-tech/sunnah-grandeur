@@ -1,9 +1,13 @@
+import 'dart:convert' show utf8;
+import 'dart:math';
+import 'package:crypto/crypto.dart' show sha256;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show PlatformException;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../models/user_model.dart';
 import '../services/functions/user_service.dart';
 
@@ -181,6 +185,89 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(false);
       return false;
     }
+  }
+
+  // ── Sign in with Apple ────────────────────────────────────────────────────
+
+  /// Signs in with Apple. If the user is currently a guest, links the
+  /// Apple credential to their anonymous session (preserving any data).
+  Future<bool> signInWithApple() async {
+    _setLoading(true);
+    try {
+      final rawNonce = _generateNonce();
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: sha256.convert(utf8.encode(rawNonce)).toString(),
+      );
+
+      final oauthCredential = OAuthProvider('apple.com').credential(
+        idToken: appleCredential.identityToken,
+        rawNonce: rawNonce,
+        accessToken: appleCredential.authorizationCode,
+      );
+
+      UserCredential cred;
+      if (isGuest && _firebaseUser != null) {
+        try {
+          cred = await _firebaseUser!.linkWithCredential(oauthCredential);
+        } on FirebaseAuthException catch (e) {
+          if (e.code == 'credential-already-in-use' ||
+              e.code == 'email-already-in-use') {
+            cred = await _auth.signInWithCredential(oauthCredential);
+          } else {
+            rethrow;
+          }
+        }
+      } else {
+        cred = await _auth.signInWithCredential(oauthCredential);
+      }
+
+      if (cred.user != null) {
+        // Apple only returns the name on the *first* authorization ever —
+        // fall back to whatever Firebase already has on subsequent sign-ins.
+        final appleName = [
+          appleCredential.givenName,
+          appleCredential.familyName,
+        ].where((s) => s != null && s.isNotEmpty).join(' ');
+        final name  = cred.user!.displayName ?? appleName;
+        final email = cred.user!.email ?? appleCredential.email ?? '';
+        if (appleName.isNotEmpty && cred.user!.displayName == null) {
+          await cred.user!.updateDisplayName(appleName);
+        }
+        UserService.createUserMetadata(name: name, email: email, phone: '')
+            .catchError((Object e) {
+          debugPrint('[AuthProvider] Apple createUserMetadata: $e');
+        });
+        await _fetchUserData(cred.user!.uid);
+      }
+      return true;
+    } on SignInWithAppleAuthorizationException catch (e) {
+      _isLoading = false;
+      // User cancelled the sheet — not an error.
+      if (e.code != AuthorizationErrorCode.canceled) {
+        _error = 'Apple sign-in failed. Please try again.';
+      }
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _error = _authMessage(e);
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  /// Cryptographically secure random nonce for the Apple sign-in request,
+  /// hashed with SHA-256 before being sent — required so Firebase can
+  /// verify the ID token was issued for *this* request, not replayed.
+  String _generateNonce([int length = 32]) {
+    const charset =
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List.generate(length, (_) => charset[random.nextInt(charset.length)])
+        .join();
   }
 
   // ── Guest (anonymous) sign-in ─────────────────────────────────────────────

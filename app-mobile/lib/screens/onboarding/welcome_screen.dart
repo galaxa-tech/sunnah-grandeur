@@ -1,5 +1,7 @@
 // ignore_for_file: deprecated_member_use
+import 'dart:io' show Platform;
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -7,6 +9,11 @@ import '../../providers/auth_provider.dart';
 import '../../theme/app_colors.dart';
 import '../auth/login_screen.dart';
 import '../auth/register_screen.dart';
+
+// Sign in with Apple is only offered on iOS — that's the only platform
+// wired up on the Apple Developer / Firebase side (App ID capability +
+// entitlement), and it's what App Store review requires alongside Google.
+bool get _appleSignInAvailable => !kIsWeb && Platform.isIOS;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WelcomeScreen — premium minimal onboarding gateway.
@@ -36,6 +43,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   late final Animation<Offset>    _slideUp;
 
   bool _googleLoading = false;
+  bool _appleLoading  = false;
   bool _guestLoading  = false;
 
   @override
@@ -58,7 +66,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   // ── Actions ───────────────────────────────────────────────────────────────
 
   Future<void> _onGoogle() async {
-    if (_googleLoading || _guestLoading) return;
+    if (_googleLoading || _appleLoading || _guestLoading) return;
     setState(() => _googleLoading = true);
     final auth = context.read<AuthProvider>();
     final ok   = await auth.signInWithGoogle();
@@ -74,8 +82,24 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     }
   }
 
+  Future<void> _onApple() async {
+    if (_googleLoading || _appleLoading || _guestLoading) return;
+    setState(() => _appleLoading = true);
+    final auth = context.read<AuthProvider>();
+    final ok   = await auth.signInWithApple();
+    if (!mounted) return;
+
+    if (ok) {
+      Navigator.pushNamedAndRemoveUntil(context, '/main', (_) => false);
+    } else {
+      setState(() => _appleLoading = false);
+      final msg = auth.error ?? '';
+      if (msg.isNotEmpty) _showError(msg);
+    }
+  }
+
   Future<void> _onGuest() async {
-    if (_googleLoading || _guestLoading) return;
+    if (_googleLoading || _appleLoading || _guestLoading) return;
     setState(() => _guestLoading = true);
     final auth = context.read<AuthProvider>();
     final ok   = await auth.signInAsGuest();
@@ -116,7 +140,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   Widget build(BuildContext context) {
     final c    = AppColors.of(context);
     final size = MediaQuery.sizeOf(context);
-    final busy = _googleLoading || _guestLoading;
+    final busy = _googleLoading || _appleLoading || _guestLoading;
 
     return Scaffold(
       backgroundColor: c.bg,
@@ -245,6 +269,19 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           style: _AuthButtonStyle.googleDark,
           c: c,
         ),
+
+        // ── 1b. Continue with Apple (iOS only) ──────────────────────────────
+        if (_appleSignInAvailable) ...[
+          const SizedBox(height: 12),
+          _AuthButton(
+            label: 'Continue with Apple',
+            loading: _appleLoading,
+            disabled: busy && !_appleLoading,
+            onTap: _onApple,
+            style: _AuthButtonStyle.googleDark,
+            c: c,
+          ),
+        ],
 
         const SizedBox(height: 12),
 

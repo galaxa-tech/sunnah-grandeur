@@ -1,4 +1,6 @@
 // ignore_for_file: deprecated_member_use
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,6 +9,9 @@ import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
+
+// See welcome_screen.dart — Apple sign-in is only wired up on iOS.
+bool get _appleSignInAvailable => !kIsWeb && Platform.isIOS;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RegisterScreen — minimal 3-field signup (name, email, password).
@@ -33,6 +38,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _isLoading     = false;
   bool _googleLoading = false;
+  bool _appleLoading  = false;
 
   @override
   void dispose() {
@@ -44,7 +50,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  bool get _anyLoading => _isLoading || _googleLoading;
+  bool get _anyLoading => _isLoading || _googleLoading || _appleLoading;
 
   // ── Email register ────────────────────────────────────────────────────────
 
@@ -82,6 +88,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
       Navigator.pushNamedAndRemoveUntil(context, '/main', (_) => false);
     } else {
       setState(() => _googleLoading = false);
+      final msg = auth.error ?? '';
+      if (msg.isNotEmpty) _showSnack(msg);
+    }
+  }
+
+  // ── Apple ────────────────────────────────────────────────────────────────
+
+  Future<void> _handleApple() async {
+    if (_anyLoading) return;
+    setState(() => _appleLoading = true);
+    final auth = context.read<AuthProvider>();
+    final ok   = await auth.signInWithApple();
+    if (!mounted) return;
+
+    if (ok) {
+      Navigator.pushNamedAndRemoveUntil(context, '/main', (_) => false);
+    } else {
+      setState(() => _appleLoading = false);
       final msg = auth.error ?? '';
       if (msg.isNotEmpty) _showSnack(msg);
     }
@@ -186,6 +210,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     isGold: false,
                     c: c,
                   ),
+
+                  if (_appleSignInAvailable) ...[
+                    const SizedBox(height: 12),
+                    _IconlessButton(
+                      label: lang.tr('continue_with_apple'),
+                      loading: _appleLoading,
+                      disabled: _anyLoading,
+                      onTap: _handleApple,
+                      isGold: false,
+                      c: c,
+                    ),
+                  ],
 
                   const SizedBox(height: 20),
 

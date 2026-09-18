@@ -14,10 +14,16 @@ name: Build & Release Mobile App
 #   ANDROID_KEY_ALIAS
 #   ANDROID_KEY_PASSWORD
 #
-# Needed for the iOS job to actually sign (currently builds unsigned to at
-# least catch compile errors — see the ios job below for what's still
-# missing to produce a real, uploadable .ipa):
-#   APPLE_TEAM_ID
+# Needed for the iOS job to produce a signed, App-Store-Connect-uploadable
+# .ipa (falls back to an unsigned --no-codesign compile check with a warning
+# if any of these are missing):
+#   APPLE_TEAM_ID                       — e.g. KN82BTYMT3
+#   IOS_DISTRIBUTION_CERTIFICATE_P12    — `base64 -w0 distribution_certificate.p12`
+#   IOS_DISTRIBUTION_CERTIFICATE_PASSWORD
+#   IOS_PROVISIONING_PROFILE            — `base64 -w0 profile.mobileprovision`
+#   APP_STORE_CONNECT_API_KEY_ID
+#   APP_STORE_CONNECT_API_ISSUER_ID
+#   APP_STORE_CONNECT_API_KEY           — `base64 -w0 AuthKey_<KEY_ID>.p8`
 
 on:
   push:
@@ -122,12 +128,8 @@ jobs:
           path: app-mobile/build/app/outputs/bundle/release/app-release.aab
 
   build-ios:
-    name: Build iOS (unsigned — verifies compile only)
+    name: Build & Upload iOS (App Store Connect)
     runs-on: macos-latest
-    # Placeholder for real signing — see the header comment above. Without
-    # APPLE_TEAM_ID + a provisioning approach (Fastlane match, or manual
-    # certificate/profile secrets), this job can only prove the Dart/iOS
-    # side compiles; it does not produce an installable .ipa yet.
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -158,9 +160,145 @@ jobs:
         run: pod install
         working-directory: ./app-mobile/ios
 
-      - name: Build iOS (no codesign)
+      # Fork PRs and any run missing a secret fall back to an unsigned
+      # compile check instead of failing outright.
+      - name: Check signing secrets are present
+        id: signing
+        run: |
+          if [ -n "${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_P12 }}" ] && \
+             [ -n "${{ secrets.IOS_PROVISIONING_PROFILE }}" ] && \
+             [ -n "${{ secrets.APPLE_TEAM_ID }}" ] && \
+             [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY }}" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::iOS signing secrets not fully configured — building unsigned (compile check only), no App Store Connect upload."
+          fi
+
+      - name: Build iOS (no codesign — compile check only)
+        if: steps.signing.outputs.ready != 'true'
         run: flutter build ios --release --no-codesign --dart-define-from-file=api_keys.json --build-number=${{ github.run_number }}
         working-directory: ./app-mobile
+
+      # ── Signed build below — GitHub's documented pattern for installing an
+      # Apple certificate on macOS runners:
+      # https://docs.github.com/actions/deployment/deploying-xcode-applications/installing-an-apple-certificate-on-macos-runners-for-xcode-development
+      - name: Import signing certificate & provisioning profile
+        if: steps.signing.outputs.ready == 'true'
+        env:
+          P12_BASE64: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_P12 }}
+          P12_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}
+          PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+          KEYCHAIN_PASSWORD: ${{ github.run_id }}${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          CERT_PATH="$RUNNER_TEMP/distribution_certificate.p12"
+          PROFILE_PATH="$RUNNER_TEMP/profile.mobileprovision"
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+
+          echo -n "$P12_BASE64" | base64 --decode -o "$CERT_PATH"
+          echo -n "$PROFILE_BASE64" | base64 --decode -o "$PROFILE_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | sed 's/"//g')
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          mkdir -p ~/Library/MobileDevice/"Provisioning Profiles"
+          DECODED_PROFILE="$(security cms -D -i "$PROFILE_PATH")"
+          PROFILE_UUID="$(echo "$DECODED_PROFILE" | plutil -extract UUID xml1 -o - - | sed -n 's/.*<string>\(.*\)<\/string>.*/\1/p')"
+          PROFILE_NAME="$(echo "$DECODED_PROFILE" | plutil -extract Name xml1 -o - - | sed -n 's/.*<string>\(.*\)<\/string>.*/\1/p')"
+          cp "$PROFILE_PATH" ~/Library/MobileDevice/"Provisioning Profiles"/"$PROFILE_UUID".mobileprovision
+
+          echo "PROFILE_NAME=$PROFILE_NAME" >> "$GITHUB_ENV"
+          echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
+
+      # Regenerates ios/Flutter/Generated.xcconfig (build number, dart-defines)
+      # without doing a full build, so the plain `xcodebuild archive` below
+      # picks up the right Flutter config — see `flutter build ios --help`.
+      - name: Sync Flutter build config
+        if: steps.signing.outputs.ready == 'true'
+        run: flutter build ios --release --config-only --dart-define-from-file=api_keys.json --build-number=${{ github.run_number }}
+        working-directory: ./app-mobile
+
+      - name: Archive (xcodebuild, manual signing)
+        if: steps.signing.outputs.ready == 'true'
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          xcodebuild archive \
+            -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -sdk iphoneos \
+            -configuration Release \
+            -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
+            OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH"
+        working-directory: ./app-mobile/ios
+
+      - name: Write ExportOptions.plist
+        if: steps.signing.outputs.ready == 'true'
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store</string>
+            <key>teamID</key><string>${APPLE_TEAM_ID}</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>destination</key><string>upload</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.sunnahgrandeur.app</key>
+              <string>${PROFILE_NAME}</string>
+            </dict>
+          </dict>
+          </plist>
+          EOF
+
+      # `destination: upload` above makes this single xcodebuild call export
+      # the .ipa AND upload it straight to App Store Connect (Xcode 13+),
+      # authenticating with the App Store Connect API key instead of an
+      # Apple ID — no interactive 2FA needed for CI.
+      - name: Export & upload to App Store Connect
+        if: steps.signing.outputs.ready == 'true'
+        env:
+          API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
+          API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/private_keys"
+          echo -n "$API_KEY_BASE64" | base64 --decode -o "$RUNNER_TEMP/private_keys/AuthKey_${API_KEY_ID}.p8"
+
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
+            -exportPath "$RUNNER_TEMP/ipa" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -authenticationKeyPath "$RUNNER_TEMP/private_keys/AuthKey_${API_KEY_ID}.p8" \
+            -authenticationKeyID "$API_KEY_ID" \
+            -authenticationKeyIssuerID "$API_ISSUER_ID"
+        working-directory: ./app-mobile/ios
+
+      - name: Clean up temporary keychain
+        if: always() && steps.signing.outputs.ready == 'true'
+        run: security delete-keychain "$KEYCHAIN_PATH" || true
+
+      - name: Upload IPA artifact
+        if: steps.signing.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-ipa
+          path: ${{ runner.temp }}/ipa/*.ipa
 
   build-web:
     name: Build Flutter Web App (Firebase Hosting "app" target)
