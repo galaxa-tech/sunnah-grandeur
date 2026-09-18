@@ -65,7 +65,7 @@ export default function PaymentInfoPage() {
 
             <section className="space-y-4 border-t border-border-subtle pt-8">
               <p>
-                For questions regarding payments or billing inquiries, please contact our support team at <a href="mailto:info@sunnahgrandeur.com" className="text-primary-container hover:underline">info@sunnahgrandeur.com</a>.
+                For questions regarding payments or billing inquiries, please contact our support team at <a href="mailto:info@sunnahgrandeur.us" className="text-primary-container hover:underline">info@sunnahgrandeur.us</a>.
               </p>
             </section>
           </div>

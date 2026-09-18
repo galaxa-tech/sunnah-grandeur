@@ -28,19 +28,19 @@ export default function FAQPage() {
     },
     {
       q: "Can I cancel my order?",
-      a: "Yes, orders can be cancelled before shipment only. Please contact our support team as soon as possible at info@sunnahgrandeur.com to request a cancellation."
+      a: "Yes, orders can be cancelled before shipment only. Please contact our support team as soon as possible at info@sunnahgrandeur.us to request a cancellation."
     },
     {
       q: "What should I do if I receive a damaged or incorrect item?",
-      a: "Please contact our customer support team at info@sunnahgrandeur.com within 48 hours of delivery. In your email, include your order number, a description of the issue, and clear photos of the damaged or incorrect item."
+      a: "Please contact our customer support team at info@sunnahgrandeur.us within 48 hours of delivery. In your email, include your order number, a description of the issue, and clear photos of the damaged or incorrect item."
     },
     {
       q: "How do I request an exchange?",
-      a: "Exchange requests are handled directly from our main office in Jackson Heights, NY. Please email info@sunnahgrandeur.com to coordinate your request."
+      a: "Exchange requests are handled directly from our main office in Jackson Heights, NY. Please email info@sunnahgrandeur.us to coordinate your request."
     },
     {
       q: "How can I contact Sunnah Grandeur?",
-      a: "You can reach us directly via email at info@sunnahgrandeur.com. Our office is located at 3715 73rd St, Suite 205, Jackson Heights, NY 11372, USA."
+      a: "You can reach us directly via email at info@sunnahgrandeur.us. Our office is located at 3715 73rd St, Suite 205, Jackson Heights, NY 11372, USA."
     }
   ];
 

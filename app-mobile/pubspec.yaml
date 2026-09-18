@@ -41,12 +41,28 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: 3.0.2
   flutter_native_splash: ^2.4.3
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
   assets:
     - assets/audio/
     - assets/images/
+
+# flutter_launcher_icons config — run `dart run flutter_launcher_icons`
+# after `flutter pub get` to (re)generate Android + iOS launcher icons from
+# the brand logo. iOS icons can't have an alpha channel, so image_path_ios
+# points at a pre-flattened copy on the dark brand background (#0A0A0C)
+# instead of the transparent source used for Android's adaptive icon.
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/logo.png"
+  image_path_ios: "assets/images/logo_icon_flattened.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#0A0A0C"
+  adaptive_icon_foreground: "assets/images/logo.png"
+  remove_alpha_ios: true
 
 # flutter_native_splash config — run `dart run flutter_native_splash:create`
 # after `flutter pub get` to (re)generate the native splash assets for both

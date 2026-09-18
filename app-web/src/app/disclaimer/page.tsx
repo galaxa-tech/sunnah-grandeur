@@ -68,7 +68,7 @@ export default function DisclaimerPage() {
 
             <section className="space-y-4 border-t border-border-subtle pt-8">
               <p>
-                For questions or support regarding our products, please contact us at <a href="mailto:info@sunnahgrandeur.com" className="text-primary-container hover:underline">info@sunnahgrandeur.com</a>.
+                For questions or support regarding our products, please contact us at <a href="mailto:info@sunnahgrandeur.us" className="text-primary-container hover:underline">info@sunnahgrandeur.us</a>.
               </p>
             </section>
           </div>

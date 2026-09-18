@@ -63,7 +63,7 @@ export default function PrivacyPolicyPage() {
                 We only share your information with trusted third-party service providers who assist us in operating our business and delivering products to you:
               </p>
               <ul className="list-disc pl-6 space-y-2">
-                <li><strong>Vercel:</strong> For hosting and operational delivery of the website.</li>
+                <li><strong>Firebase Hosting:</strong> For hosting and operational delivery of the website.</li>
                 <li><strong>Stripe:</strong> For secure payment gateway processing.</li>
                 <li><strong>Shipping Couriers:</strong> For order fulfillment and package delivery.</li>
               </ul>
@@ -79,7 +79,7 @@ export default function PrivacyPolicyPage() {
             <section className="space-y-4 border-t border-border-subtle pt-8">
               <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">5. Contact Us</h2>
               <p>
-                If you have questions about our privacy practices, please contact us via email at <a href="mailto:info@sunnahgrandeur.com" className="text-primary-container hover:underline">info@sunnahgrandeur.com</a>.
+                If you have questions about our privacy practices, please contact us via email at <a href="mailto:info@sunnahgrandeur.us" className="text-primary-container hover:underline">info@sunnahgrandeur.us</a>.
               </p>
               <p className="text-xs">
                 Sunnah Grandeur Office Address:<br />

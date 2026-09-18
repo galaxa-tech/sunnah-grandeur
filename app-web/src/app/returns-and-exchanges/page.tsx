@@ -34,7 +34,7 @@ export default function ReturnsAndExchangesPage() {
                 In the rare event that you receive a damaged product or an incorrect item, please notify our customer support team within <strong>48 hours of delivery</strong>.
               </p>
               <p>
-                To help us resolve the issue quickly, please send an email to <a href="mailto:info@sunnahgrandeur.com" className="text-primary-container hover:underline font-semibold">info@sunnahgrandeur.com</a> with the following details:
+                To help us resolve the issue quickly, please send an email to <a href="mailto:info@sunnahgrandeur.us" className="text-primary-container hover:underline font-semibold">info@sunnahgrandeur.us</a> with the following details:
               </p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>Your order number;</li>
@@ -52,7 +52,7 @@ export default function ReturnsAndExchangesPage() {
                 All exchange requests are handled directly from our main office.
               </p>
               <p>
-                To initiate an exchange, please email us at <a href="mailto:info@sunnahgrandeur.com" className="text-primary-container hover:underline font-semibold">info@sunnahgrandeur.com</a>. We will coordinate with you regarding the exchange process.
+                To initiate an exchange, please email us at <a href="mailto:info@sunnahgrandeur.us" className="text-primary-container hover:underline font-semibold">info@sunnahgrandeur.us</a>. We will coordinate with you regarding the exchange process.
               </p>
               <p className="text-xs">
                 Office Location:<br />
@@ -65,7 +65,7 @@ export default function ReturnsAndExchangesPage() {
             <section className="space-y-4 border-t border-border-subtle pt-8">
               <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">3. Returns & Refunds</h2>
               <p>
-                For questions regarding returns or refunds, please contact our support team at <a href="mailto:info@sunnahgrandeur.com" className="text-primary-container hover:underline font-semibold">info@sunnahgrandeur.com</a>.
+                For questions regarding returns or refunds, please contact our support team at <a href="mailto:info@sunnahgrandeur.us" className="text-primary-container hover:underline font-semibold">info@sunnahgrandeur.us</a>.
               </p>
             </section>
           </div>

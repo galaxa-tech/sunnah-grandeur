@@ -60,7 +60,7 @@ export default function SupportPage() {
                     <span className="material-symbols-outlined text-primary-container text-xl mt-0.5">mail</span>
                     <div>
                       <p className="text-xs font-semibold text-text-primary uppercase tracking-wider font-label-accent">Email Support</p>
-                      <a href="mailto:info@sunnahgrandeur.com" className="text-sm text-primary-container hover:underline font-bold">info@sunnahgrandeur.com</a>
+                      <a href="mailto:info@sunnahgrandeur.us" className="text-sm text-primary-container hover:underline font-bold">info@sunnahgrandeur.us</a>
                     </div>
                   </div>
 

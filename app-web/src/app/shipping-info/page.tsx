@@ -62,7 +62,7 @@ export default function ShippingInfoPage() {
             <section className="space-y-4 border-t border-border-subtle pt-8">
               <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">5. Contact Support</h2>
               <p>
-                If you have any questions or require support regarding your order's delivery status, please contact us at <a href="mailto:info@sunnahgrandeur.com" className="text-primary-container hover:underline">info@sunnahgrandeur.com</a>.
+                If you have any questions or require support regarding your order's delivery status, please contact us at <a href="mailto:info@sunnahgrandeur.us" className="text-primary-container hover:underline">info@sunnahgrandeur.us</a>.
               </p>
             </section>
           </div>

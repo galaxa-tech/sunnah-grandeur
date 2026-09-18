@@ -80,7 +80,7 @@ export default function TermsOfServicePage() {
                 Users agree to use our website only for lawful purposes. These terms are governed by applicable local and federal laws.
               </p>
               <p>
-                For questions regarding returns, exchanges, or terms, please contact our support team at <a href="mailto:info@sunnahgrandeur.com" className="text-primary-container hover:underline">info@sunnahgrandeur.com</a>.
+                For questions regarding returns, exchanges, or terms, please contact our support team at <a href="mailto:info@sunnahgrandeur.us" className="text-primary-container hover:underline">info@sunnahgrandeur.us</a>.
               </p>
             </section>
           </div>

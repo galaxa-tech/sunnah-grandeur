@@ -79,7 +79,7 @@ export default function ContactPage() {
                   <textarea className="w-full bg-bg-primary border border-border-subtle rounded text-text-primary px-4 py-3 focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-colors duration-300 font-body-md text-body-md resize-none" id="message" name="message" placeholder={t.contact.messagePlaceholder} rows={5} required value={formData.message} onChange={handleChange}></textarea>
                 </div>
                 {status === 'error' && (
-                  <p className="text-xs text-red-400 text-center">Something went wrong. Please try emailing us at <a href="mailto:info@sunnahgrandeur.com" className="underline">info@sunnahgrandeur.com</a>.</p>
+                  <p className="text-xs text-red-400 text-center">Something went wrong. Please try emailing us at <a href="mailto:info@sunnahgrandeur.us" className="underline">info@sunnahgrandeur.us</a>.</p>
                 )}
                 <button className="w-full bg-primary-container text-bg-primary font-label-accent text-label-accent py-4 rounded uppercase tracking-widest hover:bg-primary transition-all duration-300 hover:shadow-[0_0_15px_rgba(201,168,76,0.5)] disabled:opacity-50" type="submit" disabled={status === 'sending'}>
                   {status === 'sending' ? 'Sending...' : t.contact.send}
@@ -112,7 +112,7 @@ export default function ContactPage() {
                   <span className="material-symbols-outlined text-primary text-3xl mb-4 block" style={{ fontVariationSettings: "'FILL' 1" }}>mail</span>
                   <h3 className="font-headline-md text-headline-md text-primary mb-2">{t.contact.directContact}</h3>
                   <p className="font-body-md text-body-md text-text-secondary mb-2">
-                    <a className="hover:text-primary transition-colors" href="mailto:info@sunnahgrandeur.com">info@sunnahgrandeur.com</a>
+                    <a className="hover:text-primary transition-colors" href="mailto:info@sunnahgrandeur.us">info@sunnahgrandeur.us</a>
                   </p>
                   <p className="font-body-md text-body-md text-text-secondary flex items-center gap-1.5 mt-4">
                     <span className="material-symbols-outlined text-sm">public</span>

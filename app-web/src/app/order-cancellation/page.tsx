@@ -44,7 +44,7 @@ export default function OrderCancellationPage() {
                 To cancel your order, please contact our support team immediately:
               </p>
               <ul className="list-disc pl-6 space-y-2">
-                <li>Send an email to <a href="mailto:info@sunnahgrandeur.com" className="text-primary-container hover:underline font-semibold">info@sunnahgrandeur.com</a>.</li>
+                <li>Send an email to <a href="mailto:info@sunnahgrandeur.us" className="text-primary-container hover:underline font-semibold">info@sunnahgrandeur.us</a>.</li>
                 <li>Use the subject line: <strong>Order Cancellation Request - [Your Order Number]</strong>.</li>
                 <li>Provide your full name and the order details.</li>
               </ul>
@@ -55,7 +55,7 @@ export default function OrderCancellationPage() {
 
             <section className="space-y-4 border-t border-border-subtle pt-8">
               <p>
-                For further questions or inquiries regarding order processing and policies, please reach out to us at <a href="mailto:info@sunnahgrandeur.com" className="text-primary-container hover:underline">info@sunnahgrandeur.com</a>.
+                For further questions or inquiries regarding order processing and policies, please reach out to us at <a href="mailto:info@sunnahgrandeur.us" className="text-primary-container hover:underline">info@sunnahgrandeur.us</a>.
               </p>
             </section>
           </div>

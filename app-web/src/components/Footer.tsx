@@ -54,7 +54,7 @@ export default function Footer() {
               USA
             </p>
             <p className="pt-2">
-              <a href="mailto:info@sunnahgrandeur.com" className="hover:text-primary transition-colors font-semibold">info@sunnahgrandeur.com</a>
+              <a href="mailto:info@sunnahgrandeur.us" className="hover:text-primary transition-colors font-semibold">info@sunnahgrandeur.us</a>
             </p>
           </div>
           <div className="pt-2">
