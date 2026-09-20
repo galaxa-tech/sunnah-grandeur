@@ -56,6 +56,9 @@ export default function Footer() {
             <p className="pt-2">
               <a href="mailto:info@sunnahgrandeur.us" className="hover:text-primary transition-colors font-semibold">info@sunnahgrandeur.us</a>
             </p>
+            <p>
+              <a href="tel:+16465940396" className="hover:text-primary transition-colors font-semibold">+1 (646) 594-0396</a>
+            </p>
           </div>
           <div className="pt-2">
             <a 

@@ -65,6 +65,14 @@ export default function SupportPage() {
                   </div>
 
                   <div className="flex items-start gap-3 pt-3 border-t border-border-subtle/50">
+                    <span className="material-symbols-outlined text-primary-container text-xl mt-0.5">call</span>
+                    <div>
+                      <p className="text-xs font-semibold text-text-primary uppercase tracking-wider font-label-accent">Phone</p>
+                      <a href="tel:+16465940396" className="text-sm text-primary-container hover:underline font-bold">+1 (646) 594-0396</a>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 pt-3 border-t border-border-subtle/50">
                     <span className="material-symbols-outlined text-primary-container text-xl mt-0.5">location_on</span>
                     <div>
                       <p className="text-xs font-semibold text-text-primary uppercase tracking-wider font-label-accent">Office Address</p>

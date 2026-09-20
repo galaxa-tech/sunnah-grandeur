@@ -114,6 +114,9 @@ export default function ContactPage() {
                   <p className="font-body-md text-body-md text-text-secondary mb-2">
                     <a className="hover:text-primary transition-colors" href="mailto:info@sunnahgrandeur.us">info@sunnahgrandeur.us</a>
                   </p>
+                  <p className="font-body-md text-body-md text-text-secondary mb-2">
+                    <a className="hover:text-primary transition-colors" href="tel:+16465940396">+1 (646) 594-0396</a>
+                  </p>
                   <p className="font-body-md text-body-md text-text-secondary flex items-center gap-1.5 mt-4">
                     <span className="material-symbols-outlined text-sm">public</span>
                     <a className="hover:text-primary transition-colors" href="https://www.facebook.com/sunnahgrandeurnyc" target="_blank" rel="noopener noreferrer">Facebook Page</a>

@@ -1,0 +1,51 @@
+name: Deploy Storefront to Firebase Hosting
+
+# The customer storefront (app-web, Next.js static export) had no
+# auto-deploy at all until this workflow — content fixes were merged to
+# main but never actually reached sunnahgrandeur.us / sunnahgrandeur.com,
+# which stayed on a stale manual deploy. See ARCHITECTURE.md: `web` target
+# = app-web/out. This workflow keeps it in sync with main automatically,
+# the same way deploy_mobile_web.yml already does for the `app` target.
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'app-web/**'
+      - 'firebase.json'
+      - '.firebaserc'
+      - '.github/workflows/deploy_storefront.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Build & Deploy Storefront
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: app-web/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+        working-directory: ./app-web
+
+      - name: Build Storefront (Next.js static export)
+        run: npm run build
+        working-directory: ./app-web
+
+      - name: Deploy to Firebase Hosting (web target, live channel)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_SUNNAH_GRANDEUR }}'
+          projectId: sunnah-grandeur
+          target: web
+          channelId: live
