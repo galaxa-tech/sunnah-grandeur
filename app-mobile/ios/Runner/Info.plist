@@ -78,6 +78,18 @@
 		<string>Sunnah Grandeur uses your location to calculate accurate prayer times.</string>
 		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 		<string>Sunnah Grandeur uses your location to calculate accurate prayer times.</string>
+		<!-- ── Camera / microphone usage descriptions (Apple error 90683) ──── -->
+		<!-- The app has no camera/mic feature of its own. youtube_player_flutter -->
+		<!-- (used for embedded lecture/nasheed videos) pulls in flutter_inappwebview, -->
+		<!-- whose WKWebView implements WKUIDelegate's media-capture permission -->
+		<!-- callback so that web content *could* request camera/mic — Apple's -->
+		<!-- binary scan flags that capability regardless of whether any page -->
+		<!-- actually calls it. There's no supported flag to strip it from the -->
+		<!-- plugin, so these strings are required for App Store validation. -->
+		<key>NSCameraUsageDescription</key>
+		<string>Camera access may be requested by interactive elements within embedded video content in the app.</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>Microphone access may be requested by interactive elements within embedded video content in the app.</string>
 		<!-- ── url_launcher: allow opening Google Maps app ─────────────────── -->
 		<key>LSApplicationQueriesSchemes</key>
 		<array>
