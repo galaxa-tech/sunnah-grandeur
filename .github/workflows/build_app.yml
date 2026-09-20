@@ -215,6 +215,26 @@ jobs:
           echo "PROFILE_NAME=$PROFILE_NAME" >> "$GITHUB_ENV"
           echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
 
+      # Baked into the actual Xcode project config (not just passed as
+      # xcodebuild command-line overrides) so that EVERY tool that reads
+      # build settings — including Flutter's own `--config-only` check
+      # below — sees manual signing. Without this, Flutter's pre-build
+      # check resolves *automatic* signing (the project's default, no
+      # Apple ID signed in on this runner) and fails with "No valid code
+      # signing certificates were found" before archiving even starts.
+      - name: Write iOS manual-signing xcconfig
+        if: steps.signing.outputs.ready == 'true'
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          cat > Flutter/Signing.xcconfig <<EOF
+          CODE_SIGN_STYLE = Manual
+          CODE_SIGN_IDENTITY = Apple Distribution
+          DEVELOPMENT_TEAM = ${APPLE_TEAM_ID}
+          PROVISIONING_PROFILE_SPECIFIER = ${PROFILE_NAME}
+          EOF
+        working-directory: ./app-mobile/ios
+
       # Regenerates ios/Flutter/Generated.xcconfig (build number, dart-defines)
       # without doing a full build, so the plain `xcodebuild archive` below
       # picks up the right Flutter config — see `flutter build ios --help`.
@@ -225,8 +245,6 @@ jobs:
 
       - name: Archive (xcodebuild, manual signing)
         if: steps.signing.outputs.ready == 'true'
-        env:
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           set -euo pipefail
           xcodebuild archive \
@@ -235,10 +253,6 @@ jobs:
             -sdk iphoneos \
             -configuration Release \
             -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
-            CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
-            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
-            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH"
         working-directory: ./app-mobile/ios
 

@@ -1,6 +1,7 @@
 # ── Secret key files — NEVER commit these ────────────────────────────────────
 api_keys.json
 **/ios/Flutter/ApiKeys.xcconfig
+**/ios/Flutter/Signing.xcconfig
 **/android/local.properties
 
 # Miscellaneous

@@ -2,3 +2,14 @@
 // ApiKeys.xcconfig is gitignored — copy ApiKeys.xcconfig.template and fill in.
 // Use #include? so builds don't fail on CI when the file isn't present.
 #include? "ApiKeys.xcconfig"
+// CI-only manual codesigning override, generated at build time from the
+// IOS_DISTRIBUTION_CERTIFICATE_P12 / IOS_PROVISIONING_PROFILE secrets — see
+// .github/workflows/build_app.yml. Baking this into the xcconfig (rather
+// than passing it only as xcodebuild command-line overrides) is what makes
+// `flutter build ios --config-only` see manual signing too, not just the
+// later raw `xcodebuild archive` call — without it, Flutter's own
+// pre-build check tries to resolve *automatic* signing and fails with
+// "No valid code signing certificates were found" before archiving even
+// starts. Absent locally, so local Xcode builds keep using your own
+// Apple ID / automatic signing untouched.
+#include? "Signing.xcconfig"
