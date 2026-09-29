@@ -7,6 +7,7 @@ import { collection, doc, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp,
 import { httpsCallable } from "firebase/functions";
 import { db, functions } from "@/lib/firebase";
 import { storedToUsd, usdToStored, formatUsd, DEFAULT_BDT_TO_USD_RATE } from "@/lib/currency";
+import { isCancelledOrder, orderTotalCents } from "@/lib/orders";
 
 interface Product {
   id: string;
@@ -284,14 +285,18 @@ export default function ShopManagementPage() {
   };
 
   const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
+    const previous = ordersList.find(o => o.id === orderId)?.status;
+    // Optimistic update so the dropdown doesn't snap back while the call runs;
+    // the live orders listener then confirms the value persisted in Firestore.
+    setOrdersList(list => list.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
     try {
       // Firestore rules block direct client writes to /orders — this must go
       // through the admin-only updateOrderStatus Cloud Function.
       const updateOrderStatus = httpsCallable(functions, "updateOrderStatus");
       await updateOrderStatus({ orderId, status: newStatus });
-      setOrdersList(ordersList.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
     } catch (e) {
       console.error("Error updating order status:", e);
+      setOrdersList(list => list.map(o => o.id === orderId ? { ...o, status: previous } : o));
       alert("Failed to update order status. Check console for details.");
     }
   };
@@ -394,6 +399,18 @@ export default function ShopManagementPage() {
       console.error("Error saving product:", e);
     }
   };
+
+  const cancelledCount = ordersList.filter(isCancelledOrder).length;
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+  // Footer reflects whichever tab is open (it used to always say "products").
+  const footerText = {
+    products:   `Showing ${products.length} of ${plural(products.length, "product")}`,
+    categories: `Showing ${plural(categories.length, "category").replace("categorys", "categories")}`,
+    banners:    `Showing ${plural(banners.length, "banner")}`,
+    orders:     `Showing ${ordersList.length} of ${plural(ordersList.length, "order")}` +
+                (cancelledCount > 0 ? ` (${cancelledCount} cancelled)` : ""),
+    inventory:  `Tracking stock for ${plural(products.length, "product")}`,
+  }[activeTab];
 
   return (
     <div className="flex">
@@ -645,7 +662,12 @@ export default function ShopManagementPage() {
             {activeTab === "orders" && (
               <div className="p-8 space-y-6">
                 <div className="flex justify-between items-center">
-                  <h3 className="font-headline-md text-xl text-on-background">Store Orders ({ordersList.length})</h3>
+                  <h3 className="font-headline-md text-xl text-on-background">
+                    Store Orders ({ordersList.length})
+                    {cancelledCount > 0 && (
+                      <span className="ml-2 text-xs text-on-surface-variant font-body-md">· {cancelledCount} cancelled</span>
+                    )}
+                  </h3>
                   <button
                     onClick={() => {}}
                     className="flex items-center gap-2 border border-outline-variant px-3 py-1.5 rounded font-label-accent text-[10px] text-on-background hover:bg-surface-container-high transition-all opacity-50 cursor-not-allowed"
@@ -674,7 +696,7 @@ export default function ShopManagementPage() {
                     </thead>
                     <tbody className="divide-y divide-border-subtle">
                       {ordersList.map((order) => (
-                        <tr key={order.id} className="hover:bg-surface-container">
+                        <tr key={order.id} className={`hover:bg-surface-container ${isCancelledOrder(order) ? "opacity-60" : ""}`}>
                           <td className="px-6 py-4 font-mono font-bold text-primary">
                             {order.trackingCode || `#${order.id.substring(0, 8)}`}
                           </td>
@@ -689,7 +711,7 @@ export default function ShopManagementPage() {
                             {order.items ? `${order.items.length} item(s)` : "1 item"}
                           </td>
                           <td className="px-6 py-4 font-semibold text-primary">
-                            ${(order.totalInCents != null ? order.totalInCents / 100 : (order.total || order.amount || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            ${(orderTotalCents(order) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
                           <td className="px-6 py-4">
                             <select
@@ -741,7 +763,7 @@ export default function ShopManagementPage() {
 
             
             <div className="p-6 bg-surface-container-lowest border-t border-border-subtle flex justify-between items-center">
-              <p className="font-body-md text-xs text-on-surface-variant">Showing {products.length} of {products.length} products</p>
+              <p className="font-body-md text-xs text-on-surface-variant">{footerText}</p>
             </div>
           </div>
         </div>

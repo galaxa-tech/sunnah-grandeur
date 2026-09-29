@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import Link from "next/link";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { isCancelledOrder, orderTotalCents, orderStatusBadgeClass } from "@/lib/orders";
 
 export default function DashboardPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -41,9 +42,10 @@ export default function DashboardPage() {
     };
   }, []);
 
-  // Real order documents (backend/functions/src/domains/orders) carry
-  // `totalInCents` and a `shipping` object — not `total` or `customer`.
-  const totalRevenueCents = orders.reduce((sum, order) => sum + (order.totalInCents || 0), 0);
+  // Cancelled orders never count toward revenue, order totals or the weekly
+  // chart — they still appear in Recent Orders with a Cancelled badge.
+  const activeOrders = orders.filter((o) => !isCancelledOrder(o));
+  const totalRevenueCents = activeOrders.reduce((sum, order) => sum + orderTotalCents(order), 0);
 
   // Real order counts for the last 7 days (Mon–Sun of the current week),
   // computed from the same live `orders` listener — no fabricated numbers.
@@ -54,7 +56,7 @@ export default function DashboardPage() {
     const monday = new Date(now);
     monday.setHours(0, 0, 0, 0);
     monday.setDate(now.getDate() - dayOfWeek);
-    for (const order of orders) {
+    for (const order of activeOrders) {
       const seconds = order.createdAt?.seconds;
       if (!seconds) continue;
       const d = new Date(seconds * 1000);
@@ -78,7 +80,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               { label: "Total Revenue", value: `$${(totalRevenueCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, growth: "Live", icon: "payments" },
-              { label: "Total Orders", value: orders.length.toString(), growth: "Live", icon: "shopping_cart" },
+              { label: "Total Orders", value: activeOrders.length.toString(), growth: "Live", icon: "shopping_cart" },
               { label: "Registered Users", value: userCount.toString(), growth: "Live", icon: "group" },
               { label: "Active Products", value: productCount.toString(), growth: "Live", icon: "inventory_2" },
             ].map((stat) => (
@@ -143,9 +145,9 @@ export default function DashboardPage() {
                                 </div>
                               </div>
                             </td>
-                            <td className="py-4 text-xs font-bold text-primary-container">${((order.totalInCents || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                            <td className="py-4 text-xs font-bold text-primary-container">${(orderTotalCents(order) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                             <td className="py-4 text-right">
-                              <span className="px-2.5 py-1 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] font-bold uppercase tracking-widest">
+                              <span className={`px-2.5 py-1 rounded border text-[10px] font-bold uppercase tracking-widest ${orderStatusBadgeClass(order.status)}`}>
                                 {order.status || "Processing"}
                               </span>
                             </td>
