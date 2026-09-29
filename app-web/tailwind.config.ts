@@ -81,12 +81,12 @@ const config: Config = {
         "container-max": "1280px"
       },
       fontFamily: {
-        "headline-xl": ["Noto Serif"],
-        "headline-lg": ["Noto Serif"],
-        "body-lg": ["Manrope"],
-        "label-accent": ["Space Grotesk"],
-        "body-md": ["Manrope"],
-        "headline-md": ["Noto Serif"]
+        "headline-xl": ["Noto Serif", "Cormorant Garamond", "serif"],
+        "headline-lg": ["Noto Serif", "Cormorant Garamond", "serif"],
+        "body-lg": ["Manrope", "Plus Jakarta Sans", "sans-serif"],
+        "label-accent": ["Space Grotesk", "sans-serif"],
+        "body-md": ["Manrope", "Plus Jakarta Sans", "sans-serif"],
+        "headline-md": ["Noto Serif", "Cormorant Garamond", "serif"]
       },
       fontSize: {
         "headline-xl": ["3.5rem", { lineHeight: "1.1", letterSpacing: "-0.02em", fontWeight: "400" }],
