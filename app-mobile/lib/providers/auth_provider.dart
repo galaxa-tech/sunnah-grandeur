@@ -327,13 +327,43 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Deletes account server-side via Cloud Function.
-  Future<void> deleteAccount() async {
-    if (_firebaseUser == null) return;
+  /// Permanently deletes the account and its data server-side, then signs
+  /// out locally. Returns false (with [error] set) if anything failed, so the
+  /// UI never tells the user their account is gone when it isn't.
+  ///
+  /// Sign in with Apple users are asked to re-authorize first so the Apple
+  /// token can be revoked — required by App Store guideline 5.1.1(v).
+  Future<bool> deleteAccount() async {
+    final user = _firebaseUser;
+    if (user == null) return false;
+    _setLoading(true);
     try {
+      final usesApple = user.providerData.any((p) => p.providerId == 'apple.com');
+      if (usesApple && !kIsWeb) {
+        final appleCredential = await SignInWithApple.getAppleIDCredential(scopes: []);
+        await _auth.revokeTokenWithAuthorizationCode(appleCredential.authorizationCode);
+      }
+
       await UserService.deleteAccount();
+
+      try { await _google.signOut(); } catch (_) {}
+      await _auth.signOut();
+      _userData = null;
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } on SignInWithAppleAuthorizationException catch (e) {
+      _error = e.code == AuthorizationErrorCode.canceled
+          ? 'Apple re-authorization is required to delete your account.'
+          : 'Apple re-authorization failed. Please try again.';
+      _setLoading(false);
+      return false;
     } catch (e) {
       debugPrint('[AuthProvider] deleteAccount: $e');
+      _error = 'We couldn\'t delete your account. Please try again, or email '
+          'info@sunnahgrandeur.us and we\'ll delete it for you.';
+      _setLoading(false);
+      return false;
     }
   }
 
@@ -346,7 +376,9 @@ class AuthProvider extends ChangeNotifier {
 
   void _setLoading(bool v) {
     _isLoading = v;
-    _error = null;
+    // Only clear the previous error when starting a new operation — failure
+    // paths set _error and then call _setLoading(false), which must keep it.
+    if (v) _error = null;
     notifyListeners();
   }
 

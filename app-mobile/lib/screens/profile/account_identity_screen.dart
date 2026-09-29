@@ -197,8 +197,13 @@ class _AccountIdentityScreenState extends State<AccountIdentityScreen> {
                           danger: true,
                         );
                         if (confirm == true) {
-                          await auth.deleteAccount();
+                          final ok = await auth.deleteAccount();
                           if (!context.mounted) return;
+                          if (!ok) {
+                            showAppSnackbar(context, auth.error ?? lang.tr('delete_account'),
+                                type: AppSnackbarType.error, duration: const Duration(seconds: 5));
+                            return;
+                          }
                           Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
                         }
                       },

@@ -39,6 +39,14 @@ export default function FAQPage() {
       a: "Exchange requests are handled directly from our main office in Jackson Heights, NY. Please email info@sunnahgrandeur.us to coordinate your request."
     },
     {
+      q: "Is my website account the same as my app account?",
+      a: "Yes. The Sunnah Grandeur app for iOS and Android and this website share the same account, so you can sign in with the same email or Google account on both. Your cart, favorites and orders sync between them."
+    },
+    {
+      q: "How do I delete my account?",
+      a: "In the app, go to Profile → Account & Identity → Delete Account. You can also delete it on our website at sunnahgrandeur.com/account-deletion, or email info@sunnahgrandeur.us with the subject \"Account Deletion Request\". Deletion permanently removes your profile, cart, favorites and reviews; order records are kept only in anonymized form for tax purposes."
+    },
+    {
       q: "How can I contact Sunnah Grandeur?",
       a: "You can reach us directly via email at info@sunnahgrandeur.us. Our office is located at 3715 73rd St, Suite 205, Jackson Heights, NY 11372, USA."
     }

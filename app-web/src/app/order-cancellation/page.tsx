@@ -49,7 +49,7 @@ export default function OrderCancellationPage() {
                 <li>Provide your full name and the order details.</li>
               </ul>
               <p>
-                Our support team will verify if your order has shipped and assist you with the cancellation process. If the order was cancelled successfully before shipment, we will initiate the refund back to your original payment method.
+                Our support team will verify if your order has shipped and assist you with the cancellation process. Because we currently accept Cash on Delivery only, no payment is collected for an order cancelled before shipment, so there is nothing to refund. (Once online card payments launch, prepaid orders cancelled before shipment will be refunded to the original payment method.)
               </p>
             </section>
 

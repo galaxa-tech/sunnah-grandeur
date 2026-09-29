@@ -145,6 +145,10 @@ function AccountPageInner() {
               Sign Out
             </button>
           </div>
+          <p className="text-[11px] text-text-secondary pt-2">
+            Want to leave?{" "}
+            <Link href="/account-deletion" className="text-red-400 hover:underline">Delete your account and data</Link>
+          </p>
         </div>
       )}
 

@@ -26,6 +26,11 @@ class CheckoutScreen extends StatefulWidget {
   State<CheckoutScreen> createState() => _CheckoutScreenState();
 }
 
+/// Card checkout stays off until live Stripe keys are configured in
+/// backend/functions/.env. Flip to true to re-enable (native only — Stripe's
+/// PaymentSheet is a no-op on web).
+const bool kCardPaymentsEnabled = false;
+
 class _CheckoutScreenState extends State<CheckoutScreen> {
   final _formKey    = GlobalKey<FormState>();
   bool _isProcessing = false;
@@ -90,8 +95,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Future<void> _handleCompleteOrder() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_paymentMethod == 'card' && kIsWeb) {
-      _showSnack('Card payments are only available on the mobile app.');
+    if (_paymentMethod == 'card' && (kIsWeb || !kCardPaymentsEnabled)) {
+      _showSnack('Card payments are coming soon. Please choose Cash on Delivery.');
       return;
     }
 
@@ -501,13 +506,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         const SizedBox(height: 10),
         _PaymentMethodOption(
           icon: Icons.credit_card_rounded,
-          title: 'Card via Stripe',
-          subtitle: kIsWeb
-              ? 'Card payments are only available on the mobile app.'
-              : 'Your card details are encrypted and never stored on our servers.',
+          title: kCardPaymentsEnabled ? 'Card via Stripe' : 'Credit / Debit Card — Coming Soon',
+          subtitle: !kCardPaymentsEnabled
+              ? 'Card payments are coming soon. Cash on Delivery is available now.'
+              : kIsWeb
+                  ? 'Card payments are only available on the mobile app.'
+                  : 'Your card details are encrypted and never stored on our servers.',
           selected: _paymentMethod == 'card',
-          disabled: kIsWeb,
-          onTap: kIsWeb ? null : () => setState(() => _paymentMethod = 'card'),
+          disabled: kIsWeb || !kCardPaymentsEnabled,
+          onTap: (kIsWeb || !kCardPaymentsEnabled)
+              ? null
+              : () => setState(() => _paymentMethod = 'card'),
         ),
       ],
     );

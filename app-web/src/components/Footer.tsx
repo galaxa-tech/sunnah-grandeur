@@ -87,6 +87,7 @@ export default function Footer() {
         <div className="flex flex-col space-y-3">
           <h4 className="text-label-accent font-label-accent text-text-primary uppercase mb-2 font-bold">Legal &amp; Policies</h4>
           <Link className="text-text-secondary hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/privacy-policy">Privacy Policy</Link>
+          <Link className="text-text-secondary hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/account-deletion">Account Deletion</Link>
           <Link className="text-text-secondary hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/terms-of-service">Terms &amp; Conditions</Link>
           <Link className="text-text-secondary hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/disclaimer">Disclaimer</Link>
           <Link className="text-text-secondary hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/cookie-policy">Cookie Policy</Link>

@@ -10,6 +10,8 @@ export default function SupportPage() {
     { title: "Damaged / Incorrect Items", desc: "Report items damaged in transit or incorrect product shipments." },
     { title: "Exchange Requests", desc: "Initiate product size, variation, or perfume exchanges." },
     { title: "Product Information", desc: "Details on fragrance notes, ingredients, or lifestyle artifacts." },
+    { title: "Mobile App Help", desc: "Sign-in, prayer times, location, notifications and other questions about the Sunnah Grandeur iOS and Android app." },
+    { title: "Account & Privacy", desc: "Update your details, request a copy of your data, or delete your account and data." },
     { title: "General Support", desc: "Any other questions or feedback about Sunnah Grandeur." },
   ];
 
@@ -31,7 +33,7 @@ export default function SupportPage() {
           <div className="border-b border-border-subtle pb-8 mb-12">
             <h1 className="font-serif text-3xl md:text-5xl font-bold text-text-primary mb-4">Customer Support</h1>
             <p className="text-text-secondary text-sm md:text-base max-w-2xl">
-              We are here to assist the Ummah with any questions regarding our premium collections or services. Reach out to experience true grandeur.
+              We are here to assist the Ummah with any questions regarding our premium collections, your orders, or the Sunnah Grandeur mobile app. We aim to reply to every message within 1–2 business days.
             </p>
           </div>
 
@@ -99,6 +101,9 @@ export default function SupportPage() {
                   </p>
                   <p>
                     <strong className="text-text-primary">Returns:</strong> For questions regarding returns or refunds, please contact our support team.
+                  </p>
+                  <p>
+                    <strong className="text-text-primary">Account Deletion:</strong> Delete your account in the app (Profile → Account &amp; Identity) or on our <Link href="/account-deletion" className="text-primary-container hover:underline">Account Deletion page</Link>. See also our <Link href="/privacy-policy" className="text-primary-container hover:underline">Privacy Policy</Link> and <Link href="/faq" className="text-primary-container hover:underline">FAQ</Link>.
                   </p>
                 </div>
               </div>

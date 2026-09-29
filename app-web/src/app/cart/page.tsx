@@ -78,7 +78,7 @@ export default function CartPage() {
                 <div className="flex-grow flex flex-col justify-between">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="text-body-lg font-body-lg font-medium text-on-surface mb-1">
+                      <h3 className="text-body-lg font-body-lg font-medium text-text-primary mb-1">
                         {item.name}
                       </h3>
                       <p className="text-body-md font-body-md text-text-secondary mb-2">
@@ -139,20 +139,20 @@ export default function CartPage() {
               <div className="space-y-4 text-body-md font-body-md">
                 <div className="flex justify-between">
                   <span className="text-text-secondary">Subtotal</span>
-                  <span className="text-on-surface">{formatUsd(subtotal, usdRate)}</span>
+                  <span className="text-text-primary">{formatUsd(subtotal, usdRate)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-text-secondary">Shipping</span>
                   {qualifiesForFreeShipping ? (
                     <span className="text-green-400 font-medium">Free (Standard)</span>
                   ) : (
-                    <span className="text-on-surface">{formatUsdRaw(shippingUsd)}</span>
+                    <span className="text-text-primary">{formatUsdRaw(shippingUsd)}</span>
                   )}
                 </div>
                 <p className="text-[11px] text-text-secondary/70">Tax is calculated when your order is confirmed.</p>
               </div>
               <div className="border-t border-border-subtle mt-6 pt-6 flex justify-between items-end">
-                <span className="text-body-lg font-body-lg text-on-surface">Estimated Total</span>
+                <span className="text-body-lg font-body-lg text-text-primary">Estimated Total</span>
                 <span className="text-headline-lg font-headline-lg text-primary">
                   {formatUsdRaw(totalUsd)}
                 </span>

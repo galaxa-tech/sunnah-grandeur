@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../main.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
@@ -24,6 +25,12 @@ import 'prayer_method_screen.dart';
 import 'invite_friends_screen.dart';
 import 'rate_app_screen.dart';
 import 'support_us_screen.dart';
+
+/// Opens a page of the public storefront (policies, support) in the browser.
+/// Store review requires these to be reachable from inside the app.
+Future<void> _openSitePage(String path) =>
+    launchUrl(Uri.parse('https://sunnahgrandeur.com$path'),
+        mode: LaunchMode.externalApplication);
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -119,6 +126,31 @@ class ProfileScreen extends StatelessWidget {
                   label: lang.tr('support_us'),
                   sub:   lang.tr('support_us_sub'),
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SupportUsScreen())),
+              ),
+            ]),
+
+            EyeRow(label: lang.tr('legal_help')),
+
+            _MenuSection(c: c, items: [
+              _MenuItem(icon: Icons.help_outline_rounded,
+                  label: lang.tr('help_support'),
+                  sub:   lang.tr('help_support_sub'),
+                  onTap: () => _openSitePage('/support'),
+              ),
+              _MenuItem(icon: Icons.privacy_tip_outlined,
+                  label: lang.tr('privacy_policy'),
+                  sub:   lang.tr('privacy_policy_sub'),
+                  onTap: () => _openSitePage('/privacy-policy'),
+              ),
+              _MenuItem(icon: Icons.description_outlined,
+                  label: lang.tr('terms_of_service'),
+                  sub:   lang.tr('terms_of_service_sub'),
+                  onTap: () => _openSitePage('/terms-of-service'),
+              ),
+              _MenuItem(icon: Icons.no_accounts_outlined,
+                  label: lang.tr('delete_account_info'),
+                  sub:   lang.tr('delete_account_info_sub'),
+                  onTap: () => _openSitePage('/account-deletion'),
               ),
             ]),
 

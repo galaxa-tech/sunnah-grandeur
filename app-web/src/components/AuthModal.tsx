@@ -85,10 +85,12 @@ export default function AuthModal({ onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+    <div className="fixed inset-0 z-[200] flex items-start sm:items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" />
+      {/* max-h + own scroll so the form is never clipped on short/landscape
+          viewports or when the mobile keyboard is open. */}
       <div
-        className="relative w-full max-w-md bg-surface-card border border-border-subtle rounded-2xl shadow-2xl p-8 animate-in fade-in zoom-in-95"
+        className="relative my-auto w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto bg-surface-card border border-border-subtle rounded-2xl shadow-2xl p-6 sm:p-8 animate-in fade-in zoom-in-95"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close */}

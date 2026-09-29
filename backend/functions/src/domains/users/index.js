@@ -77,17 +77,55 @@ const updateUserProfile = onCall({ region: "us-central1" }, async (request) => {
 });
 
 // ── deleteAccount ─────────────────────────────────────────────────────────────
-// Deletes Firestore profile + Firebase Auth account server-side.
-// Client must never write directly to /users/{uid}.
+// Permanently erases everything tied to the caller's account (App Store 5.1.1(v)
+// / Google Play account-deletion policy), then deletes the Auth user.
+//   Deleted:     users/{uid} (+ tasbih_sessions), carts/{uid}, favorites/{uid},
+//                the user's reviews and app feedback.
+//   Anonymized:  orders — kept for tax/accounting, but name/phone/email/address
+//                are scrubbed and userId is detached.
+// The public account-deletion page (sunnahgrandeur.com/account-deletion)
+// documents exactly this list — keep them in sync.
+
+const ANONYMIZED_SHIPPING = {
+  name: "Deleted User", phone: "", email: "", line1: "", city: "",
+  state: "", postalCode: "",
+};
+
+async function deleteWhereUserId(collection, uid) {
+  const snap = await db.collection(collection).where("userId", "==", uid).get();
+  const writer = db.bulkWriter();
+  snap.docs.forEach((d) => writer.delete(d.ref));
+  await writer.close();
+}
 
 const deleteAccount = onCall({ region: "us-central1" }, async (request) => {
   const uid = requireAuth(request);
 
-  // Delete Firestore document first
-  await db.collection(COL.USERS).doc(uid).delete();
+  // Owner-keyed documents, including subcollections.
+  await Promise.all([
+    db.recursiveDelete(db.collection(COL.USERS).doc(uid)),
+    db.recursiveDelete(db.collection("carts").doc(uid)),
+    db.recursiveDelete(db.collection("favorites").doc(uid)),
+    deleteWhereUserId("reviews", uid),
+    deleteWhereUserId("app_feedback", uid),
+  ]);
 
-  // Then revoke auth (order matters — if auth delete fails, Firestore is already gone
-  // but the user can no longer sign in because their data is removed)
+  // Orders: retain the financial record, strip the personal data.
+  const orders = await db.collection(COL.ORDERS).where("userId", "==", uid).get();
+  const writer = db.bulkWriter();
+  orders.docs.forEach((d) => {
+    const shipping = { ...(d.get("shipping") || {}), ...ANONYMIZED_SHIPPING };
+    writer.update(d.ref, {
+      userId:         null,
+      shipping,
+      accountDeleted: true,
+      updatedAt:      FieldValue.serverTimestamp(),
+    });
+  });
+  await writer.close();
+
+  // Auth user last — if anything above throws, the user can still sign in
+  // and retry instead of being left with orphaned data.
   await getAuth().deleteUser(uid);
 
   return { success: true };
