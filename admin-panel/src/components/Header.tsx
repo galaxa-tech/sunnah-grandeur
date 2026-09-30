@@ -19,11 +19,17 @@ export default function Header({ title }: HeaderProps) {
             search
           </span>
         </div>
-        <div className="flex items-center gap-4">
-          <button className="text-on-surface-variant hover:text-primary transition-colors scale-95 active:scale-90">
+        <div className="flex items-center gap-1 sm:gap-2">
+          <button
+            aria-label="Notifications"
+            className="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors active:scale-90"
+          >
             <span className="material-symbols-outlined">notifications</span>
           </button>
-          <button className="text-on-surface-variant hover:text-primary transition-colors scale-95 active:scale-90">
+          <button
+            aria-label="Account"
+            className="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors active:scale-90"
+          >
             <span className="material-symbols-outlined">account_circle</span>
           </button>
         </div>

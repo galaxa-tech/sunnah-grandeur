@@ -48,9 +48,11 @@ export default function Footer() {
           </p>
           <div className="text-text-secondary text-xs space-y-1.5 pt-2">
             <p className="font-semibold text-text-primary">Office Address:</p>
-            <p className="whitespace-pre-line leading-relaxed">
+            <p className="leading-relaxed">
               3715 73rd St, Suite 205
+              <br />
               Jackson Heights, NY 11372
+              <br />
               USA
             </p>
             <p className="pt-2">
@@ -131,20 +133,10 @@ export default function Footer() {
           )}
         </div>
       </div>
-      <div className="max-w-container-max mx-auto px-gutter mt-16 pt-8 border-t border-border-subtle flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+      <div className="max-w-container-max mx-auto px-gutter mt-16 pt-8 border-t border-border-subtle text-center sm:text-left">
         <p className="text-body-md text-text-secondary text-xs">
           {t.footer.rights}
         </p>
-        <a 
-          href="https://sunnah-grandeur-admin.web.app" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="text-[11px] text-text-secondary/40 hover:text-primary-container transition-colors font-mono uppercase tracking-widest flex items-center gap-1"
-          title="Internal Staff &amp; Admin Management Portal"
-        >
-          <span className="material-symbols-outlined text-[13px]">lock</span>
-          Staff Portal
-        </a>
       </div>
     </footer>
   );

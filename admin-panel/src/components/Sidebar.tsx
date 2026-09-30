@@ -73,7 +73,7 @@ export default function Sidebar() {
         <button
           onClick={() => setIsMobileOpen(false)}
           aria-label="Close menu"
-          className="md:hidden self-end mb-2 w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-primary"
+          className="md:hidden self-end mb-2 w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-primary"
         >
           <span className="material-symbols-outlined">close</span>
         </button>
@@ -100,7 +100,7 @@ export default function Sidebar() {
       </nav>
 
       <div className="mt-auto px-2 space-y-4">
-        <Link 
+        <Link
           href="/dashboard/shop"
           className="w-full py-3 bg-primary-container text-on-primary-container font-label-accent uppercase text-[10px] tracking-widest hover:brightness-110 transition-all flex items-center justify-center gap-2 rounded"
         >
@@ -119,10 +119,11 @@ export default function Sidebar() {
             </div>
           </div>
 
-          <button 
+          <button
             onClick={handleLogout}
             title="Sign Out"
-            className="p-1.5 text-on-surface-variant hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+            aria-label="Sign out"
+            className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
           >
             <span className="material-symbols-outlined text-lg">logout</span>
           </button>

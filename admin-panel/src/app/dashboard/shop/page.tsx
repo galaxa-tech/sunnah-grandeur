@@ -448,7 +448,7 @@ export default function ShopManagementPage() {
         <Header title="Shop Management" />
 
         {/* Sub Navigation */}
-        <div className="px-8 py-2 bg-background/40 backdrop-blur-sm border-b border-outline-variant flex gap-6">
+        <div className="px-4 md:px-8 py-2 bg-background/40 backdrop-blur-sm border-b border-outline-variant flex gap-5 md:gap-6 overflow-x-auto">
           {[
             { id: "products", label: "PRODUCTS" },
             { id: "categories", label: "CATEGORIES" },
@@ -459,7 +459,7 @@ export default function ShopManagementPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`font-label-accent tracking-widest pb-1 text-[10px] uppercase transition-colors ${
+              className={`shrink-0 whitespace-nowrap font-label-accent tracking-widest pb-1 text-[10px] uppercase transition-colors ${
                 activeTab === tab.id
                   ? "text-primary font-bold border-b-2 border-primary"
                   : "text-on-surface-variant hover:text-primary"
@@ -471,24 +471,24 @@ export default function ShopManagementPage() {
         </div>
 
         {/* Content Canvas */}
-        <div className="p-8 max-w-[1400px] mx-auto w-full relative z-10">
+        <div className="p-4 sm:p-6 md:p-8 max-w-[1400px] mx-auto w-full relative z-10">
           <div className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden shadow-2xl">
             {activeTab === "products" && (
               <>
-                <div className="p-6 border-b border-border-subtle flex justify-between items-center">
+                <div className="p-4 sm:p-6 border-b border-border-subtle flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                   <h3 className="font-headline-md text-headline-md text-on-background text-xl">Product Catalog</h3>
-                  <div className="flex gap-4">
+                  <div className="flex gap-3 sm:gap-4">
                     <button
                       onClick={() => {}}
-                      className="flex items-center gap-2 border border-outline-variant px-4 py-2 rounded font-label-accent text-[10px] text-on-background hover:bg-surface-container-high transition-all opacity-50 cursor-not-allowed"
+                      className="hidden sm:flex items-center gap-2 border border-outline-variant px-4 py-2 rounded font-label-accent text-[10px] text-on-background hover:bg-surface-container-high transition-all opacity-50 cursor-not-allowed"
                       title="Auto-refreshing via real-time sync"
                     >
                       <span className="material-symbols-outlined text-sm">sync</span>
                       LIVE SYNC
                     </button>
-                    <button 
+                    <button
                       onClick={openAddModal}
-                      className="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded font-label-accent text-[10px] hover:brightness-110 transition-all"
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-primary text-on-primary px-4 py-2.5 sm:py-2 rounded font-label-accent text-[10px] hover:brightness-110 transition-all"
                     >
                       <span className="material-symbols-outlined text-sm">add</span>
                       NEW PRODUCT
@@ -554,26 +554,28 @@ export default function ShopManagementPage() {
                             </td>
                             <td className="px-6 py-4 text-center">
                               <label className="relative inline-flex items-center cursor-pointer">
-                                <input 
-                                  checked={product.isActive} 
+                                <input
+                                  checked={product.isActive}
                                   onChange={() => handleToggleActive(product.id, product.isActive)}
-                                  className="sr-only peer" 
-                                  type="checkbox" 
+                                  className="sr-only peer"
+                                  type="checkbox"
                                 />
                                 <div className="w-11 h-6 bg-surface-container-highest rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                               </label>
                             </td>
                             <td className="px-6 py-4 text-right">
-                              <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button 
+                              <div className="flex justify-end gap-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                <button
                                   onClick={() => openEditModal(product)}
-                                  className="material-symbols-outlined text-primary hover:text-primary-fixed text-lg"
+                                  aria-label="Edit product"
+                                  className="material-symbols-outlined text-primary hover:text-primary-fixed text-xl p-1 -m-1"
                                 >
                                   edit
                                 </button>
-                                <button 
+                                <button
                                   onClick={() => handleDeleteProduct(product.id)}
-                                  className="material-symbols-outlined text-status-cancelled hover:opacity-80 text-lg"
+                                  aria-label="Delete product"
+                                  className="material-symbols-outlined text-status-cancelled hover:opacity-80 text-xl p-1 -m-1"
                                 >
                                   delete
                                 </button>
@@ -589,12 +591,12 @@ export default function ShopManagementPage() {
             )}
 
             {activeTab === "categories" && (
-              <div className="p-8 space-y-6">
-                <div className="flex justify-between items-center">
+              <div className="p-4 sm:p-6 md:p-8 space-y-6">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                   <h3 className="font-headline-md text-xl text-on-background">Product Categories ({categories.length})</h3>
                   <button
                     onClick={openAddCatModal}
-                    className="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded font-label-accent text-[10px] hover:brightness-110 transition-all"
+                    className="flex items-center justify-center gap-2 bg-primary text-on-primary px-4 py-2.5 sm:py-2 rounded font-label-accent text-[10px] hover:brightness-110 transition-all"
                   >
                     <span className="material-symbols-outlined text-sm">add</span>
                     NEW CATEGORY
@@ -611,9 +613,9 @@ export default function ShopManagementPage() {
                       const count = products.filter((p) => p.categoryId === cat.id).length;
                       return (
                         <div key={cat.id} className="p-6 bg-surface-container rounded-xl border border-border-subtle hover:border-primary/50 transition-colors group relative">
-                          <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => openEditCatModal(cat)} className="material-symbols-outlined text-primary hover:text-primary-fixed text-base">edit</button>
-                            <button onClick={() => handleDeleteCategory(cat)} className="material-symbols-outlined text-status-cancelled hover:opacity-80 text-base">delete</button>
+                          <div className="absolute top-4 right-4 flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => openEditCatModal(cat)} aria-label="Edit category" className="material-symbols-outlined text-primary hover:text-primary-fixed text-lg p-1 -m-1">edit</button>
+                            <button onClick={() => handleDeleteCategory(cat)} aria-label="Delete category" className="material-symbols-outlined text-status-cancelled hover:opacity-80 text-lg p-1 -m-1">delete</button>
                           </div>
                           <h4 className="font-bold text-primary text-base pr-12">{cat.name}</h4>
                           <p className="text-xs text-on-surface-variant mt-1">{cat.description}</p>
@@ -629,12 +631,12 @@ export default function ShopManagementPage() {
             )}
 
             {activeTab === "banners" && (
-              <div className="p-8 space-y-6">
-                <div className="flex justify-between items-center">
+              <div className="p-4 sm:p-6 md:p-8 space-y-6">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                   <h3 className="font-headline-md text-xl text-on-background">Promo Banners ({banners.length})</h3>
                   <button
                     onClick={openAddBannerModal}
-                    className="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded font-label-accent text-[10px] hover:brightness-110 transition-all"
+                    className="flex items-center justify-center gap-2 bg-primary text-on-primary px-4 py-2.5 sm:py-2 rounded font-label-accent text-[10px] hover:brightness-110 transition-all"
                   >
                     <span className="material-symbols-outlined text-sm">add</span>
                     NEW BANNER
@@ -663,8 +665,8 @@ export default function ShopManagementPage() {
                           <div className="flex justify-between items-start gap-2">
                             <h4 className="font-bold text-primary text-sm">{banner.title}</h4>
                             <div className="flex gap-2 shrink-0">
-                              <button onClick={() => openEditBannerModal(banner)} className="material-symbols-outlined text-primary hover:text-primary-fixed text-base">edit</button>
-                              <button onClick={() => handleDeleteBanner(banner)} className="material-symbols-outlined text-status-cancelled hover:opacity-80 text-base">delete</button>
+                              <button onClick={() => openEditBannerModal(banner)} aria-label="Edit banner" className="material-symbols-outlined text-primary hover:text-primary-fixed text-lg p-1 -m-1">edit</button>
+                              <button onClick={() => handleDeleteBanner(banner)} aria-label="Delete banner" className="material-symbols-outlined text-status-cancelled hover:opacity-80 text-lg p-1 -m-1">delete</button>
                             </div>
                           </div>
                           <p className="text-xs text-on-surface-variant mt-1 line-clamp-2">{banner.subtitle}</p>
@@ -689,8 +691,8 @@ export default function ShopManagementPage() {
             )}
 
             {activeTab === "orders" && (
-              <div className="p-8 space-y-6">
-                <div className="flex justify-between items-center">
+              <div className="p-4 sm:p-6 md:p-8 space-y-6">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                   <h3 className="font-headline-md text-xl text-on-background">
                     Store Orders ({ordersList.length})
                     {cancelledCount > 0 && (
@@ -765,7 +767,7 @@ export default function ShopManagementPage() {
 
 
             {activeTab === "inventory" && (
-              <div className="p-8 space-y-6">
+              <div className="p-4 sm:p-6 md:p-8 space-y-6">
                 <h3 className="font-headline-md text-xl text-on-background">Inventory Overview</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="p-6 bg-surface-container rounded-xl border border-border-subtle">
@@ -790,7 +792,7 @@ export default function ShopManagementPage() {
               </div>
             )}
 
-            
+
             <div className="p-6 bg-surface-container-lowest border-t border-border-subtle flex justify-between items-center">
               <p className="font-body-md text-xs text-on-surface-variant">{footerText}</p>
             </div>
@@ -799,59 +801,60 @@ export default function ShopManagementPage() {
 
         {/* Add/Edit Product Modal */}
         {isModalOpen && (
-          <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm overflow-y-auto flex items-center justify-center py-10">
-            <div className="max-w-[800px] w-full mx-6 bg-surface-card border border-border-subtle rounded-2xl shadow-2xl relative my-auto">
+          <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm overflow-y-auto flex items-center justify-center py-4 sm:py-10">
+            <div className="max-w-[800px] w-full mx-4 sm:mx-6 bg-surface-card border border-border-subtle rounded-2xl shadow-2xl relative my-auto">
               {/* Modal Header */}
-              <div className="sticky top-0 z-10 bg-surface-card/95 backdrop-blur-md px-10 py-6 border-b border-border-subtle flex justify-between items-center">
-                <div>
-                  <h2 className="font-headline-lg text-2xl text-primary">{editingProduct ? "Edit Product" : "Add New Product"}</h2>
-                  <p className="font-body-md text-xs text-on-surface-variant">Configure product details in the database catalog.</p>
+              <div className="sticky top-0 z-10 bg-surface-card/95 backdrop-blur-md px-5 sm:px-10 py-4 sm:py-6 border-b border-border-subtle flex justify-between items-center gap-4">
+                <div className="min-w-0">
+                  <h2 className="font-headline-lg text-xl sm:text-2xl text-primary truncate">{editingProduct ? "Edit Product" : "Add New Product"}</h2>
+                  <p className="font-body-md text-xs text-on-surface-variant hidden sm:block">Configure product details in the database catalog.</p>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsModalOpen(false)}
-                  className="w-10 h-10 rounded-full border border-outline-variant flex items-center justify-center text-on-surface-variant hover:text-primary hover:border-primary transition-all"
+                  aria-label="Close"
+                  className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-full border border-outline-variant flex items-center justify-center text-on-surface-variant hover:text-primary hover:border-primary transition-all"
                 >
                   <span className="material-symbols-outlined text-xl">close</span>
                 </button>
               </div>
-              
+
               <form onSubmit={handleSubmit}>
-                <div className="p-10 space-y-6 max-h-[60vh] overflow-y-auto">
+                <div className="p-5 sm:p-10 space-y-6 max-h-[65vh] sm:max-h-[60vh] overflow-y-auto">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="block font-label-accent text-[10px] text-primary tracking-widest uppercase">Product Name</label>
-                      <input 
-                        value={name} 
+                      <input
+                        value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="w-full bg-[#1A1A1A] border border-outline-variant rounded px-4 py-3 text-sm focus:outline-none focus:border-primary transition-all" 
-                        placeholder="e.g. Royal Amber Musk" 
-                        required 
-                        type="text" 
+                        className="w-full bg-[#1A1A1A] border border-outline-variant rounded px-4 py-3 text-sm focus:outline-none focus:border-primary transition-all"
+                        placeholder="e.g. Royal Amber Musk"
+                        required
+                        type="text"
                       />
                     </div>
                     <div className="space-y-2">
                       <label className="block font-label-accent text-[10px] text-primary tracking-widest uppercase">Tagline / Badge</label>
-                      <input 
-                        value={tag} 
+                      <input
+                        value={tag}
                         onChange={(e) => setTag(e.target.value)}
-                        className="w-full bg-[#1A1A1A] border border-outline-variant rounded px-4 py-3 text-sm focus:outline-none focus:border-primary transition-all" 
-                        placeholder="e.g. New, Bestseller, Premium" 
-                        type="text" 
+                        className="w-full bg-[#1A1A1A] border border-outline-variant rounded px-4 py-3 text-sm focus:outline-none focus:border-primary transition-all"
+                        placeholder="e.g. New, Bestseller, Premium"
+                        type="text"
                       />
                     </div>
                     <div className="col-span-full space-y-2">
                       <label className="block font-label-accent text-[10px] text-primary tracking-widest uppercase">Detailed Description</label>
-                      <textarea 
-                        value={description} 
+                      <textarea
+                        value={description}
                         onChange={(e) => setDescription(e.target.value)}
-                        className="w-full bg-[#1A1A1A] border border-outline-variant rounded px-4 py-3 text-sm focus:outline-none focus:border-primary transition-all" 
-                        placeholder="Describe notes, craft, and sizes..." 
+                        className="w-full bg-[#1A1A1A] border border-outline-variant rounded px-4 py-3 text-sm focus:outline-none focus:border-primary transition-all"
+                        placeholder="Describe notes, craft, and sizes..."
                         rows={3}
                         required
                       ></textarea>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
                     <div className="space-y-2">
                       <label className="block font-label-accent text-[10px] text-primary tracking-widest uppercase">Category</label>
@@ -939,17 +942,17 @@ export default function ShopManagementPage() {
                     <p className="text-[10px] text-on-surface-variant">Used for checkout stock checks and the Inventory tab.</p>
                   </div>
                 </div>
-                
+
                 {/* Modal Footer */}
-                <div className="px-10 py-8 border-t border-border-subtle flex justify-end gap-6 bg-surface-container-lowest rounded-b-2xl">
-                  <button 
+                <div className="px-5 sm:px-10 py-5 sm:py-8 border-t border-border-subtle flex flex-col-reverse sm:flex-row justify-end gap-3 sm:gap-6 bg-surface-container-lowest rounded-b-2xl">
+                  <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
                     className="px-8 py-3 rounded font-label-accent text-[10px] tracking-widest text-on-surface-variant hover:text-on-surface transition-all"
                   >
                     DISCARD
                   </button>
-                  <button 
+                  <button
                     type="submit"
                     className="bg-primary px-12 py-3 rounded font-label-accent text-[10px] tracking-widest text-on-primary shadow-lg shadow-primary/20 hover:brightness-110 transition-all"
                   >
@@ -964,17 +967,18 @@ export default function ShopManagementPage() {
         {/* Add/Edit Category Modal */}
         {isCatModalOpen && (
           <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-4">
-            <div className="max-w-[500px] w-full bg-surface-card border border-border-subtle rounded-2xl shadow-2xl">
-              <div className="px-8 py-6 border-b border-border-subtle flex justify-between items-center">
+            <div className="max-w-[500px] w-full bg-surface-card border border-border-subtle rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+              <div className="px-5 sm:px-8 py-5 sm:py-6 border-b border-border-subtle flex justify-between items-center">
                 <h2 className="font-headline-lg text-xl text-primary">{editingCategory ? "Edit Category" : "New Category"}</h2>
                 <button
                   onClick={() => setIsCatModalOpen(false)}
-                  className="text-on-surface-variant hover:text-primary transition-colors"
+                  aria-label="Close"
+                  className="text-on-surface-variant hover:text-primary transition-colors p-1 -m-1"
                 >
                   <span className="material-symbols-outlined">close</span>
                 </button>
               </div>
-              <form onSubmit={handleCatSubmit} className="p-8 space-y-5">
+              <form onSubmit={handleCatSubmit} className="p-5 sm:p-8 space-y-5">
                 <div className="space-y-2">
                   <label className="block text-xs font-label-accent text-primary tracking-widest uppercase">Name</label>
                   <input
@@ -1012,17 +1016,18 @@ export default function ShopManagementPage() {
         {/* Add/Edit Banner Modal */}
         {isBannerModalOpen && (
           <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-4">
-            <div className="max-w-[500px] w-full bg-surface-card border border-border-subtle rounded-2xl shadow-2xl">
-              <div className="px-8 py-6 border-b border-border-subtle flex justify-between items-center">
+            <div className="max-w-[500px] w-full bg-surface-card border border-border-subtle rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+              <div className="px-5 sm:px-8 py-5 sm:py-6 border-b border-border-subtle flex justify-between items-center">
                 <h2 className="font-headline-lg text-xl text-primary">{editingBanner ? "Edit Banner" : "New Banner"}</h2>
                 <button
                   onClick={() => setIsBannerModalOpen(false)}
-                  className="text-on-surface-variant hover:text-primary transition-colors"
+                  aria-label="Close"
+                  className="text-on-surface-variant hover:text-primary transition-colors p-1 -m-1"
                 >
                   <span className="material-symbols-outlined">close</span>
                 </button>
               </div>
-              <form onSubmit={handleBannerSubmit} className="p-8 space-y-5">
+              <form onSubmit={handleBannerSubmit} className="p-5 sm:p-8 space-y-5">
                 <div className="space-y-2">
                   <label className="block text-xs font-label-accent text-primary tracking-widest uppercase">Title</label>
                   <input

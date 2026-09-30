@@ -73,11 +73,11 @@ export default function SettingsPage() {
       <main className="ml-0 md:ml-64 flex-1 flex flex-col min-h-screen relative bento-pattern overflow-hidden">
         <Header title="Store Settings" />
 
-        <div className="p-8 max-w-[1000px] mx-auto w-full relative z-10 space-y-8">
+        <div className="p-4 sm:p-6 md:p-8 max-w-[1000px] mx-auto w-full relative z-10 space-y-6 sm:space-y-8">
           {message && (
             <div className={`p-4 rounded-lg text-xs font-semibold text-center border ${
-              message.type === "success" 
-                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
+              message.type === "success"
+                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
                 : "bg-red-500/10 border-red-500/30 text-red-400"
             }`}>
               {message.text}
@@ -85,11 +85,11 @@ export default function SettingsPage() {
           )}
 
           {/* General Store Information */}
-          <div className="bg-surface-card border border-border-subtle rounded-xl p-8 shadow-xl space-y-6">
+          <div className="bg-surface-card border border-border-subtle rounded-xl p-5 sm:p-8 shadow-xl space-y-6">
             <h3 className="font-headline-md text-xl text-primary border-b border-border-subtle pb-4 font-bold">
               General Store Configuration
             </h3>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
               <div className="space-y-2">
                 <label className="block text-xs font-label-accent uppercase text-on-surface-variant">Store Name</label>
@@ -103,7 +103,7 @@ export default function SettingsPage() {
 
               <div className="space-y-2">
                 <label className="block text-xs font-label-accent uppercase text-on-surface-variant">Default Currency</label>
-                <select 
+                <select
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
                   className="w-full bg-[#1A1A1A] border border-outline-variant rounded px-4 py-3 text-on-surface focus:outline-none focus:border-primary text-xs"
@@ -147,18 +147,18 @@ export default function SettingsPage() {
           </div>
 
           {/* Security & Authentication */}
-          <div className="bg-surface-card border border-border-subtle rounded-xl p-8 shadow-xl space-y-6">
+          <div className="bg-surface-card border border-border-subtle rounded-xl p-5 sm:p-8 shadow-xl space-y-6">
             <h3 className="font-headline-md text-xl text-primary border-b border-border-subtle pb-4 font-bold">
               Security &amp; Permissions
             </h3>
-            
+
             <div className="space-y-4 text-xs text-on-surface-variant">
-              <div className="flex items-center justify-between p-4 bg-dark-900 rounded-lg border border-border-subtle">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-dark-900 rounded-lg border border-border-subtle">
                 <div>
                   <p className="font-semibold text-white text-sm">Require Auth for Admin Panel Access</p>
                   <p className="text-[11px] text-slate-400">Restricted access enforced via Firebase Auth session verification.</p>
                 </div>
-                <span className="text-emerald-400 font-bold text-[10px] uppercase px-3 py-1 bg-emerald-950 rounded-full border border-emerald-800">
+                <span className="self-start sm:self-auto text-emerald-400 font-bold text-[10px] uppercase px-3 py-1 bg-emerald-950 rounded-full border border-emerald-800">
                   ACTIVE
                 </span>
               </div>

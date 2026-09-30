@@ -60,7 +60,7 @@ export default function UserManagementPage() {
         <Header title="User Management" />
 
         {/* Content Canvas */}
-        <div className="p-8 max-w-[1400px] mx-auto w-full relative z-10">
+        <div className="p-4 sm:p-6 md:p-8 max-w-[1400px] mx-auto w-full relative z-10">
           {/* Filters & Stats Section */}
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div className="flex items-center gap-3">
@@ -93,8 +93,8 @@ export default function UserManagementPage() {
                     const isAdmin = user.role === "admin" || user.role === "superAdmin" || user.role === "SuperAdmin" || user.role === "Administrator";
 
                     return (
-                      <tr 
-                        key={user.id} 
+                      <tr
+                        key={user.id}
                         className="hover:bg-surface-container-low transition-colors group"
                       >
                         <td className="px-6 py-4">

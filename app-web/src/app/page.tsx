@@ -244,9 +244,13 @@ export default function HomePage() {
                   <h3 className="font-cinzel text-xs font-bold text-text-primary group-hover:text-primary transition-colors">
                     {cat.name}
                   </h3>
-                  <span className="text-[9px] font-mono text-text-secondary/80 mt-0.5 block">
-                    {dbProducts.filter((p) => p.categoryId === cat.id).length} Products
-                  </span>
+                  {loading ? (
+                    <span className="inline-block w-12 h-[9px] mt-1 rounded-full bg-text-secondary/20 animate-pulse" />
+                  ) : (
+                    <span className="text-[9px] font-mono text-text-secondary/80 mt-0.5 block">
+                      {dbProducts.filter((p) => p.categoryId === cat.id).length} Products
+                    </span>
+                  )}
                 </div>
               </Link>
             ))}

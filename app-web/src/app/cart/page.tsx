@@ -104,8 +104,10 @@ export default function CartPage() {
                     {/* Quantity Controls */}
                     <div className="flex items-center border border-border-subtle rounded-DEFAULT bg-bg-primary">
                       <button
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="w-8 h-8 flex items-center justify-center text-text-secondary hover:text-primary transition-colors"
+                        onClick={() => item.quantity > 1 && updateQuantity(item.id, item.quantity - 1)}
+                        disabled={item.quantity <= 1}
+                        aria-label="Decrease quantity"
+                        className="w-8 h-8 flex items-center justify-center text-text-secondary hover:text-primary transition-colors disabled:opacity-30 disabled:hover:text-text-secondary disabled:cursor-not-allowed"
                       >
                         <span className="material-symbols-outlined text-sm">remove</span>
                       </button>
@@ -114,6 +116,7 @@ export default function CartPage() {
                       </span>
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        aria-label="Increase quantity"
                         className="w-8 h-8 flex items-center justify-center text-text-secondary hover:text-primary transition-colors"
                       >
                         <span className="material-symbols-outlined text-sm">add</span>

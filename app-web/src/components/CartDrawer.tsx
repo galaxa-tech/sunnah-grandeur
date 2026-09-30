@@ -146,9 +146,10 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   <div className="flex items-center justify-between mt-2">
                     {/* Quantity Selector */}
                     <div className="flex items-center border border-border-subtle rounded bg-surface-card">
-                      <button 
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="w-6 h-6 flex items-center justify-center text-text-secondary hover:text-primary transition-colors text-xs"
+                      <button
+                        onClick={() => item.quantity > 1 && updateQuantity(item.id, item.quantity - 1)}
+                        disabled={item.quantity <= 1}
+                        className="w-6 h-6 flex items-center justify-center text-text-secondary hover:text-primary transition-colors text-xs disabled:opacity-30 disabled:hover:text-text-secondary disabled:cursor-not-allowed"
                         aria-label="Decrease quantity"
                       >
                         -

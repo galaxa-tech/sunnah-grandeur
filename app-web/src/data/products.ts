@@ -18,7 +18,7 @@ export const products: Product[] = [
   // ── Fragrance ────────────────────────────────────────────────
   {
     id: '1',
-    name: 'Jo Malone Wood Sage & Sea Salt',
+    name: 'Sea Musk Sage Eau de Parfum',
     category: 'Fragrance',
     categoryId: 'fragrance',
     price: 692,
@@ -30,7 +30,7 @@ export const products: Product[] = [
   },
   {
     id: '2',
-    name: 'Black Opium',
+    name: 'Noir Oud Vanille',
     category: 'Fragrance',
     categoryId: 'fragrance',
     price: 899,
@@ -41,7 +41,7 @@ export const products: Product[] = [
   },
   {
     id: '3',
-    name: 'Acqua di Gio',
+    name: 'Marine Bergamot Cologne',
     category: 'Fragrance',
     categoryId: 'fragrance',
     price: 238,
@@ -52,7 +52,7 @@ export const products: Product[] = [
   },
   {
     id: '4',
-    name: 'La Vie Est Belle',
+    name: 'Jannah Blossom Eau de Parfum',
     category: 'Fragrance',
     categoryId: 'fragrance',
     price: 454,
@@ -63,7 +63,7 @@ export const products: Product[] = [
   },
   {
     id: '5',
-    name: 'Sauvage',
+    name: 'Desert Rose Cologne',
     category: 'Fragrance',
     categoryId: 'fragrance',
     price: 165,
@@ -329,7 +329,7 @@ export const products: Product[] = [
   // ── Ramadan & Eid ────────────────────────────────────────────
   {
     id: '26',
-    name: 'Ramadan Planner 2025',
+    name: 'Ramadan Planner & Dua Journal',
     category: 'Ramadan & Eid',
     categoryId: 'ramadan',
     price: 340,

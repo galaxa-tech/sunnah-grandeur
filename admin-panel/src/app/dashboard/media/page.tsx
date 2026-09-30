@@ -182,8 +182,8 @@ export default function MediaManagementPage() {
       <main className="ml-0 md:ml-64 flex-1 flex flex-col min-h-screen relative bento-pattern overflow-hidden">
         <Header title="Media Library" />
 
-        <div className="p-8 max-w-[1400px] mx-auto w-full relative z-10 space-y-6">
-          <div className="flex justify-between items-center bg-surface-card p-6 rounded-xl border border-border-subtle shadow-xl">
+        <div className="p-4 sm:p-6 md:p-8 max-w-[1400px] mx-auto w-full relative z-10 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 bg-surface-card p-4 sm:p-6 rounded-xl border border-border-subtle shadow-xl">
             <div>
               <h3 className="font-headline-md text-xl text-on-background">Mobile App Media Tab</h3>
               <p className="text-xs text-on-surface-variant mt-1">
@@ -193,7 +193,7 @@ export default function MediaManagementPage() {
             </div>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="flex items-center gap-2 bg-primary text-on-primary px-6 py-2.5 rounded font-label-accent text-xs hover:brightness-110 transition-all shadow-lg shadow-primary/20 shrink-0"
+              className="flex items-center justify-center gap-2 bg-primary text-on-primary px-6 py-2.5 rounded font-label-accent text-xs hover:brightness-110 transition-all shadow-lg shadow-primary/20 shrink-0"
             >
               <span className="material-symbols-outlined text-base">add</span>
               ADD VIDEO
@@ -240,21 +240,24 @@ export default function MediaManagementPage() {
                       <button
                         onClick={() => openEdit(item)}
                         title="Edit"
-                        className="bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-primary hover:text-on-primary"
+                        aria-label="Edit video"
+                        className="bg-black/70 text-white rounded-full w-9 h-9 flex items-center justify-center hover:bg-primary hover:text-on-primary"
                       >
                         <span className="material-symbols-outlined text-sm">edit</span>
                       </button>
                       <button
                         onClick={() => toggleActive(item)}
                         title={item.isActive ? "Hide from app" : "Show in app"}
-                        className="bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-primary hover:text-on-primary"
+                        aria-label={item.isActive ? "Hide from app" : "Show in app"}
+                        className="bg-black/70 text-white rounded-full w-9 h-9 flex items-center justify-center hover:bg-primary hover:text-on-primary"
                       >
                         <span className="material-symbols-outlined text-sm">{item.isActive ? "visibility" : "visibility_off"}</span>
                       </button>
                       <button
                         onClick={() => handleDelete(item.id)}
                         title="Delete"
-                        className="bg-red-500/80 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600"
+                        aria-label="Delete video"
+                        className="bg-red-500/80 text-white rounded-full w-9 h-9 flex items-center justify-center hover:bg-red-600"
                       >
                         <span className="material-symbols-outlined text-sm">delete</span>
                       </button>
@@ -278,17 +281,18 @@ export default function MediaManagementPage() {
 
         {isModalOpen && (
           <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-4">
-            <div className="max-w-[500px] w-full bg-surface-card border border-border-subtle rounded-2xl shadow-2xl">
-              <div className="px-8 py-6 border-b border-border-subtle flex justify-between items-center">
+            <div className="max-w-[500px] w-full bg-surface-card border border-border-subtle rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+              <div className="px-5 sm:px-8 py-5 sm:py-6 border-b border-border-subtle flex justify-between items-center">
                 <h2 className="font-headline-lg text-xl text-primary">{editingId ? "Edit Video" : "Add Video"}</h2>
                 <button
                   onClick={() => { setIsModalOpen(false); resetForm(); }}
-                  className="text-on-surface-variant hover:text-primary transition-colors"
+                  aria-label="Close"
+                  className="text-on-surface-variant hover:text-primary transition-colors p-1 -m-1"
                 >
                   <span className="material-symbols-outlined">close</span>
                 </button>
               </div>
-              <form onSubmit={handleAddMedia} className="p-8 space-y-5">
+              <form onSubmit={handleAddMedia} className="p-5 sm:p-8 space-y-5">
                 {formError && (
                   <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-lg p-3">
                     {formError}
@@ -323,7 +327,7 @@ export default function MediaManagementPage() {
                     placeholder="e.g. The Etiquette of Seeking Knowledge" required
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="block text-xs font-label-accent text-primary tracking-widest uppercase">Scholar / Channel</label>
                     <input

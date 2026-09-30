@@ -34,7 +34,6 @@ export default function ProductClient() {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [giftWrap, setGiftWrap] = useState(false);
-  const [activeThumb, setActiveThumb] = useState(0);
   const [activeTab, setActiveTab] = useState<'description' | 'specs' | 'reviews'>('description');
   const [addedNotification, setAddedNotification] = useState(false);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -120,7 +119,6 @@ export default function ProductClient() {
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
   const savings = product.originalPrice ? product.originalPrice - product.price : 0;
-  const thumbs = [product.image, product.image, product.image];
 
   return (
     <div className="min-h-screen bg-bg-primary pt-[88px] pb-16">
@@ -161,23 +159,6 @@ export default function ProductClient() {
                 </div>
               )}
             </div>
-            {product.image && (
-              <div className="flex gap-2">
-                {thumbs.map((src, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveThumb(i)}
-                    className={`w-16 h-16 rounded border-2 overflow-hidden flex-shrink-0 transition-colors ${
-                      activeThumb === i
-                        ? 'border-primary-container'
-                        : 'border-border-subtle hover:border-primary-container/50'
-                    }`}
-                  >
-                    <img src={src} alt="" className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* CENTER: Product Details */}
@@ -278,8 +259,7 @@ export default function ProductClient() {
                       <span className="text-text-secondary"> scheduled delivery</span>
                     </p>
                     <p className="text-text-secondary text-xs mt-0.5">
-                      Delivering across the USA —{' '}
-                      <span className="text-primary-container cursor-pointer hover:underline">Update location</span>
+                      Delivering across the USA
                     </p>
                   </div>
                 </div>
@@ -297,7 +277,7 @@ export default function ProductClient() {
                   <select
                     value={quantity}
                     onChange={e => setQuantity(Number(e.target.value))}
-                    className="bg-surface-card border border-primary/30 text-text-primary text-sm font-mono font-bold outline-none min-w-[72px] px-3.5 py-2 rounded-lg cursor-pointer hover:border-primary/60 transition-colors"
+                    className="bg-surface-card border border-primary/30 text-text-primary text-sm font-mono font-bold min-w-[72px] px-3.5 py-2 rounded-lg cursor-pointer hover:border-primary/60 focus:outline-none focus:border-primary transition-colors"
                   >
                     {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
                   </select>
@@ -363,15 +343,19 @@ export default function ProductClient() {
 
               <div className="space-y-2 text-xs">
                 {[
-                  { label: 'Shipper / Seller', value: 'Sunnah Grandeur', link: true },
-                  { label: 'Returns', value: '30-day refund / replacement', link: false },
-                  { label: 'Payment', value: 'Secure transaction', link: false },
+                  { label: 'Shipper / Seller', value: 'Sunnah Grandeur', href: '/about' },
+                  { label: 'Returns', value: '30-day refund / replacement', href: null },
+                  { label: 'Payment', value: 'Secure transaction', href: null },
                 ].map(row => (
                   <div key={row.label} className="flex gap-3">
                     <span className="text-text-secondary w-[88px] flex-shrink-0">{row.label}</span>
-                    <span className={row.link ? 'text-primary-container hover:underline cursor-pointer' : 'text-text-primary'}>
-                      {row.value}
-                    </span>
+                    {row.href ? (
+                      <Link href={row.href} className="text-primary-container hover:underline">
+                        {row.value}
+                      </Link>
+                    ) : (
+                      <span className="text-text-primary">{row.value}</span>
+                    )}
                   </div>
                 ))}
               </div>

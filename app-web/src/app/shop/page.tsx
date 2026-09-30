@@ -219,7 +219,7 @@ export default function ShopPage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="bg-surface-card border border-primary/30 text-text-primary text-xs font-mono font-bold outline-none px-3.5 py-2 rounded-lg cursor-pointer uppercase tracking-wider hover:border-primary/60 transition-colors"
+                className="bg-surface-card border border-primary/30 text-text-primary text-xs font-mono font-bold px-3.5 py-2 rounded-lg cursor-pointer uppercase tracking-wider hover:border-primary/60 focus:outline-none focus:border-primary transition-colors"
               >
                 <option value="featured">{t.shop.featured}</option>
                 <option value="priceLow">{t.shop.priceLow}</option>
@@ -321,8 +321,8 @@ export default function ShopPage() {
           {/* ── Product Grid ── */}
           <main className="flex-grow min-w-0">
             {loading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
-                {[1, 2, 3, 4].map((i) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-5">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
                   <div key={i} className="h-80 rounded-2xl bg-surface-card border border-border-subtle animate-pulse" />
                 ))}
               </div>

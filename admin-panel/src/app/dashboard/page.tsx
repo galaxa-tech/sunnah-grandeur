@@ -75,7 +75,7 @@ export default function DashboardPage() {
         <Header title="Overview" />
 
         {/* Dashboard Canvas */}
-        <div className="p-8 max-w-[1400px] mx-auto space-y-8 relative z-10">
+        <div className="p-4 sm:p-6 md:p-8 max-w-[1400px] mx-auto space-y-6 sm:space-y-8 relative z-10">
           {/* Row 1: Stat Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
@@ -217,7 +217,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Functional Quick Actions */}
-            <div className="grid grid-cols-2 grid-rows-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 sm:grid-rows-2 gap-4">
               <Link href="/dashboard/shop" className="bg-primary-container/10 border border-primary/30 hover:border-primary transition-all p-6 flex flex-col justify-between group rounded-lg">
                 <span className="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">add_circle</span>
                 <div>
