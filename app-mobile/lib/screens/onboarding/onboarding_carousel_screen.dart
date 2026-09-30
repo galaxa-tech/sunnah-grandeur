@@ -103,6 +103,11 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
       final ok = await loc.useCurrentLocation();
       if (!mounted) return;
       if (ok) {
+        if (loc.lat != null && loc.lng != null) {
+          await context.read<AdhanSettingsProvider>()
+              .applyRegionalDefaults(loc.lat!, loc.lng!);
+          if (!mounted) return;
+        }
         _goToPage(2);
       } else if (loc.error != null) {
         showAppSnackbar(context, loc.error!,

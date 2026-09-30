@@ -15,9 +15,15 @@
 // two from this tabular result — which is expected and normal for any
 // arithmetic Hijri calendar.
 //
-// No external packages are used — everything below is Julian Day Number
-// (JDN) arithmetic implemented directly.
+// v2: [HijriDate] now uses the **Umm al-Qura** calendar (the official
+// calendar of Saudi Arabia, via the `hijri` package's published month
+// tables, AH 1356–1500) and falls back to the tabular arithmetic below only
+// outside that range. A user adjustment of ±2 days ([HijriDate.adjustmentDays])
+// accounts for local moon-sighting, which can differ from Umm al-Qura.
 // ─────────────────────────────────────────────────────────────────────────
+
+import 'package:hijri/hijri_calendar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Julian Day Number for the first day of the Islamic calendar
 /// (1 Muharram, AH 1) under the civil/tabular epoch convention.
@@ -111,9 +117,42 @@ class HijriDate implements Comparable<HijriDate> {
   final int month; // 1-12
   final int day; // 1-30
 
+  // Umm al-Qura tables shipped with package:hijri.
+  static const _uqMinYear = 1356;
+  static const _uqMaxYear = 1500;
+  static final _uq = HijriCalendar();
+
+  /// Local moon-sighting correction in days (−2…+2). Positive shows a later
+  /// Hijri date. Persisted; call [loadAdjustment] once at startup.
+  static int adjustmentDays = 0;
+  static const _prefsKey = 'hijri_adjust_days';
+
+  static Future<void> loadAdjustment() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      adjustmentDays = (prefs.getInt(_prefsKey) ?? 0).clamp(-2, 2);
+    } catch (_) {}
+  }
+
+  static Future<void> setAdjustment(int days) async {
+    adjustmentDays = days.clamp(-2, 2);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_prefsKey, adjustmentDays);
+    } catch (_) {}
+  }
+
+  static bool _inUq(int hYear) => hYear >= _uqMinYear && hYear <= _uqMaxYear;
+
   /// Builds a [HijriDate] from a Gregorian [DateTime] (time-of-day ignored).
   factory HijriDate.fromGregorian(DateTime date) {
-    final jdn = gregorianToJdn(date.year, date.month, date.day);
+    final g = DateTime(date.year, date.month, date.day)
+        .add(Duration(days: adjustmentDays));
+    if (g.year > 1937 && g.year < 2076) {
+      final h = HijriCalendar.fromDate(g);
+      return HijriDate(h.hYear, h.hMonth, h.hDay);
+    }
+    final jdn = gregorianToJdn(g.year, g.month, g.day);
     final (y, m, d) = jdnToIslamic(jdn);
     return HijriDate(y, m, d);
   }
@@ -123,14 +162,22 @@ class HijriDate implements Comparable<HijriDate> {
 
   /// Converts this Hijri date back to a Gregorian [DateTime] (midnight).
   DateTime toGregorian() {
-    final jdn = islamicToJdn(year, month, day);
-    final (y, m, d) = jdnToGregorian(jdn);
-    return DateTime(y, m, d);
+    final DateTime g;
+    if (_inUq(year)) {
+      final raw = _uq.hijriToGregorian(year, month, day);
+      g = DateTime(raw.year, raw.month, raw.day);
+    } else {
+      final jdn = islamicToJdn(year, month, day);
+      final (y, m, d) = jdnToGregorian(jdn);
+      g = DateTime(y, m, d);
+    }
+    return g.subtract(Duration(days: adjustmentDays));
   }
 
   /// Number of days in [year]/[month] under the tabular calendar
   /// (29 or 30 — 30 in leap years for Dhu al-Hijjah, the 12th month).
   static int daysInMonth(int year, int month) {
+    if (_inUq(year)) return _uq.getDaysInMonth(year, month);
     final thisMonthStart = islamicToJdn(year, month, 1);
     final int nextMonthStart;
     if (month >= 12) {
@@ -170,9 +217,9 @@ class HijriDate implements Comparable<HijriDate> {
 
   @override
   int compareTo(HijriDate other) {
-    final jdn = islamicToJdn(year, month, day);
-    final otherJdn = islamicToJdn(other.year, other.month, other.day);
-    return jdn.compareTo(otherJdn);
+    if (year != other.year) return year.compareTo(other.year);
+    if (month != other.month) return month.compareTo(other.month);
+    return day.compareTo(other.day);
   }
 
   @override

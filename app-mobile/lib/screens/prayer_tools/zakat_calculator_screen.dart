@@ -7,6 +7,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../widgets/eye_row.dart';
 import '../../widgets/sg_pill.dart';
+import '../../providers/store_provider.dart';
 
 /// Zakat Calculator — a self-contained tool screen (no app-wide provider
 /// needed, matching the pattern of TasbeehScreen / ForbiddenTimesScreen:
@@ -22,6 +23,7 @@ class ZakatCalculatorScreen extends StatefulWidget {
 class _ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
   // Standard Zakat reference values.
   static const double _nisabGoldGrams = 85.0;
+  static const double _nisabSilverGrams = 595.0;
   static const double _zakatRate = 0.025; // 2.5%
 
   // Fallback values shown while the live price (see MetalPricesService)
@@ -42,6 +44,29 @@ class _ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
   bool _loadingLivePrices = false;
   bool _usingLivePrices = false;
 
+  // Nisab basis. Silver (595 g) is the lower threshold, preferred by many
+  // scholars as the more cautious choice for cash wealth; gold (85 g) is
+  // also a valid position. The user picks — both are shown.
+  bool _silverBasis = true;
+
+  // Display currency. Metal prices arrive in USD; BDT uses the same
+  // settings/app_config.usdToLocalRate the store uses.
+  String _currency = 'USD';
+  final _debtsCtrl = TextEditingController();
+
+  double get _bdtPerUsd => context.read<StoreProvider>().bdtPerUsd;
+  String get _sym => _currency == 'BDT' ? '৳' : '\$';
+
+  void _setCurrency(String next) {
+    if (next == _currency) return;
+    final f = next == 'BDT' ? _bdtPerUsd : 1 / _bdtPerUsd;
+    for (final ctrl in [_goldPriceCtrl, _silverPriceCtrl]) {
+      final v = double.tryParse(ctrl.text.trim());
+      if (v != null) ctrl.text = (v * f).toStringAsFixed(2);
+    }
+    setState(() => _currency = next);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -51,6 +76,7 @@ class _ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
       _silverGramsCtrl,
       _businessCtrl,
       _investmentsCtrl,
+      _debtsCtrl,
       _goldPriceCtrl,
       _silverPriceCtrl,
     ]) {
@@ -66,8 +92,9 @@ class _ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
     setState(() {
       _loadingLivePrices = false;
       if (prices != null) {
-        _goldPriceCtrl.text = prices.goldUsdPerGram.toStringAsFixed(2);
-        _silverPriceCtrl.text = prices.silverUsdPerGram.toStringAsFixed(2);
+        final f = _currency == 'BDT' ? _bdtPerUsd : 1.0;
+        _goldPriceCtrl.text = (prices.goldUsdPerGram * f).toStringAsFixed(2);
+        _silverPriceCtrl.text = (prices.silverUsdPerGram * f).toStringAsFixed(2);
         _usingLivePrices = true;
       }
     });
@@ -80,6 +107,7 @@ class _ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
     _silverGramsCtrl.dispose();
     _businessCtrl.dispose();
     _investmentsCtrl.dispose();
+    _debtsCtrl.dispose();
     _goldPriceCtrl.dispose();
     _silverPriceCtrl.dispose();
     super.dispose();
@@ -102,8 +130,13 @@ class _ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
 
     final goldValue = goldGrams * goldPrice;
     final silverValue = silverGrams * silverPrice;
-    final totalWealth = cash + goldValue + silverValue + business + investments;
-    final nisab = goldPrice * _nisabGoldGrams;
+    final debts = _num(_debtsCtrl);
+    final totalWealth =
+        (cash + goldValue + silverValue + business + investments - debts)
+            .clamp(0.0, double.infinity);
+    final nisabGold = goldPrice * _nisabGoldGrams;
+    final nisabSilver = silverPrice * _nisabSilverGrams;
+    final nisab = _silverBasis ? nisabSilver : nisabGold;
     final meetsNisab = nisab > 0 && totalWealth >= nisab;
     final zakatDue = meetsNisab ? totalWealth * _zakatRate : 0.0;
 
@@ -171,6 +204,13 @@ class _ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
                 ),
 
                 EyeRow(label: lang.tr('your_zakatable_assets')),
+                _Segmented(
+                  c: c,
+                  options: const ['USD \$', 'BDT ৳'],
+                  selected: _currency == 'USD' ? 0 : 1,
+                  onSelect: (i) => _setCurrency(i == 0 ? 'USD' : 'BDT'),
+                ),
+                const SizedBox(height: 8),
                 _AmountField(
                   c: c, label: lang.tr('cash_savings'),
                   hint: lang.tr('cash_savings_hint'),
@@ -198,6 +238,12 @@ class _ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
                   hint: lang.tr('other_investments_hint'),
                   controller: _investmentsCtrl,
                 ),
+                _AmountField(
+                  c: c, label: lang.tr('debts_due'),
+                  hint: lang.tr('debts_due_hint'),
+                  controller: _debtsCtrl,
+                  prefix: _sym,
+                ),
 
                 const SizedBox(height: 6),
                 EyeRow(
@@ -223,16 +269,31 @@ class _ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
                   c: c, label: lang.tr('gold_price_gram'),
                   hint: lang.tr('gold_price_gram_hint'),
                   controller: _goldPriceCtrl,
-                  prefix: '\$',
+                  prefix: _sym,
                 ),
                 _AmountField(
                   c: c, label: lang.tr('silver_price_gram'),
                   hint: lang.tr('silver_price_gram_hint'),
                   controller: _silverPriceCtrl,
-                  prefix: '\$',
+                  prefix: _sym,
                 ),
 
                 const SizedBox(height: 10),
+                EyeRow(label: lang.tr('nisab_basis')),
+                _Segmented(
+                  c: c,
+                  options: [
+                    '${lang.tr('silver')} · 595 g · $_sym${nisabSilver.toStringAsFixed(0)}',
+                    '${lang.tr('gold')} · 85 g · $_sym${nisabGold.toStringAsFixed(0)}',
+                  ],
+                  selected: _silverBasis ? 0 : 1,
+                  onSelect: (i) => setState(() => _silverBasis = i == 0),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 6, bottom: 4),
+                  child: Text(lang.tr('nisab_basis_note'),
+                      style: AppTextStyles.bodyMuted(c, size: 10.5)),
+                ),
                 EyeRow(label: lang.tr('zakat_result')),
                 _ResultCard(
                   c: c,
@@ -243,6 +304,7 @@ class _ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
                   zakatDue: zakatDue,
                   goldValue: goldValue,
                   silverValue: silverValue,
+                  symbol: _sym,
                 ),
               ]),
             ),
@@ -337,8 +399,10 @@ class _ResultCard extends StatelessWidget {
     required this.zakatDue,
     required this.goldValue,
     required this.silverValue,
+    required this.symbol,
   });
 
+  final String symbol;
   final AppColors c;
   final LanguageProvider lang;
   final double totalWealth;
@@ -361,7 +425,7 @@ class _ResultCard extends StatelessWidget {
       buf.write(digits[i]);
       if (posFromEnd > 1 && posFromEnd % 3 == 1) buf.write(',');
     }
-    return '${negative ? '-' : ''}\$$buf.${parts[1]}';
+    return '${negative ? '-' : ''}$symbol$buf.${parts[1]}';
   }
 
   @override
@@ -432,6 +496,57 @@ class _BackBtn extends StatelessWidget {
           border: Border.all(color: c.bd2),
         ),
         child: Icon(Icons.chevron_left_rounded, color: c.gold, size: 20),
+      ),
+    );
+  }
+}
+
+class _Segmented extends StatelessWidget {
+  const _Segmented({
+    required this.c,
+    required this.options,
+    required this.selected,
+    required this.onSelect,
+  });
+  final AppColors c;
+  final List<String> options;
+  final int selected;
+  final ValueChanged<int> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: c.surf,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: c.bd),
+      ),
+      child: Row(
+        children: List.generate(options.length, (i) {
+          final on = i == selected;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => onSelect(i),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 6),
+                decoration: BoxDecoration(
+                  color: on ? c.goldSurface : Colors.transparent,
+                  borderRadius: BorderRadius.circular(9),
+                  border: Border.all(
+                      color: on ? c.gold.withValues(alpha: 0.5) : Colors.transparent),
+                ),
+                child: Text(options[i],
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.body(c,
+                        size: 11.5,
+                        color: on ? c.gold : c.t2,
+                        weight: on ? FontWeight.w700 : FontWeight.w500)),
+              ),
+            ),
+          );
+        }),
       ),
     );
   }

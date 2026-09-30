@@ -6,7 +6,10 @@ import '../../main.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../widgets/eye_row.dart';
-import '../../widgets/sg_pill.dart';
+import '../../widgets/auth_widgets.dart';
+import '../../widgets/app_snackbar.dart';
+import '../../widgets/net_image.dart';
+import '../../config/app_info.dart';
 import '../../models/adhan_settings.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/adhan_settings_provider.dart';
@@ -25,6 +28,7 @@ import 'prayer_method_screen.dart';
 import 'invite_friends_screen.dart';
 import 'rate_app_screen.dart';
 import 'support_us_screen.dart';
+import '../store/order_history_screen.dart';
 
 /// Opens a page of the public storefront (policies, support) in the browser.
 /// Store review requires these to be reachable from inside the app.
@@ -34,6 +38,37 @@ Future<void> _openSitePage(String path) =>
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
+
+  Future<void> _confirmSignOut(BuildContext context) async {
+    final c = AppColors.of(context);
+    final lang = context.read<LanguageProvider>();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: c.elev,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text(lang.tr('sign_out_q'), style: AppTextStyles.heading(c, fontSize: 18)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(lang.tr('cancel'), style: TextStyle(color: c.t2)),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: c.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(lang.tr('sign_out')),
+          ),
+        ],
+      ),
+    );
+    if (ok == true && context.mounted) {
+      await context.read<AuthProvider>().signOut();
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true)
+            .pushNamedAndRemoveUntil('/welcome', (_) => false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,12 +99,18 @@ class ProfileScreen extends StatelessWidget {
             // Stats bar
             _StatsBar(c: c, lang: lang),
 
-            // Guest upgrade banner
-            if (auth.isGuest) _GuestBanner(c: c),
+            // Guest upgrade card
+            if (auth.isGuest) const _GuestCta(),
 
             EyeRow(label: lang.tr('settings')),
 
             _MenuSection(c: c, items: [
+              if (auth.hasAccount)
+                _MenuItem(icon: Icons.receipt_long_outlined,
+                    label: lang.tr('my_orders'),
+                    sub: lang.tr('my_orders_sub'),
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OrderHistoryScreen())),
+                ),
               _MenuItem(icon: Icons.person_outline_rounded,
                   label: lang.tr('account_identity'),
                   sub: lang.tr('account_sub'),
@@ -156,187 +197,43 @@ class ProfileScreen extends StatelessWidget {
 
             // Sign in / Sign out
             Container(
-              margin: const EdgeInsets.fromLTRB(18, 6, 18, 20),
+              margin: const EdgeInsets.fromLTRB(18, 6, 18, 8),
+              width: double.infinity,
               child: auth.isGuest
-                  ? GestureDetector(
+                  ? AuthPrimaryButton(
+                      label: lang.tr('sign_in_create_account'),
+                      icon: Icons.login_rounded,
                       onTap: () => Navigator.push(context,
                           MaterialPageRoute(builder: (_) => const LoginScreen())),
-                      child: Container(
-                        width: double.infinity,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          gradient: c.goldGradient,
-                          borderRadius: BorderRadius.circular(14),
-                          boxShadow: [
-                            BoxShadow(
-                              color: c.gold.withValues(alpha: 0.25),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.login_rounded,
-                                color: Colors.white, size: 16),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Sign In / Create Account',
-                              style: AppTextStyles.button(c),
-                            ),
-                          ],
-                        ),
-                      ),
                     )
                   : OutlinedButton.icon(
-                      onPressed: () => auth.signOut(),
+                      onPressed: () => _confirmSignOut(context),
                       icon: Icon(Icons.logout_rounded, color: c.red, size: 16),
                       label: Text(lang.tr('sign_out'),
                           style: AppTextStyles.body(c, color: c.red, size: 13)),
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: c.red.withValues(alpha: 0.22)),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 12),
+                        side: BorderSide(color: c.red.withValues(alpha: 0.3)),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                     ),
+            ),
+
+            // Version footer
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 10, 18, 24),
+              child: Column(children: [
+                Image.asset('assets/images/logo.png', width: 36, height: 36),
+                const SizedBox(height: 6),
+                Text('${lang.tr('app_name')} v$kAppVersion',
+                    style: AppTextStyles.bodyMuted(c, size: 11)),
+                Text(lang.tr('by_sunnah_grandeur'),
+                    style: AppTextStyles.bodyMuted(c, size: 10)),
+              ]),
             ),
           ]),
         ),
       ),
-    );
-  }
-}
-
-// ── Guest Banner ──────────────────────────────────────────────────────────────
-class _GuestBanner extends StatelessWidget {
-  const _GuestBanner({required this.c});
-  final AppColors c;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(18, 4, 18, 4),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: c.goldSurface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: c.gold.withValues(alpha: 0.25)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36, height: 36,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: c.gold.withValues(alpha: 0.12),
-            ),
-            child: Icon(Icons.person_outline_rounded, color: c.gold, size: 18),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'You\'re browsing as a guest',
-                  style: GoogleFonts.inter(
-                    color: c.t1,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Sign in to sync your data across devices.',
-                  style: GoogleFonts.inter(
-                    color: c.t3,
-                    fontSize: 11.5,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const RegisterScreen())),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                gradient: c.goldGradient,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                'Join',
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Profile Card ──────────────────────────────────────────────────────────────
-class _ProfileCard extends StatelessWidget {
-  const _ProfileCard({required this.c, required this.auth, required this.lang});
-  final AppColors c;
-  final AuthProvider auth;
-  final LanguageProvider lang;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(18, 6, 18, 10),
-      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
-      decoration: c.goldCardDecoration,
-      child: Row(children: [
-        Container(
-          width: 56, height: 56,
-          decoration: BoxDecoration(shape: BoxShape.circle, gradient: c.goldGradient),
-          child: auth.isLoading
-            ? const Center(child: CircularProgressIndicator(color: Colors.white))
-            : Center(
-                child: Text(
-                  auth.userData?.name.isNotEmpty == true
-                      ? auth.userData!.name[0].toUpperCase()
-                      : 'U',
-                  style: AppTextStyles.body(c, size: 20, color: Colors.white,
-                      weight: FontWeight.w600),
-                ),
-              ),
-        ),
-        const SizedBox(width: 14),
-        Expanded(child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(auth.userData?.name ?? lang.tr('guest_user'),
-                style: AppTextStyles.heading(c, fontSize: 19)),
-            const SizedBox(height: 2),
-            Text(
-              auth.firebaseUser?.isAnonymous == true
-                  ? lang.tr('anonymous_account')
-                  : lang.tr('verified_member'),
-              style: AppTextStyles.bodyMuted(c, size: 10),
-            ),
-            const SizedBox(height: 7),
-            // There's no real membership tier yet — don't claim "Pro" for
-            // every guest and signed-in user alike. A signed-in (non-
-            // anonymous) account is genuinely active; a guest gets no pill.
-            if (auth.firebaseUser?.isAnonymous != true)
-              Row(children: [
-                SgPill(label: lang.tr('active'), variant: 'green'),
-              ]),
-          ],
-        )),
-      ]),
     );
   }
 }
@@ -503,5 +400,195 @@ String _languageDisplayName(String code) {
     case 'ar': return 'Arabic';
     case 'bn': return 'Bangla';
     default:   return 'English';
+  }
+}
+
+// ── Profile header card ──────────────────────────────────────────────────────
+class _ProfileCard extends StatelessWidget {
+  const _ProfileCard({required this.c, required this.auth, required this.lang});
+  final AppColors c;
+  final AuthProvider auth;
+  final LanguageProvider lang;
+
+  @override
+  Widget build(BuildContext context) {
+    final user = auth.firebaseUser;
+    final guest = auth.isGuest || user == null;
+    final name = guest
+        ? lang.tr('guest_user')
+        : (auth.userData?.name.isNotEmpty == true
+            ? auth.userData!.name
+            : (user.displayName ?? user.email?.split('@').first ?? ''));
+    final email = guest ? '' : (user.email ?? auth.userData?.email ?? '');
+    final photo = guest ? null : user.photoURL;
+    final since = user?.metadata.creationTime;
+    final initials = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .take(2)
+        .map((w) => w[0].toUpperCase())
+        .join();
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(18, 8, 18, 12),
+      padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF2A1C05), Color(0xFF5A4012), Color(0xFF8B6824)],
+        ),
+        border: Border.all(color: c.gold.withValues(alpha: 0.45)),
+        boxShadow: [
+          BoxShadow(
+            color: c.gold.withValues(alpha: c.isDark ? 0.18 : 0.12),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(children: [
+        Container(
+          width: 70,
+          height: 70,
+          padding: const EdgeInsets.all(2.5),
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(colors: [Color(0xFFF3DE9B), Color(0xFFC9A84C)]),
+          ),
+          child: ClipOval(
+            child: Container(
+              color: const Color(0xFF1A1206),
+              alignment: Alignment.center,
+              child: auth.isLoading
+                  ? const SizedBox.square(
+                      dimension: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFE6C364)))
+                  : photo != null && photo.isNotEmpty
+                      ? NetImage(photo, width: 65, height: 65)
+                      : guest || initials.isEmpty
+                          ? const Icon(Icons.person_rounded, color: Color(0xFFE6C364), size: 34)
+                          : Text(initials,
+                              style: GoogleFonts.cormorantGaramond(
+                                  fontSize: 28, fontWeight: FontWeight.w700,
+                                  color: const Color(0xFFF3DE9B))),
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.notoSerif(
+                    fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
+            if (email.isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(email,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(fontSize: 12, color: Colors.white70)),
+            ],
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.25),
+                borderRadius: BorderRadius.circular(100),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(guest ? Icons.explore_outlined : Icons.verified_rounded,
+                    size: 13, color: guest ? Colors.white70 : const Color(0xFF7DD4A8)),
+                const SizedBox(width: 5),
+                Text(
+                  guest
+                      ? lang.tr('guest_label')
+                      : since != null
+                          ? '${lang.tr('member_since')} ${since.year}'
+                          : lang.tr('verified_member'),
+                  style: GoogleFonts.inter(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w600),
+                ),
+              ]),
+            ),
+          ]),
+        ),
+      ]),
+    );
+  }
+}
+
+// ── Guest call-to-action ─────────────────────────────────────────────────────
+class _GuestCta extends StatefulWidget {
+  const _GuestCta();
+
+  @override
+  State<_GuestCta> createState() => _GuestCtaState();
+}
+
+class _GuestCtaState extends State<_GuestCta> {
+  bool _loading = false;
+
+  Future<void> _google() async {
+    setState(() => _loading = true);
+    final auth = context.read<AuthProvider>();
+    final ok = await auth.signInWithGoogle();
+    if (!mounted) return;
+    setState(() => _loading = false);
+    final msg = auth.error ?? '';
+    if (!ok && msg.isNotEmpty) {
+      showAppSnackbar(context, msg, type: AppSnackbarType.error);
+    } else if (ok) {
+      showAppSnackbar(context, context.read<LanguageProvider>().tr('signed_in_welcome'),
+          type: AppSnackbarType.success);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final lang = context.watch<LanguageProvider>();
+    Widget perk(IconData i, String k) => Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Row(children: [
+            Icon(i, size: 16, color: c.gold),
+            const SizedBox(width: 8),
+            Expanded(child: Text(lang.tr(k), style: AppTextStyles.body(c, size: 12.5, color: c.t2))),
+          ]),
+        );
+    return Container(
+      margin: const EdgeInsets.fromLTRB(18, 10, 18, 4),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: c.surf,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: c.gold.withValues(alpha: 0.35)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text(lang.tr('guest_cta_title'),
+            style: GoogleFonts.notoSerif(fontSize: 16, fontWeight: FontWeight.w700, color: c.t1)),
+        const SizedBox(height: 10),
+        perk(Icons.shopping_bag_outlined, 'guest_perk_orders'),
+        perk(Icons.sync_rounded, 'guest_perk_sync'),
+        perk(Icons.bookmark_outline_rounded, 'guest_perk_bookmarks'),
+        const SizedBox(height: 8),
+        AuthSocialButton(
+          kind: AuthProviderKind.google,
+          label: lang.tr('continue_with_google'),
+          loading: _loading,
+          onTap: _google,
+        ),
+        const SizedBox(height: 8),
+        TextButton(
+          onPressed: () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const RegisterScreen())),
+          child: Text(lang.tr('create_account_with_email'),
+              style: AppTextStyles.body(c, size: 13, color: c.gold, weight: FontWeight.w700)),
+        ),
+      ]),
+    );
   }
 }

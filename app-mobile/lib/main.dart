@@ -33,6 +33,7 @@ import 'screens/auth/register_screen.dart';
 import 'screens/prayer_tools/adhan_settings_screen.dart';
 import 'screens/prayer_tools/zakat_calculator_screen.dart';
 import 'screens/prayer_tools/hijri_calendar_screen.dart';
+import 'utils/hijri_converter.dart' show HijriDate;
 import 'screens/profile/location_settings_screen.dart';
 
 // ── ThemeMode + text-scale notifier ──────────────────────────────────────────
@@ -99,6 +100,7 @@ void main() async {
   // NotificationService (which only runs its own init, including this same
   // call, on native). Safe to call more than once.
   tz_data.initializeTimeZones();
+  await HijriDate.loadAdjustment();
 
   // ── Background services (only when Firebase is healthy) ───────────────────
   if (firebaseError == null) {

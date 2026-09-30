@@ -7,11 +7,13 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../providers/language_provider.dart';
+import '../../config/app_info.dart';
 
 // The app has no per-user referral-code system yet — every user shares the
 // same real, live link rather than a fabricated personalized one.
-const _shareLink = 'https://sunnah-grandeur-app.web.app';
-String _shareMsg(LanguageProvider lang) => '${lang.tr('share_msg_body')}\n$_shareLink';
+const _shareLink = kWebAppUrl;
+String _shareMsg(LanguageProvider lang) =>
+    '${lang.tr('share_msg_body')}\n\nAndroid: $kPlayStoreUrl\nWeb: $kWebAppUrl';
 
 Future<void> _openShareUrl(BuildContext context, Uri uri) async {
   final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);

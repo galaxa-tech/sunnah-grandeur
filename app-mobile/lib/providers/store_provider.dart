@@ -54,6 +54,9 @@ class StoreProvider extends ChangeNotifier {
   /// from what the customer is actually billed.
   int get taxRateBps => _taxRateBps;
   double get taxRate => _taxRateBps / 10000;
+
+  /// Taka per US dollar (inverse of settings/app_config.usdToLocalRate).
+  double get bdtPerUsd => 1 / _usdToLocalRate;
   String? get selectedCategoryId => _selectedCategoryId;
   String get searchQuery => _searchQuery;
   StoreSort get sort => _sort;

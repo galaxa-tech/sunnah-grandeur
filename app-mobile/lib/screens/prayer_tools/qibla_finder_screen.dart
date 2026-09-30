@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_qiblah/flutter_qiblah.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../../providers/language_provider.dart';
+import '../../providers/location_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 
@@ -50,44 +53,7 @@ class _QiblaFinderScreenState extends State<QiblaFinderScreen> {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
 
-    if (kIsWeb) {
-      return Scaffold(
-        backgroundColor: c.bg,
-        body: SafeArea(
-          child: Column(children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 10, 18, 4),
-              child: Row(children: [
-                _BackBtn(c: c),
-                const SizedBox(width: 10),
-                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Qibla Finder', style: AppTextStyles.brandSmall(c)),
-                  Text('Mobile only', style: AppTextStyles.brandTag(c)),
-                ])),
-              ]),
-            ),
-            Expanded(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.explore_outlined, color: c.gold, size: 56),
-                    const SizedBox(height: 20),
-                    Text('Compass Not Available', style: AppTextStyles.heading(c, fontSize: 18)),
-                    const SizedBox(height: 10),
-                    Text(
-                      'The Qibla compass requires device motion sensors.\nPlease use the Sunnah Grandeur mobile app.',
-                      textAlign: TextAlign.center,
-                      style: AppTextStyles.bodyMuted(c, size: 13),
-                    ),
-                  ]),
-                ),
-              ),
-            ),
-          ]),
-        ),
-      );
-    }
+    if (kIsWeb) return const _WebQibla();
 
     return Scaffold(
       backgroundColor: c.bg,
@@ -513,4 +479,155 @@ class _BackBtn extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Initial great-circle bearing (degrees from true north) from a point to
+/// the Kaaba.
+double qiblaBearing(double lat, double lng) {
+  const kLat = 21.422487, kLng = 39.826206;
+  final phi1 = lat * math.pi / 180, phi2 = kLat * math.pi / 180;
+  final dLambda = (kLng - lng) * math.pi / 180;
+  final y = math.sin(dLambda) * math.cos(phi2);
+  final x = math.cos(phi1) * math.sin(phi2) -
+      math.sin(phi1) * math.cos(phi2) * math.cos(dLambda);
+  return (math.atan2(y, x) * 180 / math.pi + 360) % 360;
+}
+
+/// Browsers can't read a reliable compass heading, so on the web app the
+/// Qibla is shown as a bearing from north on a static compass rose, with
+/// instructions to line it up using any compass.
+class _WebQibla extends StatelessWidget {
+  const _WebQibla();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final lang = context.watch<LanguageProvider>();
+    final loc = context.watch<LocationProvider>();
+    final lat = loc.lat, lng = loc.lng;
+    final bearing = (lat != null && lng != null) ? qiblaBearing(lat, lng) : null;
+
+    return Scaffold(
+      backgroundColor: c.bg,
+      body: SafeArea(
+        child: Column(children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 10, 18, 4),
+            child: Row(children: [
+              _BackBtn(c: c),
+              const SizedBox(width: 10),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(lang.tr('qibla_finder'), style: AppTextStyles.brandSmall(c)),
+                Text(loc.hasLocation ? loc.locationLabel : lang.tr('location_default'),
+                    style: AppTextStyles.brandTag(c)),
+              ])),
+            ]),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(children: [
+                if (bearing == null) ...[
+                  const SizedBox(height: 40),
+                  Icon(Icons.location_off_outlined, color: c.gold, size: 48),
+                  const SizedBox(height: 14),
+                  Text(lang.tr('qibla_need_location'),
+                      textAlign: TextAlign.center, style: AppTextStyles.body(c, size: 14)),
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                        backgroundColor: c.gold, foregroundColor: const Color(0xFF1A1200)),
+                    onPressed: () => context.read<LocationProvider>().useCurrentLocation(),
+                    icon: const Icon(Icons.my_location_rounded, size: 18),
+                    label: Text(lang.tr('use_current_location')),
+                  ),
+                ] else ...[
+                  SizedBox(
+                    width: 280,
+                    height: 280,
+                    child: CustomPaint(painter: _RosePainter(c: c, bearing: bearing)),
+                  ),
+                  const SizedBox(height: 22),
+                  Text('${bearing.toStringAsFixed(0)}°',
+                      style: GoogleFonts.cormorantGaramond(
+                          fontSize: 48, fontWeight: FontWeight.w700, color: c.gold)),
+                  Text(lang.tr('qibla_from_north'),
+                      style: AppTextStyles.bodyMuted(c, size: 13)),
+                  const SizedBox(height: 18),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: c.surfaceCardDecoration,
+                    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Icon(Icons.info_outline_rounded, color: c.gold, size: 18),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(lang.tr('qibla_web_hint'),
+                            style: AppTextStyles.body(c, size: 12.5, color: c.t2)),
+                      ),
+                    ]),
+                  ),
+                ],
+              ]),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+}
+
+class _RosePainter extends CustomPainter {
+  _RosePainter({required this.c, required this.bearing});
+  final AppColors c;
+  final double bearing;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final r = size.width / 2;
+    final ring = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..color = c.gold.withValues(alpha: 0.5);
+    canvas.drawCircle(center, r - 2, ring);
+    canvas.drawCircle(center, r - 18, ring..color = c.bd2);
+
+    final tick = Paint()..color = c.t3..strokeWidth = 1.2;
+    for (var d = 0; d < 360; d += 15) {
+      final a = (d - 90) * math.pi / 180;
+      final inner = d % 90 == 0 ? r - 30 : r - 24;
+      canvas.drawLine(center + Offset(math.cos(a), math.sin(a)) * inner,
+          center + Offset(math.cos(a), math.sin(a)) * (r - 18), tick);
+    }
+    const labels = ['N', 'E', 'S', 'W'];
+    for (var i = 0; i < 4; i++) {
+      final a = (i * 90 - 90) * math.pi / 180;
+      final tp = TextPainter(
+        text: TextSpan(
+          text: labels[i],
+          style: TextStyle(
+              color: i == 0 ? c.red : c.t2, fontSize: 15, fontWeight: FontWeight.w800),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(canvas,
+          center + Offset(math.cos(a), math.sin(a)) * (r - 44) - Offset(tp.width / 2, tp.height / 2));
+    }
+
+    // Qibla needle
+    final a = (bearing - 90) * math.pi / 180;
+    final tip = center + Offset(math.cos(a), math.sin(a)) * (r - 36);
+    final needle = Paint()
+      ..color = c.gold
+      ..strokeWidth = 5
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(center, tip, needle);
+    canvas.drawCircle(tip, 11, Paint()..color = c.gold);
+    final kaaba = Rect.fromCenter(center: tip, width: 11, height: 11);
+    canvas.drawRect(kaaba, Paint()..color = const Color(0xFF111111));
+    canvas.drawCircle(center, 7, Paint()..color = c.gold2);
+  }
+
+  @override
+  bool shouldRepaint(covariant _RosePainter old) => old.bearing != bearing;
 }
