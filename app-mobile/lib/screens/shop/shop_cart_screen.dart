@@ -8,6 +8,7 @@ import '../../providers/store_provider.dart';
 import '../../providers/language_provider.dart';
 import '../store/checkout_screen.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/net_image.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ShopCartScreen
@@ -159,10 +160,9 @@ class _CartItemsList extends StatelessWidget {
               ),
               clipBehavior: Clip.antiAlias,
               child: item.product.primaryImage.isNotEmpty
-                  ? Image.network(item.product.primaryImage,
+                  ? NetImage(item.product.primaryImage,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          _fallback(item.product.categoryId, c.gold))
+                      fallback: _fallback(item.product.categoryId, c.gold))
                   : _fallback(item.product.categoryId, c.gold),
             ),
             const SizedBox(width: 16),

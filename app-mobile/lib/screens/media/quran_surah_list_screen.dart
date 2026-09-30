@@ -150,8 +150,7 @@ class _SurahRow extends StatelessWidget {
           const SizedBox(width: 10),
           Directionality(
             textDirection: TextDirection.rtl,
-            child: Text(surah.name,
-                style: AppTextStyles.heading(c, color: c.gold2, fontSize: 17)),
+            child: Text(surah.name, style: surahNameStyle(c.gold2, size: 18)),
           ),
         ]),
       ),

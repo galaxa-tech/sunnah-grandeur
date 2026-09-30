@@ -9,6 +9,7 @@ import '../../models/product_model.dart';
 import '../../widgets/shop/product_reviews_section.dart';
 import 'shop_cart_screen.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/net_image.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ShopProductDetailScreen
@@ -172,13 +173,12 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
               ),
               clipBehavior: Clip.antiAlias,
               child: p.primaryImage.isNotEmpty
-                  ? Image.network(
+                  ? NetImage(
                       _activeThumb < _thumbs.length
                           ? _thumbs[_activeThumb]
                           : p.primaryImage,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          _buildGradientFallback(p),
+                      fallback: _buildGradientFallback(p),
                     )
                   : _buildGradientFallback(p),
             ),
@@ -205,9 +205,8 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: p.primaryImage.isNotEmpty && e.value.isNotEmpty
-                      ? Image.network(e.value, fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
-                              _buildGradientFallback(p))
+                      ? NetImage(e.value, fit: BoxFit.cover,
+                          fallback: _buildGradientFallback(p))
                       : _buildGradientFallback(p),
                 ),
               ),

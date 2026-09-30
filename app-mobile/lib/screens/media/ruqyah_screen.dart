@@ -8,6 +8,8 @@ import '../../providers/media_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../models/video_model.dart';
 import 'video_player_screen.dart';
+import '../../widgets/net_image.dart';
+import '../../widgets/quran_ruqyah_list.dart';
 
 class RuqyahScreen extends StatelessWidget {
   const RuqyahScreen({super.key});
@@ -108,25 +110,26 @@ class RuqyahScreen extends StatelessWidget {
                                 video: media.ruqyahMedia.first),
                           ),
 
-                        EyeRow(label: lang.tr('all_recitations')),
+                        EyeRow(label: lang.tr('ruqyah_from_quran')),
+                        const QuranRuqyahList(),
 
-                        if (media.ruqyahMedia.isEmpty)
+                        if (media.ruqyahMedia.isNotEmpty)
+                          EyeRow(label: lang.tr('ruqyah_videos')),
+                        if (media.ruqyahMedia.isEmpty && !media.ruqyahFailed)
                           Padding(
-                            padding: const EdgeInsets.all(40),
+                            padding: const EdgeInsets.fromLTRB(28, 16, 28, 8),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.healing_rounded,
-                                    color: c.t3, size: 36),
-                                const SizedBox(height: 12),
-                                Text(lang.tr('no_recitations_available'),
-                                    style:
-                                        AppTextStyles.bodyMuted(c)),
-                                const SizedBox(height: 6),
-                                Text(
-                                    lang.tr('pull_refresh_hint'),
-                                    style: AppTextStyles.bodyMuted(c,
-                                        size: 11),
+                                Icon(Icons.hourglass_empty_rounded,
+                                    color: c.t3, size: 26),
+                                const SizedBox(height: 8),
+                                Text(lang.tr('ruqyah_empty_title'),
+                                    textAlign: TextAlign.center,
+                                    style: AppTextStyles.label(c, size: 13)),
+                                const SizedBox(height: 4),
+                                Text(lang.tr('ruqyah_empty_body'),
+                                    style: AppTextStyles.bodyMuted(c, size: 11),
                                     textAlign: TextAlign.center),
                               ],
                             ),
@@ -186,10 +189,10 @@ class _FeaturedCard extends StatelessWidget {
         SizedBox(
           height: 140,
           child: Stack(fit: StackFit.expand, children: [
-            Image.network(
+            NetImage(
               'https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg',
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              fallback: Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,

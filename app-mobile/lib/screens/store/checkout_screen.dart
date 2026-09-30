@@ -14,6 +14,7 @@ import '../../services/functions/order_service.dart';
 import '../../widgets/auth_gate.dart';
 import 'order_confirmed_screen.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/net_image.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CheckoutScreen — full address form + Stripe payment
@@ -550,8 +551,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: item.product.primaryImage.isNotEmpty
-                    ? Image.network(item.product.primaryImage, fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Icon(
+                    ? NetImage(item.product.primaryImage, fit: BoxFit.cover,
+                        fallback: Icon(
                             Icons.shopping_bag_outlined, color: c.gold, size: 20))
                     : Icon(Icons.shopping_bag_outlined, color: c.gold, size: 20),
               ),
@@ -617,8 +618,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: item.product.primaryImage.isNotEmpty
-                      ? Image.network(item.product.primaryImage, fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Icon(
+                      ? NetImage(item.product.primaryImage, fit: BoxFit.cover,
+                          fallback: Icon(
                               Icons.shopping_bag_outlined, color: c.gold, size: 16))
                       : Icon(Icons.shopping_bag_outlined, color: c.gold, size: 16),
                 ),

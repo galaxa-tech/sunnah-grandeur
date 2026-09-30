@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/product_model.dart';
 import '../../theme/app_colors.dart';
+import '../net_image.dart';
 
 /// ProductCard — pixel-for-pixel match of the website ProductCard component.
 ///
@@ -231,10 +232,10 @@ class _ProductCardState extends State<ProductCard> {
               ])
             : const ColorFilter.mode(
                 Colors.transparent, BlendMode.multiply),
-        child: Image.network(
+        child: NetImage(
           p.primaryImage,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _buildGradientFallback(p),
+          fallback: _buildGradientFallback(p),
         ),
       );
     }

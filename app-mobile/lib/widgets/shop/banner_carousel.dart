@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/store_category_model.dart';
 import '../../theme/app_colors.dart';
+import '../net_image.dart';
 
 
 /// Auto-advancing promo banner carousel — the admin-managed
@@ -70,8 +71,8 @@ class _BannerCarouselState extends State<BannerCarousel> {
                       fit: StackFit.expand,
                       children: [
                         if (banner.imageUrl != null && banner.imageUrl!.isNotEmpty)
-                          Image.network(banner.imageUrl!, fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(color: c.bg))
+                          NetImage(banner.imageUrl!, fit: BoxFit.cover,
+                              fallback: Container(color: c.bg))
                         else
                           Container(
                             decoration: const BoxDecoration(

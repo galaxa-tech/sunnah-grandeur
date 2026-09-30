@@ -16,7 +16,9 @@ class QuranProvider extends ChangeNotifier {
   bool _loadingSurahs = false;
   String? _surahsError;
 
-  final Map<int, SurahDetail> _surahCache = {};
+  // Keyed by '<surah>|<translation edition>' so switching app language
+  // loads the matching translation instead of showing a stale one.
+  final Map<String, SurahDetail> _surahCache = {};
   int? _loadingSurahNumber;
   String? _surahDetailError;
 
@@ -54,16 +56,22 @@ class QuranProvider extends ChangeNotifier {
   }
 
   /// Returns a cached surah if present, else fetches and caches it.
-  SurahDetail? cachedSurah(int number) => _surahCache[number];
+  SurahDetail? cachedSurah(int number, {String langCode = 'en'}) =>
+      _surahCache[_key(number, langCode)];
 
-  Future<void> loadSurah(int number, {bool forceRefresh = false}) async {
-    if (!forceRefresh && _surahCache.containsKey(number)) return;
+  String _key(int number, String langCode) =>
+      '$number|${QuranApiService.translationFor(langCode)}';
+
+  Future<void> loadSurah(int number,
+      {String langCode = 'en', bool forceRefresh = false}) async {
+    final key = _key(number, langCode);
+    if (!forceRefresh && _surahCache.containsKey(key)) return;
     _loadingSurahNumber = number;
     _surahDetailError = null;
     notifyListeners();
     try {
-      final detail = await _api.fetchSurah(number);
-      _surahCache[number] = detail;
+      final detail = await _api.fetchSurah(number, langCode: langCode);
+      _surahCache[key] = detail;
       _surahDetailError = null;
     } catch (e) {
       debugPrint('[QuranProvider] surah $number: $e');
