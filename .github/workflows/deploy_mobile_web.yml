@@ -28,8 +28,24 @@ jobs:
         run: flutter analyze
         working-directory: ./app-mobile
 
+      # Same gitignored api_keys.json the Android build reconstructs, so the
+      # web app gets the Places/Maps key too (Masjid Finder).
+      - name: Write api_keys.json from secrets
+        env:
+          PLACES_API_KEY: ${{ secrets.PLACES_API_KEY }}
+          STRIPE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+        run: |
+          cat > app-mobile/api_keys.json <<EOF
+          {
+            "PLACES_API_KEY": "${PLACES_API_KEY}",
+            "STRIPE_KEY": "${STRIPE_KEY}"
+          }
+          EOF
+
       - name: Build Flutter Web (Release)
-        run: flutter build web --release
+        run: |
+          flutter build web --release --dart-define-from-file=api_keys.json
+          node scripts/inject_maps_key.js || echo "::warning::Maps key not injected"
         working-directory: ./app-mobile
 
       - name: Deploy to Firebase Hosting (app target, live channel)

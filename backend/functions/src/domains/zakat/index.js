@@ -18,7 +18,11 @@
 const { onRequest } = require("firebase-functions/v2/https");
 
 const ALLOWED_ORIGINS = [
+  "https://webapp.sunnahgrandeur.com",
+  "https://sunnahgrandeur.com",
+  "https://www.sunnahgrandeur.com",
   "https://sunnah-grandeur-app.web.app",
+  "https://sunnah-grandeur-app.firebaseapp.com",
   "https://sunnah-grandeur.web.app",
   "https://sunnah-grandeur-admin.web.app",
   /^http:\/\/localhost(:\d+)?$/,

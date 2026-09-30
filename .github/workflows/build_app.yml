@@ -32,6 +32,9 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+# versionCode must strictly increase on Play Console; the 2000 offset keeps
+# v2 builds above every earlier upload (including the 1.x web-wrapper builds).
+
 jobs:
   build-android:
     name: Build Android (APK + AAB)
@@ -104,8 +107,8 @@ jobs:
       # the run number is a simple, always-increasing source for it.
       - name: Build Android Release APK + AAB
         run: |
-          flutter build apk --release --dart-define-from-file=api_keys.json --build-number=${{ github.run_number }}
-          flutter build appbundle --release --dart-define-from-file=api_keys.json --build-number=${{ github.run_number }}
+          flutter build apk --release --dart-define-from-file=api_keys.json --build-number=$((2000 + ${{ github.run_number }}))
+          flutter build appbundle --release --dart-define-from-file=api_keys.json --build-number=$((2000 + ${{ github.run_number }}))
         working-directory: ./app-mobile
 
       - name: Fail on placeholder API keys in the build output
@@ -177,7 +180,7 @@ jobs:
 
       - name: Build iOS (no codesign — compile check only)
         if: steps.signing.outputs.ready != 'true'
-        run: flutter build ios --release --no-codesign --dart-define-from-file=api_keys.json --build-number=${{ github.run_number }}
+        run: flutter build ios --release --no-codesign --dart-define-from-file=api_keys.json --build-number=$((2000 + ${{ github.run_number }}))
         working-directory: ./app-mobile
 
       # ── Signed build below — GitHub's documented pattern for installing an
@@ -240,7 +243,7 @@ jobs:
       # picks up the right Flutter config — see `flutter build ios --help`.
       - name: Sync Flutter build config
         if: steps.signing.outputs.ready == 'true'
-        run: flutter build ios --release --config-only --dart-define-from-file=api_keys.json --build-number=${{ github.run_number }}
+        run: flutter build ios --release --config-only --dart-define-from-file=api_keys.json --build-number=$((2000 + ${{ github.run_number }}))
         working-directory: ./app-mobile
 
       - name: Archive (xcodebuild, manual signing)
