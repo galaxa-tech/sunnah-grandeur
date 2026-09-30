@@ -1,5 +1,8 @@
 // ignore_for_file: deprecated_member_use
+import 'dart:convert';
+import 'dart:ui' show PlatformDispatcher;
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -15,6 +18,7 @@ import '../../widgets/auth_gate.dart';
 import 'order_confirmed_screen.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/net_image.dart';
+import '../../widgets/app_snackbar.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CheckoutScreen — full address form + Stripe payment
@@ -73,14 +77,65 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void initState() {
     super.initState();
     // Pre-fill from auth profile if available
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    final region = PlatformDispatcher.instance.locale.countryCode;
+    if (region != null && _countries.any((c) => c.$1 == region)) {
+      _country = region;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final user = context.read<AuthProvider>().userData;
       if (user != null) {
         _nameCtrl.text  = user.name;
         _emailCtrl.text = user.email;
         _phoneCtrl.text = user.phone;
       }
+      await _restoreAddress();
     });
+  }
+
+  // The last-used delivery details are remembered on this device so repeat
+  // orders take one tap.
+  static const _addrKey = 'checkout_address_v1';
+
+  Future<void> _restoreAddress() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_addrKey);
+      if (raw == null || !mounted) return;
+      final m = jsonDecode(raw) as Map<String, dynamic>;
+      void fill(TextEditingController c, String k) {
+        final v = (m[k] ?? '').toString();
+        if (c.text.trim().isEmpty && v.isNotEmpty) c.text = v;
+      }
+      fill(_nameCtrl, 'name');
+      fill(_phoneCtrl, 'phone');
+      fill(_emailCtrl, 'email');
+      fill(_addressCtrl, 'line1');
+      fill(_cityCtrl, 'city');
+      fill(_stateCtrl, 'state');
+      fill(_zipCtrl, 'zip');
+      final country = (m['country'] ?? '').toString();
+      if (_countries.any((c) => c.$1 == country)) setState(() => _country = country);
+    } catch (e) {
+      debugPrint('[Checkout] restore address: $e');
+    }
+  }
+
+  Future<void> _saveAddress() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_addrKey, jsonEncode({
+        'name': _nameCtrl.text.trim(),
+        'phone': _phoneCtrl.text.trim(),
+        'email': _emailCtrl.text.trim(),
+        'line1': _addressCtrl.text.trim(),
+        'city': _cityCtrl.text.trim(),
+        'state': _stateCtrl.text.trim(),
+        'zip': _zipCtrl.text.trim(),
+        'country': _country,
+      }));
+    } catch (e) {
+      debugPrint('[Checkout] save address: $e');
+    }
   }
 
   @override
@@ -123,6 +178,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (orderResult == null) {
         throw Exception('Could not create order. Please check your connection and try again.');
       }
+      await _saveAddress();
 
       if (_paymentMethod == 'cod') {
         // Cash on Delivery — order is already confirmed server-side, no
@@ -208,23 +264,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (mounted) setState(() => _isProcessing = false);
     } catch (e) {
       debugPrint('[CheckoutScreen] error: $e');
-      _showSnack('Payment failed. Please try again.');
+      _showSnack(_paymentMethod == 'cod'
+          ? 'We couldn\'t place your order. Check your connection and try again.'
+          : 'Payment failed. Please try again.');
       if (mounted) setState(() => _isProcessing = false);
     }
     // Note: we only reset _isProcessing on failure paths above.
     // On success the screen is replaced and dispose() handles cleanup.
   }
 
-  void _showSnack(String msg, {Color? bg}) {
+  void _showSnack(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg,
-          style: GoogleFonts.manrope(fontSize: 13, color: Colors.white)),
-      backgroundColor: bg ?? AppColors.of(context).red,
-      behavior: SnackBarBehavior.floating,
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-    ));
+    showAppSnackbar(context, msg,
+        type: AppSnackbarType.error, duration: const Duration(seconds: 4));
   }
 
   @override
@@ -237,7 +289,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     // — keeps this estimate from ever silently diverging from the real charge.
     final taxRate = context.watch<StoreProvider>().taxRate;
     final tax  = cart.subtotal * taxRate;
-    final total = cart.subtotal + tax;
+    final total = cart.subtotal + tax + cart.shipping;
 
     return AuthGate(
       feature: 'checkout',
@@ -657,9 +709,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             children: [
               Text(lang.tr('shipping'),
                 style: GoogleFonts.manrope(fontSize: 13, color: c.t2)),
-              Text(lang.tr('free_shipping_usa'),
+              Text(
+                cart.shipping == 0
+                    ? lang.tr('free')
+                    : '\$${cart.shipping.toStringAsFixed(2)}',
                 style: GoogleFonts.manrope(
-                  fontSize: 13, fontWeight: FontWeight.w600, color: c.green)),
+                  fontSize: 13, fontWeight: FontWeight.w600,
+                  color: cart.shipping == 0 ? c.green : c.t1)),
             ],
           ),
 
@@ -709,11 +765,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
-                Text(
-                  '${lang.tr('subtotal_plus')} '
-                  '${(context.watch<StoreProvider>().taxRate * 100).toStringAsFixed(1)}% '
-                  '${lang.tr('tax_suffix')}',
-                  style: GoogleFonts.manrope(fontSize: 12, color: c.t2)),
+                Text(lang.tr('total'),
+                  style: GoogleFonts.manrope(fontSize: 13, color: c.t2)),
                 Text('\$${total.toStringAsFixed(2)}',
                   style: GoogleFonts.notoSerif(
                     fontSize: 20, fontWeight: FontWeight.bold, color: c.gold)),
@@ -722,8 +775,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             const SizedBox(height: 2),
             Align(
               alignment: Alignment.centerRight,
-              child: Text(lang.tr('free_shipping_included'),
-                style: GoogleFonts.manrope(fontSize: 11, color: c.green)),
+              child: Text(
+                cart.shipping == 0
+                    ? lang.tr('free_shipping_unlocked')
+                    : '${lang.tr('shipping')}: \$${cart.shipping.toStringAsFixed(2)}',
+                style: GoogleFonts.manrope(
+                    fontSize: 11, color: cart.shipping == 0 ? c.green : c.t2)),
             ),
             const SizedBox(height: 14),
             _buildCompleteOrderButton(total),

@@ -128,7 +128,7 @@ export default function CollectionsPage() {
                   className={`w-full h-full object-cover transition-all duration-500 ${
                     product.isSoldOut ? 'opacity-40 grayscale' : 'opacity-80 group-hover:scale-105 group-hover:opacity-100'
                   }`}
-                  src={product.image}
+                  src={product.image || '/logo.png'}
                   alt={product.name}
                 />
                 <div className="absolute bottom-0 left-0 w-full p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-gradient-to-t from-bg-primary to-transparent">

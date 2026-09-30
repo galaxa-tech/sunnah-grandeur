@@ -73,12 +73,12 @@ class _ShellScreenState extends State<ShellScreen> {
 
   DateTime? _lastBackAt;
 
-  void _handleBack() {
+  Future<void> _handleBack() async {
+    // maybePop respects PopScopes inside the tab (e.g. the store resetting
+    // its category filter) and returns false only at the tab's root.
     final nav = _navigatorKeys[_currentIndex].currentState;
-    if (nav != null && nav.canPop()) {
-      nav.pop();
-      return;
-    }
+    if (nav != null && await nav.maybePop()) return;
+    if (!mounted) return;
     if (_currentIndex != 0) {
       setState(() => _currentIndex = 0);
       return;
