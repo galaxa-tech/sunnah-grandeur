@@ -102,6 +102,9 @@
 		<!-- $(MAPS_IOS_KEY) is resolved at build time from ApiKeys.xcconfig.  -->
 		<!-- AppDelegate.swift reads this via Bundle.main at runtime.          -->
 		<!-- The raw key string NEVER appears in source control.               -->
+		<!-- Google Sign-In iOS OAuth client (CLIENT_ID from GoogleService-Info.plist) -->
+		<key>GIDClientID</key>
+		<string>6748865044-i5lbfm7rf493b19u2f3b3k5n7f6mi6pp.apps.googleusercontent.com</string>
 		<key>GMS_API_KEY</key>
 		<string>$(MAPS_IOS_KEY)</string>
 		<key>CADisableMinimumFrameDurationOnPhone</key>

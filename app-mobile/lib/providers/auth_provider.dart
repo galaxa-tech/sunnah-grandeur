@@ -1,7 +1,8 @@
 import 'dart:convert' show utf8;
 import 'dart:math';
 import 'package:crypto/crypto.dart' show sha256;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show PlatformException;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -16,13 +17,22 @@ import '../services/functions/user_service.dart';
 const _webGoogleClientId =
     '6748865044-5b0sbthk9abobn9t4not9e02sv91g209.apps.googleusercontent.com';
 
+// iOS OAuth client (CLIENT_ID in GoogleService-Info.plist). Passed explicitly
+// so sign-in never depends on the plist being bundled — without a client ID
+// the native GoogleSignIn SDK raises an uncatchable NSException and the app
+// crashes the moment the Google button is tapped.
+const _iosGoogleClientId =
+    '6748865044-i5lbfm7rf493b19u2f3b3k5n7f6mi6pp.apps.googleusercontent.com';
+
 class AuthProvider extends ChangeNotifier {
   final FirebaseAuth      _auth   = FirebaseAuth.instance;
   final FirebaseFirestore _db     = FirebaseFirestore.instance;
   // On Android, serverClientId (the *web* OAuth client) is what makes the
   // native picker return an idToken that Firebase Auth can verify.
   final GoogleSignIn      _google = GoogleSignIn(
-    clientId:       kIsWeb ? _webGoogleClientId : null,
+    clientId:       kIsWeb
+        ? _webGoogleClientId
+        : (defaultTargetPlatform == TargetPlatform.iOS ? _iosGoogleClientId : null),
     serverClientId: kIsWeb ? null : _webGoogleClientId,
     scopes: const ['email', 'profile'],
   );
