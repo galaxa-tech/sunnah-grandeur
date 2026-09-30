@@ -1,4 +1,3 @@
-// ignore_for_file: deprecated_member_use
 import 'dart:io' show Platform;
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -6,7 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/app_snackbar.dart';
+import '../../widgets/auth_widgets.dart';
+import '../../widgets/brand_lockup.dart';
 import '../auth/login_screen.dart';
 import '../auth/register_screen.dart';
 
@@ -16,13 +19,12 @@ import '../auth/register_screen.dart';
 bool get _appleSignInAvailable => !kIsWeb && Platform.isIOS;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// WelcomeScreen — premium minimal onboarding gateway.
+// WelcomeScreen — branded auth choice screen.
 //
-// Flow:
-//   ① Continue with Google  →  Firebase Google Auth → clears stack → /main
-//   ② Continue as Guest     →  anonymous sign-in    → clears stack → /main
-//   ③ Sign In with Email    →  pushes LoginScreen
-//   ④ Create Account        →  pushes RegisterScreen
+// Hierarchy (primary → tertiary):
+//   ① Continue with Google (+ Apple on iOS) → clears stack → /main
+//   ② Sign in / Create account (email)      → Login / Register screens
+//   ③ Explore as guest (anonymous)          → clears stack → /main
 //
 // Navigation note: auth success uses pushNamedAndRemoveUntil('/main', (_) => false)
 // to atomically clear the stack and prevent double-ShellScreen issues from
@@ -52,7 +54,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     _ctrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 900));
     _fadeIn  = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
-    _slideUp = Tween<Offset>(begin: const Offset(0, 0.10), end: Offset.zero)
+    _slideUp = Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero)
         .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
     _ctrl.forward();
   }
@@ -63,17 +65,18 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     super.dispose();
   }
 
+  bool get _busy => _googleLoading || _appleLoading || _guestLoading;
+
   // ── Actions ───────────────────────────────────────────────────────────────
 
   Future<void> _onGoogle() async {
-    if (_googleLoading || _appleLoading || _guestLoading) return;
+    if (_busy) return;
     setState(() => _googleLoading = true);
     final auth = context.read<AuthProvider>();
     final ok   = await auth.signInWithGoogle();
     if (!mounted) return;
 
     if (ok) {
-      // Clear entire navigator stack, land cleanly on ShellScreen.
       Navigator.pushNamedAndRemoveUntil(context, '/main', (_) => false);
     } else {
       setState(() => _googleLoading = false);
@@ -83,7 +86,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   }
 
   Future<void> _onApple() async {
-    if (_googleLoading || _appleLoading || _guestLoading) return;
+    if (_busy) return;
     setState(() => _appleLoading = true);
     final auth = context.read<AuthProvider>();
     final ok   = await auth.signInWithApple();
@@ -99,9 +102,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   }
 
   Future<void> _onGuest() async {
-    if (_googleLoading || _appleLoading || _guestLoading) return;
+    if (_busy) return;
     setState(() => _guestLoading = true);
     final auth = context.read<AuthProvider>();
+    final lang = context.read<LanguageProvider>();
     final ok   = await auth.signInAsGuest();
     if (!mounted) return;
 
@@ -109,7 +113,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       Navigator.pushNamedAndRemoveUntil(context, '/main', (_) => false);
     } else {
       setState(() => _guestLoading = false);
-      _showError(auth.error ?? 'Could not enter as guest. Check your connection.');
+      _showError(auth.error ?? lang.tr('guest_failed'));
     }
   }
 
@@ -119,28 +123,16 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   void _onRegister() => Navigator.push(
       context, MaterialPageRoute(builder: (_) => const RegisterScreen()));
 
-  void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg,
-            style: GoogleFonts.inter(fontSize: 13)),
-        backgroundColor: const Color(0xFF1F1F23),
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12)),
-        duration: const Duration(seconds: 4),
-      ),
-    );
-  }
+  void _showError(String msg) => showAppSnackbar(context, msg,
+      type: AppSnackbarType.error, duration: const Duration(seconds: 4));
 
   // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final c    = AppColors.of(context);
+    final lang = context.watch<LanguageProvider>();
     final size = MediaQuery.sizeOf(context);
-    final busy = _googleLoading || _appleLoading || _guestLoading;
 
     return Scaffold(
       backgroundColor: c.bg,
@@ -158,24 +150,21 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             child: _GeometricCircle(size: size.width * 0.80, c: c),
           ),
 
-          // ── Main content ────────────────────────────────────────────────
           SafeArea(
             child: FadeTransition(
               opacity: _fadeIn,
               child: SlideTransition(
                 position: _slideUp,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: Column(
-                    children: [
-                      const Spacer(flex: 2),
-                      _buildHero(c),
-                      const Spacer(flex: 2),
-                      _buildActions(c, busy),
-                      const SizedBox(height: 28),
-                      _buildFooter(c),
-                      const SizedBox(height: 24),
-                    ],
+                child: LayoutBuilder(
+                  builder: (context, box) => SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 28),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                            maxWidth: 440, minHeight: box.maxHeight),
+                        child: IntrinsicHeight(child: _content(c, lang)),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -186,296 +175,115 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     );
   }
 
-  // ── Hero ──────────────────────────────────────────────────────────────────
-
-  Widget _buildHero(AppColors c) {
+  Widget _content(AppColors c, LanguageProvider lang) {
     return Column(
       children: [
-        // Gold mosque badge
-        Container(
-          width: 88, height: 88,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: c.goldGradient,
-            boxShadow: [
-              BoxShadow(
-                color: c.gold.withValues(alpha: 0.32),
-                blurRadius: 36,
-                spreadRadius: 0,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: const Center(
-            child: Text('🕌', style: TextStyle(fontSize: 40)),
-          ),
-        ),
-
+        const Spacer(flex: 3),
         const SizedBox(height: 24),
-
-        // App name with gold shimmer
-        ShaderMask(
-          shaderCallback: (bounds) => c.goldGradient.createShader(bounds),
-          child: Text(
-            'Sunnah Grandeur',
-            style: GoogleFonts.cormorantGaramond(
-              fontSize: 32,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-              letterSpacing: 0.4,
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 8),
-
-        // Arabic bismillah
+        const BrandLockup(logoSize: 112, wordmarkSize: 34),
+        const SizedBox(height: 14),
         Text(
           'بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم',
-          style: GoogleFonts.notoNaskhArabic(
-            fontSize: 16,
-            color: c.gold.withValues(alpha: 0.70),
+          style: GoogleFonts.amiri(
+            fontSize: 17,
+            color: c.gold.withValues(alpha: 0.75),
             height: 1.6,
           ),
         ),
-
-        const SizedBox(height: 10),
-
+        const SizedBox(height: 8),
         Text(
-          'Your complete Islamic lifestyle companion',
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            color: c.t3,
-            letterSpacing: 0.2,
-          ),
+          lang.tr('welcome_value'),
+          style: GoogleFonts.inter(fontSize: 13.5, color: c.t2, height: 1.5),
           textAlign: TextAlign.center,
         ),
-      ],
-    );
-  }
-
-  // ── Action buttons ────────────────────────────────────────────────────────
-
-  Widget _buildActions(AppColors c, bool busy) {
-    return Column(
-      children: [
-        // ── 1. Continue with Google ────────────────────────────────────────
-        // Dark surface, gold border, text only — no icon/logo.
-        _AuthButton(
-          label: 'Continue with Google',
-          loading: _googleLoading,
-          disabled: busy && !_googleLoading,
-          onTap: _onGoogle,
-          style: _AuthButtonStyle.googleDark,
-          c: c,
-        ),
-
-        // ── 1b. Continue with Apple (iOS only) ──────────────────────────────
-        if (_appleSignInAvailable) ...[
-          const SizedBox(height: 12),
-          _AuthButton(
-            label: 'Continue with Apple',
-            loading: _appleLoading,
-            disabled: busy && !_appleLoading,
-            onTap: _onApple,
-            style: _AuthButtonStyle.googleDark,
-            c: c,
-          ),
-        ],
-
-        const SizedBox(height: 12),
-
-        // ── 2. Continue as Guest ───────────────────────────────────────────
-        // Gold gradient — instant frictionless access.
-        _AuthButton(
-          label: 'Continue as Guest',
-          leadingIcon: Icons.arrow_forward_rounded,
-          loading: _guestLoading,
-          disabled: busy && !_guestLoading,
-          onTap: _onGuest,
-          style: _AuthButtonStyle.goldFilled,
-          c: c,
-        ),
-
+        const Spacer(flex: 3),
         const SizedBox(height: 28),
 
-        // ── Divider ────────────────────────────────────────────────────────
+        // ── Primary: Google (+ Apple on iOS) ─────────────────────────────
+        AuthSocialButton(
+          kind: AuthProviderKind.google,
+          label: lang.tr('continue_with_google'),
+          loading: _googleLoading,
+          disabled: _busy && !_googleLoading,
+          onTap: _onGoogle,
+        ),
+        if (_appleSignInAvailable) ...[
+          const SizedBox(height: 12),
+          AuthSocialButton(
+            kind: AuthProviderKind.apple,
+            label: lang.tr('continue_with_apple'),
+            loading: _appleLoading,
+            disabled: _busy && !_appleLoading,
+            onTap: _onApple,
+          ),
+        ],
+        const SizedBox(height: 18),
+        AuthOrDivider(label: lang.tr('or_label')),
+        const SizedBox(height: 18),
+
+        // ── Secondary: email ─────────────────────────────────────────────
         Row(
           children: [
-            Expanded(child: Divider(color: c.bd2, thickness: 0.8)),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text('or',
-                  style: GoogleFonts.inter(color: c.t3, fontSize: 12)),
+            Expanded(
+              child: AuthPrimaryButton(
+                label: lang.tr('sign_in'),
+                icon: Icons.mail_outline_rounded,
+                outlined: true,
+                disabled: _busy,
+                onTap: _onSignIn,
+              ),
             ),
-            Expanded(child: Divider(color: c.bd2, thickness: 0.8)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: AuthPrimaryButton(
+                label: lang.tr('create_account'),
+                disabled: _busy,
+                onTap: _onRegister,
+              ),
+            ),
           ],
         ),
-
         const SizedBox(height: 20),
 
-        // ── 3. Sign In with Email ──────────────────────────────────────────
-        _AuthButton(
-          label: 'Sign In with Email',
-          leadingIcon: Icons.mail_outline_rounded,
-          loading: false,
-          disabled: busy,
-          onTap: busy ? () {} : _onSignIn,
-          style: _AuthButtonStyle.outline,
-          c: c,
-        ),
-      ],
-    );
-  }
-
-  // ── Footer ────────────────────────────────────────────────────────────────
-
-  Widget _buildFooter(AppColors c) {
-    return Column(
-      children: [
-        // Register link
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text("Don't have an account? ",
-                style: GoogleFonts.inter(color: c.t3, fontSize: 13)),
-            GestureDetector(
-              onTap: _onRegister,
-              child: Text('Create one',
-                style: GoogleFonts.inter(
-                  color: c.gold,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                )),
+        // ── Tertiary: guest ──────────────────────────────────────────────
+        TextButton.icon(
+          onPressed: _busy ? null : _onGuest,
+          style: TextButton.styleFrom(
+            foregroundColor: c.t1,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+          ),
+          icon: _guestLoading
+              ? SizedBox.square(
+                  dimension: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: c.gold))
+              : Icon(Icons.explore_outlined, size: 18, color: c.gold),
+          label: Text(
+            lang.tr('explore_as_guest'),
+            style: GoogleFonts.inter(
+              fontSize: 14.5,
+              fontWeight: FontWeight.w600,
+              color: c.t1,
+              decoration: TextDecoration.underline,
+              decorationColor: c.gold.withValues(alpha: 0.5),
             ),
-          ],
+          ),
         ),
-
-        const SizedBox(height: 14),
-
         Text(
-          'By continuing, you agree to our Terms & Privacy Policy.',
+          lang.tr('guest_hint'),
+          textAlign: TextAlign.center,
+          style: GoogleFonts.inter(fontSize: 11.5, color: c.t3, height: 1.4),
+        ),
+        const SizedBox(height: 18),
+        Text(
+          lang.tr('by_continuing'),
           style: GoogleFonts.inter(
-            color: c.t3.withValues(alpha: 0.55),
+            color: c.t3.withValues(alpha: 0.7),
             fontSize: 10.5,
           ),
           textAlign: TextAlign.center,
         ),
+        const SizedBox(height: 20),
       ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// _AuthButton — unified button for all auth actions
-// ─────────────────────────────────────────────────────────────────────────────
-
-enum _AuthButtonStyle { googleDark, goldFilled, outline }
-
-class _AuthButton extends StatelessWidget {
-  const _AuthButton({
-    required this.label,
-    required this.loading,
-    required this.disabled,
-    required this.onTap,
-    required this.style,
-    required this.c,
-    this.leadingIcon,
-  });
-
-  final String          label;
-  final bool            loading;
-  final bool            disabled;
-  final VoidCallback    onTap;
-  final _AuthButtonStyle style;
-  final AppColors       c;
-  final IconData?       leadingIcon;
-
-  @override
-  Widget build(BuildContext context) {
-    final BoxDecoration deco;
-    final Color textColor;
-    final Color? iconColor;
-
-    switch (style) {
-      case _AuthButtonStyle.googleDark:
-        // Dark surface, subtle gold border — premium, no logo
-        deco = BoxDecoration(
-          color: c.surf,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: c.gold.withValues(alpha: 0.45), width: 1.2),
-        );
-        textColor = c.t1;
-        iconColor = null;
-
-      case _AuthButtonStyle.goldFilled:
-        // Gold gradient — primary / most frictionless action
-        deco = BoxDecoration(
-          gradient: c.goldGradient,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: c.gold.withValues(alpha: 0.30),
-              blurRadius: 20,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        );
-        textColor = const Color(0xFF1A1200); // dark on gold for contrast
-        iconColor = const Color(0xFF1A1200);
-
-      case _AuthButtonStyle.outline:
-        // Subtle outline, secondary
-        deco = BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: c.bd2, width: 1),
-        );
-        textColor = c.t2;
-        iconColor = c.t2;
-    }
-
-    return GestureDetector(
-      onTap: (disabled || loading) ? null : onTap,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 150),
-        opacity: (disabled || loading) ? 0.55 : 1.0,
-        child: Container(
-          height: 54,
-          decoration: deco,
-          child: loading
-              ? Center(
-                  child: SizedBox(
-                    width: 22, height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                          style == _AuthButtonStyle.goldFilled
-                              ? const Color(0xFF2D1F00)
-                              : c.gold),
-                    ),
-                  ),
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (leadingIcon != null) ...[
-                      Icon(leadingIcon, size: 18, color: iconColor ?? textColor),
-                      const SizedBox(width: 10),
-                    ],
-                    Text(
-                      label,
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: textColor,
-                        letterSpacing: 0.1,
-                      ),
-                    ),
-                  ],
-                ),
-        ),
-      ),
     );
   }
 }
@@ -510,7 +318,7 @@ class _GeomPainter extends CustomPainter {
     final maxR = size.width  / 2;
 
     final paint = Paint()
-      ..color       = c.gold.withValues(alpha: 0.04)
+      ..color       = c.gold.withValues(alpha: 0.05)
       ..style       = PaintingStyle.stroke
       ..strokeWidth = 1.0;
 

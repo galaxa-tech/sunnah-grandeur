@@ -19,8 +19,13 @@ const _webGoogleClientId =
 class AuthProvider extends ChangeNotifier {
   final FirebaseAuth      _auth   = FirebaseAuth.instance;
   final FirebaseFirestore _db     = FirebaseFirestore.instance;
-  final GoogleSignIn      _google =
-      GoogleSignIn(clientId: kIsWeb ? _webGoogleClientId : null);
+  // On Android, serverClientId (the *web* OAuth client) is what makes the
+  // native picker return an idToken that Firebase Auth can verify.
+  final GoogleSignIn      _google = GoogleSignIn(
+    clientId:       kIsWeb ? _webGoogleClientId : null,
+    serverClientId: kIsWeb ? null : _webGoogleClientId,
+    scopes: const ['email', 'profile'],
+  );
 
   User?      _firebaseUser;
   UserModel? _userData;
@@ -133,45 +138,28 @@ class AuthProvider extends ChangeNotifier {
   // ── Google Sign-In ────────────────────────────────────────────────────────
 
   /// Signs in with Google. If the user is currently a guest, links the
-  /// Google account to their anonymous session (preserving any data).
+  /// Google account to their anonymous session (preserving any data). If
+  /// that Google account already exists, signs into it and carries the
+  /// guest's cart across so nothing added before sign-in is lost.
+  ///
+  /// Web uses Firebase's own popup flow (the google_sign_in v6 web plugin
+  /// no longer returns an idToken). Android/iOS use the native account
+  /// picker; `serverClientId` makes Android return an idToken Firebase can
+  /// verify.
   Future<bool> signInWithGoogle() async {
     _setLoading(true);
     try {
-      final googleUser = await _google.signIn();
-      if (googleUser == null) {
-        // User cancelled the picker — not an error.
+      final cred = kIsWeb ? await _googleWeb() : await _googleNative();
+      if (cred == null) {
+        // User cancelled the picker/popup — not an error.
         _isLoading = false;
         notifyListeners();
         return false;
       }
 
-      final googleAuth = await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken:     googleAuth.idToken,
-      );
-
-      UserCredential cred;
-      if (isGuest && _firebaseUser != null) {
-        // Upgrade guest → real account by linking Google credential.
-        try {
-          cred = await _firebaseUser!.linkWithCredential(credential);
-        } on FirebaseAuthException catch (e) {
-          // If Google account already exists, sign in directly.
-          if (e.code == 'credential-already-in-use' ||
-              e.code == 'email-already-in-use') {
-            cred = await _auth.signInWithCredential(credential);
-          } else {
-            rethrow;
-          }
-        }
-      } else {
-        cred = await _auth.signInWithCredential(credential);
-      }
-
       if (cred.user != null) {
-        final name  = cred.user!.displayName ?? googleUser.displayName ?? '';
-        final email = cred.user!.email       ?? googleUser.email;
+        final name  = cred.user!.displayName ?? '';
+        final email = cred.user!.email ?? '';
         // Fire-and-forget — ignore errors silently; Firestore doc is best-effort.
         UserService.createUserMetadata(name: name, email: email, phone: '')
             .catchError((Object e) {
@@ -185,6 +173,87 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(false);
       return false;
     }
+  }
+
+  Future<UserCredential?> _googleWeb() async {
+    final provider = GoogleAuthProvider()
+      ..setCustomParameters({'prompt': 'select_account'});
+    final guest = isGuest ? _firebaseUser : null;
+    if (guest == null) return _auth.signInWithPopup(provider);
+    try {
+      return await guest.linkWithPopup(provider);
+    } on FirebaseAuthException catch (e) {
+      if ((e.code == 'credential-already-in-use' ||
+              e.code == 'email-already-in-use') &&
+          e.credential != null) {
+        return _switchFromGuest(guest, e.credential!);
+      }
+      rethrow;
+    }
+  }
+
+  Future<UserCredential?> _googleNative() async {
+    // Always show the account chooser rather than silently reusing the
+    // last account (matters on shared family phones).
+    try { await _google.signOut(); } catch (_) {}
+    final googleUser = await _google.signIn();
+    if (googleUser == null) return null;
+
+    final googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken:     googleAuth.idToken,
+    );
+
+    final guest = isGuest ? _firebaseUser : null;
+    if (guest == null) return _auth.signInWithCredential(credential);
+    try {
+      return await guest.linkWithCredential(credential);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'credential-already-in-use' ||
+          e.code == 'email-already-in-use') {
+        return _switchFromGuest(guest, e.credential ?? credential);
+      }
+      rethrow;
+    }
+  }
+
+  /// The guest's Google/Apple account already exists: sign into it, then
+  /// copy the guest cart over (carts are owner-only, so it must be read
+  /// before switching uid).
+  Future<UserCredential> _switchFromGuest(
+      User guest, AuthCredential credential) async {
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> guestItems = const [];
+    try {
+      guestItems = (await _db
+              .collection('carts').doc(guest.uid).collection('items').get())
+          .docs;
+    } catch (e) {
+      debugPrint('[AuthProvider] read guest cart: $e');
+    }
+
+    final cred = await _auth.signInWithCredential(credential);
+    final uid = cred.user?.uid;
+    if (uid != null && guestItems.isNotEmpty) {
+      try {
+        final items = _db.collection('carts').doc(uid).collection('items');
+        for (final doc in guestItems) {
+          final ref = items.doc(doc.id);
+          final existing = await ref.get();
+          final data = Map<String, dynamic>.from(doc.data());
+          if (existing.exists) {
+            final prevQty = ((existing.data()?['quantity'] ?? 0) as num).toInt();
+            final addQty  = ((data['quantity'] ?? 1) as num).toInt();
+            data['quantity'] = prevQty + addQty;
+          }
+          data['updatedAt'] = FieldValue.serverTimestamp();
+          await ref.set(data, SetOptions(merge: true));
+        }
+      } catch (e) {
+        debugPrint('[AuthProvider] carry guest cart: $e');
+      }
+    }
+    return cred;
   }
 
   // ── Sign in with Apple ────────────────────────────────────────────────────
@@ -216,7 +285,8 @@ class AuthProvider extends ChangeNotifier {
         } on FirebaseAuthException catch (e) {
           if (e.code == 'credential-already-in-use' ||
               e.code == 'email-already-in-use') {
-            cred = await _auth.signInWithCredential(oauthCredential);
+            cred = await _switchFromGuest(
+                _firebaseUser!, e.credential ?? oauthCredential);
           } else {
             rethrow;
           }
@@ -385,9 +455,21 @@ class AuthProvider extends ChangeNotifier {
   String _authMessage(Object e) {
     if (e is FirebaseAuthException) {
       switch (e.code) {
-        case 'user-not-found':        return 'No account found with that email.';
-        case 'wrong-password':        return 'Incorrect password.';
-        case 'invalid-credential':    return 'Invalid email or password.';
+        case 'user-not-found':        return 'No account found with that email. Create one instead?';
+        case 'wrong-password':        return 'That password is incorrect. Try again or reset it.';
+        case 'invalid-credential':
+        case 'invalid-login-credentials':
+          return 'Email or password is incorrect. Please check and try again.';
+        case 'user-disabled':         return 'This account has been disabled. Contact support.';
+        case 'network-request-failed':return 'No internet connection. Please check your network.';
+        case 'popup-closed-by-user':
+        case 'cancelled-popup-request':
+        case 'web-context-canceled':
+          return ''; // Silent — user closed the Google popup
+        case 'popup-blocked':
+          return 'Your browser blocked the sign-in popup. Allow popups and try again.';
+        case 'unauthorized-domain':
+          return 'Google sign-in is not enabled on this web address yet.';
         case 'email-already-in-use':  return 'That email is already registered.';
         case 'weak-password':         return 'Password must be at least 6 characters.';
         case 'invalid-email':         return 'Please enter a valid email address.';
@@ -397,7 +479,7 @@ class AuthProvider extends ChangeNotifier {
           return 'This sign-in method is not enabled. Please contact support.';
         case 'account-exists-with-different-credential':
           return 'An account already exists with this email. Try signing in differently.';
-        default: return e.message ?? 'Authentication error.';
+        default: return 'Sign-in failed (${e.code}). Please try again.';
       }
     } else if (e is PlatformException) {
       // Google Sign-In PlatformExceptions
@@ -414,11 +496,12 @@ class AuthProvider extends ChangeNotifier {
         case 'sign_in_canceled':
           return ''; // Silent — user cancelled
         default:
-          return e.message ?? 'Google sign-in error.';
+          return 'Google sign-in failed. Please try again.';
       }
     } else if (e is FirebaseException) {
-      return e.message ?? 'Firebase error occurred.';
+      return 'Something went wrong. Please try again.';
     }
-    return e.toString();
+    debugPrint('[AuthProvider] unexpected: $e');
+    return 'Something went wrong. Please try again.';
   }
 }

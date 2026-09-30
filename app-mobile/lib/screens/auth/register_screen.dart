@@ -1,4 +1,3 @@
-// ignore_for_file: deprecated_member_use
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -8,33 +7,37 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../theme/app_colors.dart';
-import '../../theme/app_text_styles.dart';
+import '../../widgets/app_snackbar.dart';
+import '../../widgets/auth_widgets.dart';
+import '../../widgets/brand_lockup.dart';
+import 'login_screen.dart';
 
 // See welcome_screen.dart — Apple sign-in is only wired up on iOS.
 bool get _appleSignInAvailable => !kIsWeb && Platform.isIOS;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// RegisterScreen — minimal 3-field signup (name, email, password).
+// RegisterScreen — Google (one tap) or name + email + password.
 //
-// Phone removed to reduce friction. Google Sign-In is offered here only for
-// guests upgrading their account (isGuest branch) — normal registration is a
-// clean email/password form; new users pick Google from WelcomeScreen instead.
-// Navigation: all success paths use pushNamedAndRemoveUntil('/main', (_) => false).
+// Guests upgrading keep their session (link, not a new account).
+// [popOnSuccess] — return to the calling screen (checkout gate) on success.
 // ─────────────────────────────────────────────────────────────────────────────
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  const RegisterScreen({super.key, this.popOnSuccess = false});
+  final bool popOnSuccess;
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final _formKey    = GlobalKey<FormState>();
-  final _nameCtrl   = TextEditingController();
-  final _emailCtrl  = TextEditingController();
-  final _passCtrl   = TextEditingController();
-  final _emailFocus = FocusNode();
-  final _passFocus  = FocusNode();
+  final _formKey     = GlobalKey<FormState>();
+  final _nameCtrl    = TextEditingController();
+  final _emailCtrl   = TextEditingController();
+  final _passCtrl    = TextEditingController();
+  final _confirmCtrl = TextEditingController();
+  final _emailFocus  = FocusNode();
+  final _passFocus   = FocusNode();
+  final _confirmFocus = FocusNode();
 
   bool _isLoading     = false;
   bool _googleLoading = false;
@@ -45,20 +48,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _nameCtrl.dispose();
     _emailCtrl.dispose();
     _passCtrl.dispose();
+    _confirmCtrl.dispose();
     _emailFocus.dispose();
     _passFocus.dispose();
+    _confirmFocus.dispose();
     super.dispose();
   }
 
-  bool get _anyLoading => _isLoading || _googleLoading || _appleLoading;
+  bool get _busy => _isLoading || _googleLoading || _appleLoading;
 
-  // ── Email register ────────────────────────────────────────────────────────
+  void _onSuccess() {
+    HapticFeedback.lightImpact();
+    if (widget.popOnSuccess) {
+      Navigator.pop(context, true);
+    } else {
+      Navigator.pushNamedAndRemoveUntil(context, '/main', (_) => false);
+    }
+  }
+
+  void _showError(String msg) {
+    if (msg.isEmpty) return;
+    showAppSnackbar(context, msg,
+        type: AppSnackbarType.error, duration: const Duration(seconds: 4));
+  }
 
   Future<void> _handleRegister() async {
-    if (!_formKey.currentState!.validate() || _anyLoading) return;
+    FocusScope.of(context).unfocus();
+    if (!_formKey.currentState!.validate() || _busy) return;
 
     setState(() => _isLoading = true);
-    final auth    = context.read<AuthProvider>();
+    final auth = context.read<AuthProvider>();
+    final lang = context.read<LanguageProvider>();
     final success = await auth.register(
       name:     _nameCtrl.text.trim(),
       email:    _emailCtrl.text.trim(),
@@ -67,61 +87,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (!mounted) return;
     if (success) {
-      HapticFeedback.lightImpact();
-      Navigator.pushNamedAndRemoveUntil(context, '/main', (_) => false);
+      _onSuccess();
     } else {
       setState(() => _isLoading = false);
-      _showSnack(auth.error ?? context.read<LanguageProvider>().tr('register_failed'));
+      _showError(auth.error ?? lang.tr('register_failed'));
     }
   }
 
-  // ── Google ────────────────────────────────────────────────────────────────
-
   Future<void> _handleGoogle() async {
-    if (_anyLoading) return;
+    if (_busy) return;
     setState(() => _googleLoading = true);
     final auth = context.read<AuthProvider>();
     final ok   = await auth.signInWithGoogle();
     if (!mounted) return;
-
     if (ok) {
-      Navigator.pushNamedAndRemoveUntil(context, '/main', (_) => false);
+      _onSuccess();
     } else {
       setState(() => _googleLoading = false);
-      final msg = auth.error ?? '';
-      if (msg.isNotEmpty) _showSnack(msg);
+      _showError(auth.error ?? '');
     }
   }
 
-  // ── Apple ────────────────────────────────────────────────────────────────
-
   Future<void> _handleApple() async {
-    if (_anyLoading) return;
+    if (_busy) return;
     setState(() => _appleLoading = true);
     final auth = context.read<AuthProvider>();
     final ok   = await auth.signInWithApple();
     if (!mounted) return;
-
     if (ok) {
-      Navigator.pushNamedAndRemoveUntil(context, '/main', (_) => false);
+      _onSuccess();
     } else {
       setState(() => _appleLoading = false);
-      final msg = auth.error ?? '';
-      if (msg.isNotEmpty) _showSnack(msg);
+      _showError(auth.error ?? '');
     }
   }
-
-  void _showSnack(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg, style: GoogleFonts.inter(fontSize: 13)),
-      backgroundColor: const Color(0xFF1F1F23),
-      behavior: SnackBarBehavior.floating,
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    ));
-  }
-
-  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -140,374 +139,183 @@ class _RegisterScreenState extends State<RegisterScreen> {
           onPressed: () => Navigator.maybePop(context),
         ),
       ),
-      body: Form(
-        key: _formKey,
-        child: SafeArea(
-          top: false,
+      body: SafeArea(
+        top: false,
+        child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(28, 0, 28, 40),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: 4),
-
-                // ── Header ─────────────────────────────────────────────────
-                Text(lang.tr('app_name'), style: AppTextStyles.brand(c)),
-                const SizedBox(height: 12),
-                Text(
-                  isGuest ? lang.tr('save_progress') : lang.tr('create_account'),
-                  style: AppTextStyles.displayMd(c),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  isGuest
-                      ? lang.tr('guest_register_sub')
-                      : lang.tr('join_community_sub'),
-                  style: AppTextStyles.italic(c, fontSize: 13),
-                  textAlign: TextAlign.center,
-                ),
-
-                // Guest upgrade notice
-                if (isGuest) ...[
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: c.goldSurface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: c.gold.withValues(alpha: 0.22)),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.info_outline_rounded,
-                            color: c.gold, size: 16),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            lang.tr('guest_session_notice'),
-                            style: GoogleFonts.inter(
-                                color: c.t2, fontSize: 12, height: 1.4),
+            padding: const EdgeInsets.fromLTRB(28, 0, 28, 32),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: Form(
+                key: _formKey,
+                child: AutofillGroup(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const BrandLockup(logoSize: 72, wordmarkSize: 24),
+                      const SizedBox(height: 20),
+                      Text(
+                        isGuest ? lang.tr('save_progress') : lang.tr('create_free_account'),
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.notoSerif(
+                            fontSize: 23, fontWeight: FontWeight.w600, color: c.t1),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        isGuest ? lang.tr('guest_register_sub') : lang.tr('register_subtitle'),
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(fontSize: 13.5, color: c.t2, height: 1.45),
+                      ),
+                      if (isGuest) ...[
+                        const SizedBox(height: 14),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                          decoration: BoxDecoration(
+                            color: c.goldSurface,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: c.gold.withValues(alpha: 0.22)),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.verified_user_outlined, color: c.gold, size: 16),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(lang.tr('guest_session_notice'),
+                                    style: GoogleFonts.inter(
+                                        color: c.t2, fontSize: 12, height: 1.4)),
+                              ),
+                            ],
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                ],
+                      const SizedBox(height: 24),
 
-                const SizedBox(height: 28),
-
-                // ── Google — guest-upgrade path only (text only, no logo) ──
-                // Normal registration is email/password only; new users pick
-                // Google from WelcomeScreen. Guests upgrading get it here too
-                // since it's the fastest way to save their progress.
-                if (isGuest) ...[
-                  _IconlessButton(
-                    label: lang.tr('continue_with_google'),
-                    loading: _googleLoading,
-                    disabled: _anyLoading,
-                    onTap: _handleGoogle,
-                    isGold: false,
-                    c: c,
-                  ),
-
-                  if (_appleSignInAvailable) ...[
-                    const SizedBox(height: 12),
-                    _IconlessButton(
-                      label: lang.tr('continue_with_apple'),
-                      loading: _appleLoading,
-                      disabled: _anyLoading,
-                      onTap: _handleApple,
-                      isGold: false,
-                      c: c,
-                    ),
-                  ],
-
-                  const SizedBox(height: 20),
-
-                  // ── Divider ──────────────────────────────────────────────
-                  Row(
-                    children: [
-                      Expanded(child: Divider(color: c.bd2, thickness: 0.8)),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        child: Text(lang.tr('or_create_with_email'),
-                            style: GoogleFonts.inter(
-                                color: c.t3, fontSize: 11)),
+                      AuthSocialButton(
+                        kind: AuthProviderKind.google,
+                        label: lang.tr('continue_with_google'),
+                        loading: _googleLoading,
+                        disabled: _busy && !_googleLoading,
+                        onTap: _handleGoogle,
                       ),
-                      Expanded(child: Divider(color: c.bd2, thickness: 0.8)),
+                      if (_appleSignInAvailable) ...[
+                        const SizedBox(height: 12),
+                        AuthSocialButton(
+                          kind: AuthProviderKind.apple,
+                          label: lang.tr('continue_with_apple'),
+                          loading: _appleLoading,
+                          disabled: _busy && !_appleLoading,
+                          onTap: _handleApple,
+                        ),
+                      ],
+                      const SizedBox(height: 20),
+                      AuthOrDivider(label: lang.tr('or_label')),
+                      const SizedBox(height: 20),
+
+                      AuthTextField(
+                        label: lang.tr('full_name'),
+                        controller: _nameCtrl,
+                        icon: Icons.person_outline_rounded,
+                        textCapitalization: TextCapitalization.words,
+                        autofillHints: const [AutofillHints.name],
+                        onFieldSubmitted: (_) => _emailFocus.requestFocus(),
+                        validator: (v) {
+                          final t = v?.trim() ?? '';
+                          if (t.isEmpty) return lang.tr('name_required');
+                          if (t.length < 2) return lang.tr('name_too_short');
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      AuthTextField(
+                        label: lang.tr('email'),
+                        controller: _emailCtrl,
+                        focusNode: _emailFocus,
+                        icon: Icons.mail_outline_rounded,
+                        keyboardType: TextInputType.emailAddress,
+                        autofillHints: const [AutofillHints.email],
+                        onFieldSubmitted: (_) => _passFocus.requestFocus(),
+                        validator: (v) {
+                          final t = v?.trim() ?? '';
+                          if (t.isEmpty) return lang.tr('email_required');
+                          if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(t)) {
+                            return lang.tr('email_invalid');
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      AuthTextField(
+                        label: lang.tr('password'),
+                        controller: _passCtrl,
+                        focusNode: _passFocus,
+                        icon: Icons.lock_outline_rounded,
+                        isPassword: true,
+                        autofillHints: const [AutofillHints.newPassword],
+                        helperText: lang.tr('password_min'),
+                        onFieldSubmitted: (_) => _confirmFocus.requestFocus(),
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return lang.tr('password_required');
+                          if (v.length < 6) return lang.tr('password_min');
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      AuthTextField(
+                        label: lang.tr('confirm_password'),
+                        controller: _confirmCtrl,
+                        focusNode: _confirmFocus,
+                        icon: Icons.lock_reset_rounded,
+                        isPassword: true,
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) => _handleRegister(),
+                        validator: (v) =>
+                            v != _passCtrl.text ? lang.tr('password_mismatch') : null,
+                      ),
+                      const SizedBox(height: 24),
+                      AuthPrimaryButton(
+                        label: lang.tr('create_account'),
+                        loading: _isLoading,
+                        disabled: _busy && !_isLoading,
+                        onTap: _handleRegister,
+                      ),
+                      const SizedBox(height: 20),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        children: [
+                          Text(lang.tr('have_account'),
+                              style: GoogleFonts.inter(fontSize: 13, color: c.t2)),
+                          GestureDetector(
+                            onTap: () => Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    LoginScreen(popOnSuccess: widget.popOnSuccess),
+                              ),
+                            ),
+                            child: Text(lang.tr('sign_in'),
+                                style: GoogleFonts.inter(
+                                  color: c.gold,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                )),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        lang.tr('by_continuing'),
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                            fontSize: 10.5, color: c.t3.withValues(alpha: 0.75)),
+                      ),
                     ],
                   ),
-
-                  const SizedBox(height: 20),
-                ],
-
-                // ── Name ───────────────────────────────────────────────────
-                _RegField(
-                  label: lang.tr('name'),
-                  controller: _nameCtrl,
-                  icon: Icons.person_outline_rounded,
-                  textCapitalization: TextCapitalization.words,
-                  textInputAction: TextInputAction.next,
-                  onFieldSubmitted: (_) => _emailFocus.requestFocus(),
-                  c: c,
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) return lang.tr('name_required');
-                    if (v.trim().length < 2) return lang.tr('name_too_short');
-                    return null;
-                  },
                 ),
-
-                const SizedBox(height: 14),
-
-                // ── Email ──────────────────────────────────────────────────
-                _RegField(
-                  label: lang.tr('email_address'),
-                  controller: _emailCtrl,
-                  focusNode: _emailFocus,
-                  icon: Icons.email_outlined,
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  onFieldSubmitted: (_) => _passFocus.requestFocus(),
-                  c: c,
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) return lang.tr('email_required');
-                    if (!v.contains('@') || !v.contains('.')) {
-                      return lang.tr('email_invalid');
-                    }
-                    return null;
-                  },
-                ),
-
-                const SizedBox(height: 14),
-
-                // ── Password ───────────────────────────────────────────────
-                _RegField(
-                  label: lang.tr('password'),
-                  controller: _passCtrl,
-                  focusNode: _passFocus,
-                  icon: Icons.lock_outline_rounded,
-                  isPassword: true,
-                  textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _handleRegister(),
-                  c: c,
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return lang.tr('password_required');
-                    if (v.length < 6) return lang.tr('min_6_chars');
-                    return null;
-                  },
-                ),
-
-                const SizedBox(height: 28),
-
-                // ── Create Account button ──────────────────────────────────
-                _IconlessButton(
-                  label: isGuest ? lang.tr('save_upgrade_account') : lang.tr('create_account'),
-                  loading: _isLoading,
-                  disabled: _anyLoading,
-                  onTap: _handleRegister,
-                  isGold: true,
-                  c: c,
-                ),
-
-                const SizedBox(height: 24),
-
-                // ── Sign-in link ───────────────────────────────────────────
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(lang.tr('already_account'),
-                        style: AppTextStyles.bodyMuted(c, size: 13)),
-                    GestureDetector(
-                      onTap: () => Navigator.maybePop(context),
-                      child: Text(lang.tr('sign_in'),
-                        style: GoogleFonts.inter(
-                          color: c.gold,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        )),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
           ),
         ),
       ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// _IconlessButton — dark surface or gold filled, text only
-// ─────────────────────────────────────────────────────────────────────────────
-class _IconlessButton extends StatelessWidget {
-  const _IconlessButton({
-    required this.label,
-    required this.loading,
-    required this.disabled,
-    required this.onTap,
-    required this.isGold,
-    required this.c,
-  });
-
-  final String      label;
-  final bool        loading;
-  final bool        disabled;
-  final VoidCallback onTap;
-  final bool        isGold;
-  final AppColors   c;
-
-  @override
-  Widget build(BuildContext context) {
-    final deco = isGold
-        ? BoxDecoration(
-            gradient: c.goldGradient,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: c.gold.withValues(alpha: 0.28),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          )
-        : BoxDecoration(
-            color: c.surf,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: c.gold.withValues(alpha: 0.45), width: 1.2),
-          );
-
-    final textColor = isGold ? const Color(0xFF1A1200) : c.t1;
-    final spinnerColor = isGold ? const Color(0xFF2D1F00) : c.gold;
-
-    return GestureDetector(
-      onTap: (disabled || loading) ? null : onTap,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 150),
-        opacity: (disabled || loading) ? 0.55 : 1.0,
-        child: Container(
-          width: double.infinity,
-          height: 54,
-          decoration: deco,
-          alignment: Alignment.center,
-          child: loading
-              ? SizedBox(
-                  width: 22, height: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.2,
-                    valueColor: AlwaysStoppedAnimation<Color>(spinnerColor),
-                  ),
-                )
-              : Text(
-                  label,
-                  style: GoogleFonts.inter(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: textColor,
-                  ),
-                ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// _RegField — validated form field
-// ─────────────────────────────────────────────────────────────────────────────
-class _RegField extends StatefulWidget {
-  const _RegField({
-    required this.label,
-    required this.controller,
-    required this.icon,
-    required this.c,
-    this.focusNode,
-    this.isPassword          = false,
-    this.keyboardType        = TextInputType.text,
-    this.textCapitalization  = TextCapitalization.none,
-    this.textInputAction     = TextInputAction.next,
-    this.onFieldSubmitted,
-    this.validator,
-  });
-
-  final String                  label;
-  final TextEditingController   controller;
-  final IconData                icon;
-  final AppColors               c;
-  final FocusNode?              focusNode;
-  final bool                    isPassword;
-  final TextInputType           keyboardType;
-  final TextCapitalization      textCapitalization;
-  final TextInputAction         textInputAction;
-  final ValueChanged<String>?   onFieldSubmitted;
-  final FormFieldValidator<String>? validator;
-
-  @override
-  State<_RegField> createState() => _RegFieldState();
-}
-
-class _RegFieldState extends State<_RegField> {
-  bool _obscure = true;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = widget.c;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(widget.label.toUpperCase(),
-            style: GoogleFonts.manrope(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: c.gold,
-                letterSpacing: 1.2)),
-        const SizedBox(height: 6),
-        Container(
-          height: 54,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: c.surf,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: c.bd2),
-          ),
-          child: Row(
-            children: [
-              Icon(widget.icon, color: c.gold, size: 18),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextFormField(
-                  controller:          widget.controller,
-                  focusNode:           widget.focusNode,
-                  obscureText:         widget.isPassword && _obscure,
-                  keyboardType:        widget.keyboardType,
-                  textCapitalization:  widget.textCapitalization,
-                  textInputAction:     widget.textInputAction,
-                  onFieldSubmitted:    widget.onFieldSubmitted,
-                  validator:           widget.validator,
-                  style: AppTextStyles.body(c, size: 14),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                    errorStyle: TextStyle(height: 0, fontSize: 0),
-                  ),
-                ),
-              ),
-              if (widget.isPassword)
-                GestureDetector(
-                  onTap: () => setState(() => _obscure = !_obscure),
-                  child: Icon(
-                    _obscure
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
-                    color: c.t3, size: 18,
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

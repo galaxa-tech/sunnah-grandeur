@@ -1,4 +1,4 @@
-package com.example.sunnah_grandeur_fixed
+package com.sunnahgrandeur.app
 
 import io.flutter.embedding.android.FlutterActivity
 

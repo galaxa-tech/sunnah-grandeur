@@ -1,4 +1,3 @@
-// ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,20 +5,22 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../theme/app_colors.dart';
-import '../../theme/app_text_styles.dart';
+import '../../widgets/app_snackbar.dart';
+import '../../widgets/auth_widgets.dart';
+import '../../widgets/brand_lockup.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// LoginScreen — minimal email + password sign-in.
+// LoginScreen — Google + email/password sign-in.
 //
-// Google Sign-In and Guest mode live only on WelcomeScreen; this screen is a
-// clean email/password form reached via "Sign In with Email".
-// Navigation: all success paths use pushNamedAndRemoveUntil('/main', (_) => false)
-// to cleanly clear the stack regardless of where this screen was pushed from.
+// [popOnSuccess] — when pushed from an in-app gate (checkout, orders), pop
+// back to where the user was instead of resetting to /main, so the cart /
+// checkout flow continues seamlessly.
 // ─────────────────────────────────────────────────────────────────────────────
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, this.popOnSuccess = false});
+  final bool popOnSuccess;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -31,7 +32,10 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passCtrl   = TextEditingController();
   final _passFocus  = FocusNode();
 
-  bool _isLoading = false;
+  bool _emailLoading  = false;
+  bool _googleLoading = false;
+
+  bool get _busy => _emailLoading || _googleLoading;
 
   @override
   void dispose() {
@@ -41,15 +45,22 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  bool get _anyLoading => _isLoading;
-
-  // ── Email sign-in ─────────────────────────────────────────────────────────
+  void _onSuccess() {
+    HapticFeedback.lightImpact();
+    if (widget.popOnSuccess) {
+      Navigator.pop(context, true);
+    } else {
+      Navigator.pushNamedAndRemoveUntil(context, '/main', (_) => false);
+    }
+  }
 
   Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate() || _anyLoading) return;
+    FocusScope.of(context).unfocus();
+    if (!_formKey.currentState!.validate() || _busy) return;
 
-    setState(() => _isLoading = true);
-    final auth    = context.read<AuthProvider>();
+    setState(() => _emailLoading = true);
+    final auth = context.read<AuthProvider>();
+    final lang = context.read<LanguageProvider>();
     final success = await auth.signIn(
       email:    _emailCtrl.text.trim(),
       password: _passCtrl.text,
@@ -57,25 +68,31 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (!mounted) return;
     if (success) {
-      HapticFeedback.lightImpact();
-      Navigator.pushNamedAndRemoveUntil(context, '/main', (_) => false);
+      _onSuccess();
     } else {
-      setState(() => _isLoading = false);
-      _showSnack(auth.error ?? context.read<LanguageProvider>().tr('login_failed'));
+      setState(() => _emailLoading = false);
+      showAppSnackbar(context, auth.error ?? lang.tr('login_failed'),
+          type: AppSnackbarType.error, duration: const Duration(seconds: 4));
     }
   }
 
-  void _showSnack(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg, style: GoogleFonts.inter(fontSize: 13)),
-      backgroundColor: const Color(0xFF1F1F23),
-      behavior: SnackBarBehavior.floating,
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    ));
+  Future<void> _handleGoogle() async {
+    if (_busy) return;
+    setState(() => _googleLoading = true);
+    final auth = context.read<AuthProvider>();
+    final ok = await auth.signInWithGoogle();
+    if (!mounted) return;
+    if (ok) {
+      _onSuccess();
+    } else {
+      setState(() => _googleLoading = false);
+      final msg = auth.error ?? '';
+      if (msg.isNotEmpty) {
+        showAppSnackbar(context, msg,
+            type: AppSnackbarType.error, duration: const Duration(seconds: 4));
+      }
+    }
   }
-
-  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -93,283 +110,124 @@ class _LoginScreenState extends State<LoginScreen> {
           onPressed: () => Navigator.maybePop(context),
         ),
       ),
-      body: Form(
-        key: _formKey,
-        child: SafeArea(
-          top: false,
+      body: SafeArea(
+        top: false,
+        child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(28, 0, 28, 40),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: 4),
+            padding: const EdgeInsets.fromLTRB(28, 0, 28, 32),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: Form(
+                key: _formKey,
+                child: AutofillGroup(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const BrandLockup(logoSize: 76, wordmarkSize: 26),
+                      const SizedBox(height: 22),
+                      Text(lang.tr('welcome_back'),
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.notoSerif(
+                              fontSize: 24, fontWeight: FontWeight.w600, color: c.t1)),
+                      const SizedBox(height: 6),
+                      Text(lang.tr('login_subtitle'),
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(fontSize: 13.5, color: c.t2)),
+                      const SizedBox(height: 28),
 
-                // ── Header ─────────────────────────────────────────────────
-                Text(lang.tr('app_name'), style: AppTextStyles.brand(c)),
-                const SizedBox(height: 4),
-                Text(lang.tr('welcome_back'), style: AppTextStyles.displayMd(c)),
-                const SizedBox(height: 6),
-                Text(
-                  lang.tr('login_subtitle'),
-                  style: AppTextStyles.italic(c, fontSize: 13),
-                  textAlign: TextAlign.center,
-                ),
+                      AuthSocialButton(
+                        kind: AuthProviderKind.google,
+                        label: lang.tr('continue_with_google'),
+                        loading: _googleLoading,
+                        disabled: _busy && !_googleLoading,
+                        onTap: _handleGoogle,
+                      ),
+                      const SizedBox(height: 20),
+                      AuthOrDivider(label: lang.tr('or_label')),
+                      const SizedBox(height: 20),
 
-                const SizedBox(height: 36),
-
-                // ── Email field ────────────────────────────────────────────
-                _AuthField(
-                  label: lang.tr('email'),
-                  controller: _emailCtrl,
-                  icon: Icons.email_outlined,
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  onFieldSubmitted: (_) => _passFocus.requestFocus(),
-                  c: c,
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) return lang.tr('email_required');
-                    if (!v.contains('@')) return lang.tr('email_invalid');
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 14),
-
-                // ── Password field ─────────────────────────────────────────
-                _AuthField(
-                  label: lang.tr('password'),
-                  controller: _passCtrl,
-                  focusNode: _passFocus,
-                  icon: Icons.lock_outline_rounded,
-                  isPassword: true,
-                  textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _handleLogin(),
-                  c: c,
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return lang.tr('password_required');
-                    return null;
-                  },
-                ),
-
-                const SizedBox(height: 8),
-
-                // Forgot password
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () => Navigator.push(context,
-                        MaterialPageRoute(
-                            builder: (_) => const ForgotPasswordScreen())),
-                    child: Text(lang.tr('forgot_password'),
-                        style: GoogleFonts.inter(
-                            color: c.gold,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500)),
+                      AuthTextField(
+                        label: lang.tr('email'),
+                        controller: _emailCtrl,
+                        icon: Icons.mail_outline_rounded,
+                        keyboardType: TextInputType.emailAddress,
+                        autofillHints: const [AutofillHints.email],
+                        onFieldSubmitted: (_) => _passFocus.requestFocus(),
+                        validator: (v) {
+                          final t = v?.trim() ?? '';
+                          if (t.isEmpty) return lang.tr('email_required');
+                          if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(t)) {
+                            return lang.tr('email_invalid');
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      AuthTextField(
+                        label: lang.tr('password'),
+                        controller: _passCtrl,
+                        focusNode: _passFocus,
+                        icon: Icons.lock_outline_rounded,
+                        isPassword: true,
+                        textInputAction: TextInputAction.done,
+                        autofillHints: const [AutofillHints.password],
+                        onFieldSubmitted: (_) => _handleLogin(),
+                        validator: (v) => (v == null || v.isEmpty)
+                            ? lang.tr('password_required')
+                            : null,
+                      ),
+                      Align(
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: TextButton(
+                          onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const ForgotPasswordScreen())),
+                          child: Text(lang.tr('forgot_password'),
+                              style: GoogleFonts.inter(
+                                  color: c.gold,
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600)),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      AuthPrimaryButton(
+                        label: lang.tr('sign_in'),
+                        loading: _emailLoading,
+                        disabled: _busy && !_emailLoading,
+                        onTap: _handleLogin,
+                      ),
+                      const SizedBox(height: 22),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        children: [
+                          Text(lang.tr('no_account'),
+                              style: GoogleFonts.inter(fontSize: 13, color: c.t2)),
+                          GestureDetector(
+                            onTap: () => Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => RegisterScreen(
+                                    popOnSuccess: widget.popOnSuccess),
+                              ),
+                            ),
+                            child: Text(lang.tr('create_account'),
+                                style: GoogleFonts.inter(
+                                  color: c.gold,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                )),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-
-                const SizedBox(height: 16),
-
-                // ── Sign-in button ─────────────────────────────────────────
-                _IconlessButton(
-                  label: lang.tr('sign_in'),
-                  loading: _isLoading,
-                  disabled: _anyLoading,
-                  onTap: _handleLogin,
-                  c: c,
-                ),
-
-                const SizedBox(height: 24),
-
-                // ── Register link ──────────────────────────────────────────
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(lang.tr('no_account'),
-                        style: AppTextStyles.bodyMuted(c, size: 13)),
-                    GestureDetector(
-                      onTap: () => Navigator.pushReplacement(context,
-                          MaterialPageRoute(
-                              builder: (_) => const RegisterScreen())),
-                      child: Text(lang.tr('register_now'),
-                        style: GoogleFonts.inter(
-                          color: c.gold,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        )),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
           ),
         ),
       ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// _IconlessButton — gold filled button (no logo, no icon)
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _IconlessButton extends StatelessWidget {
-  const _IconlessButton({
-    required this.label,
-    required this.loading,
-    required this.disabled,
-    required this.onTap,
-    required this.c,
-  });
-
-  final String      label;
-  final bool        loading;
-  final bool        disabled;
-  final VoidCallback onTap;
-  final AppColors   c;
-
-  @override
-  Widget build(BuildContext context) {
-    final deco = BoxDecoration(
-      gradient: c.goldGradient,
-      borderRadius: BorderRadius.circular(14),
-      boxShadow: [
-        BoxShadow(
-          color: c.gold.withValues(alpha: 0.28),
-          blurRadius: 16,
-          offset: const Offset(0, 4),
-        ),
-      ],
-    );
-
-    const textColor = Color(0xFF1A1200);
-    const spinnerColor = Color(0xFF2D1F00);
-
-    return GestureDetector(
-      onTap: (disabled || loading) ? null : onTap,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 150),
-        opacity: (disabled || loading) ? 0.55 : 1.0,
-        child: Container(
-          width: double.infinity,
-          height: 54,
-          decoration: deco,
-          alignment: Alignment.center,
-          child: loading
-              ? const SizedBox(
-                  width: 22, height: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.2,
-                    valueColor: AlwaysStoppedAnimation<Color>(spinnerColor),
-                  ),
-                )
-              : Text(
-                  label,
-                  style: GoogleFonts.inter(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: textColor,
-                  ),
-                ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// _AuthField — validated text field with gold icon accent
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _AuthField extends StatefulWidget {
-  const _AuthField({
-    required this.label,
-    required this.controller,
-    required this.icon,
-    required this.c,
-    this.focusNode,
-    this.isPassword      = false,
-    this.keyboardType    = TextInputType.text,
-    this.textInputAction = TextInputAction.next,
-    this.onFieldSubmitted,
-    this.validator,
-  });
-
-  final String                  label;
-  final TextEditingController   controller;
-  final IconData                icon;
-  final AppColors               c;
-  final FocusNode?              focusNode;
-  final bool                    isPassword;
-  final TextInputType           keyboardType;
-  final TextInputAction         textInputAction;
-  final ValueChanged<String>?   onFieldSubmitted;
-  final FormFieldValidator<String>? validator;
-
-  @override
-  State<_AuthField> createState() => _AuthFieldState();
-}
-
-class _AuthFieldState extends State<_AuthField> {
-  bool _obscure = true;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = widget.c;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(widget.label.toUpperCase(),
-            style: GoogleFonts.manrope(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: c.gold,
-                letterSpacing: 1.2)),
-        const SizedBox(height: 6),
-        Container(
-          height: 54,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: c.surf,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: c.bd2),
-          ),
-          child: Row(
-            children: [
-              Icon(widget.icon, color: c.gold, size: 18),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextFormField(
-                  controller: widget.controller,
-                  focusNode: widget.focusNode,
-                  obscureText: widget.isPassword && _obscure,
-                  keyboardType: widget.keyboardType,
-                  textInputAction: widget.textInputAction,
-                  onFieldSubmitted: widget.onFieldSubmitted,
-                  validator: widget.validator,
-                  style: AppTextStyles.body(c, size: 14),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                    errorStyle: TextStyle(height: 0), // error shown by container
-                  ),
-                ),
-              ),
-              if (widget.isPassword)
-                GestureDetector(
-                  onTap: () => setState(() => _obscure = !_obscure),
-                  child: Icon(
-                    _obscure
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
-                    color: c.t3, size: 18,
-                  ),
-                ),
-            ],
-          ),
-        ),
-        // Inline error via validator is suppressed above; Form handles it.
-      ],
     );
   }
 }

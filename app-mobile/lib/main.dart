@@ -25,7 +25,6 @@ import 'providers/masjid_provider.dart';
 import 'services/adhan_service.dart';
 import 'services/notification_service.dart';
 import 'theme/app_theme.dart';
-import 'screens/splash_screen.dart';
 import 'screens/shell_screen.dart';
 import 'screens/onboarding/welcome_screen.dart';
 import 'screens/onboarding/onboarding_carousel_screen.dart';
@@ -150,7 +149,7 @@ class SunnahGrandeurApp extends StatelessWidget {
     final lang          = context.watch<LanguageProvider>();
 
     return MaterialApp(
-      title: 'Sunnah Grandeur',
+      title: 'Daily Muslim',
       debugShowCheckedModeBanner: false,
       themeMode: themeNotifier.mode,
       theme:     AppTheme.light(),
@@ -177,7 +176,7 @@ class SunnahGrandeurApp extends StatelessWidget {
       ),
       home: firebaseError != null
           ? _FirebaseErrorScreen(error: firebaseError!)
-          : const SplashScreen(),
+          : const LandingPage(),
       routes: {
         '/welcome':           (_) => const WelcomeScreen(),
         '/login':             (_) => const LoginScreen(),
@@ -242,11 +241,25 @@ class _LandingPageState extends State<LandingPage> {
     final auth = context.watch<AuthProvider>();
 
     if (!_checkedOnboarding || (auth.isLoading && !_forceShow)) {
+      // Mirrors the native splash (same background + logo) so the hand-off
+      // from the OS splash to Flutter is seamless — no second splash screen.
       return const Scaffold(
         backgroundColor: Color(0xFF0D0D0F),
         body: Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFC8A55A)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image(image: AssetImage('assets/images/logo.png'),
+                  width: 160, height: 160),
+              SizedBox(height: 28),
+              SizedBox(
+                width: 22, height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.4,
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFC8A55A)),
+                ),
+              ),
+            ],
           ),
         ),
       );
