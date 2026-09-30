@@ -14,6 +14,30 @@
       },
       "oauth_client": [
         {
+          "client_id": "6748865044-7qbojl2qquf83dv4u9mci6f51s44lhbs.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sunnahgrandeur.app",
+            "certificate_hash": "a20353f262e1079c13d987181b2dfd87ce135985"
+          }
+        },
+        {
+          "client_id": "6748865044-jdi5h9cpll0oahd4vd9594vbo2obg9tv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sunnahgrandeur.app",
+            "certificate_hash": "29160c0bdc047fff7d0973406ef6a3aac71cb85b"
+          }
+        },
+        {
+          "client_id": "6748865044-q0tmlgvt7e3fmtk93hepmluact92mgs9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sunnahgrandeur.app",
+            "certificate_hash": "25db743f23a49967c2dc4c7ea9b11681a3dbd749"
+          }
+        },
+        {
           "client_id": "6748865044-5b0sbthk9abobn9t4not9e02sv91g209.apps.googleusercontent.com",
           "client_type": 3
         }

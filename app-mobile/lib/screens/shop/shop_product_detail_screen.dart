@@ -9,6 +9,9 @@ import '../../models/product_model.dart';
 import '../../widgets/shop/product_reviews_section.dart';
 import 'shop_cart_screen.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/net_image.dart';
+import '../../widgets/shop/cart_feedback.dart';
+import '../../widgets/shop/product_card.dart' show ProductImageFallback;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ShopProductDetailScreen
@@ -172,13 +175,12 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
               ),
               clipBehavior: Clip.antiAlias,
               child: p.primaryImage.isNotEmpty
-                  ? Image.network(
+                  ? NetImage(
                       _activeThumb < _thumbs.length
                           ? _thumbs[_activeThumb]
                           : p.primaryImage,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          _buildGradientFallback(p),
+                      fallback: _buildGradientFallback(p),
                     )
                   : _buildGradientFallback(p),
             ),
@@ -205,9 +207,8 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: p.primaryImage.isNotEmpty && e.value.isNotEmpty
-                      ? Image.network(e.value, fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
-                              _buildGradientFallback(p))
+                      ? NetImage(e.value, fit: BoxFit.cover,
+                          fallback: _buildGradientFallback(p))
                       : _buildGradientFallback(p),
                 ),
               ),
@@ -218,25 +219,8 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
     );
   }
 
-  Widget _buildGradientFallback(ProductModel p) {
-    final c = AppColors.of(context);
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: _categoryGradient(p.categoryId),
-        ),
-      ),
-      child: Center(
-        child: Opacity(
-          opacity: 0.25,
-          child: Icon(_categoryIcon(p.categoryId),
-              size: 64, color: c.gold),
-        ),
-      ),
-    );
-  }
+  Widget _buildGradientFallback(ProductModel p) =>
+      ProductImageFallback(categoryId: p.categoryId);
 
   // ── CENTER: Product details ─────────────────────────────────────────────────
   Widget _buildDetails() {
@@ -299,8 +283,7 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
                 )),
               const SizedBox(width: 10),
             ],
-            Text('\$${p.price.toInt().toString().replaceAllMapped(
-                RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}',
+            Text(p.priceDisplay,
               style: GoogleFonts.manrope(
                 fontSize: 32, fontWeight: FontWeight.bold,
                 color: c.t1,
@@ -314,13 +297,13 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
               TextSpan(children: [
                 TextSpan(text: 'List Price: ',
                   style: GoogleFonts.manrope(fontSize: 13, color: c.t2)),
-                TextSpan(text: '\$${p.originalPrice!.toInt()}',
+                TextSpan(text: p.originalPriceDisplay!,
                   style: GoogleFonts.manrope(
                     fontSize: 13, color: c.t2,
                     decoration: TextDecoration.lineThrough,
                     decorationColor: c.t2,
                   )),
-                TextSpan(text: '  You save \$${_savings.toInt()} ($_discount%)',
+                TextSpan(text: '  You save \$${_savings.toStringAsFixed(2)} ($_discount%)',
                   style: GoogleFonts.manrope(
                     fontSize: 13, color: const Color(0xFF4ade80))),
               ]),
@@ -390,7 +373,7 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
               Text(lang.tr('buy_new'),
                 style: GoogleFonts.manrope(fontSize: 11, color: c.t2)),
               const SizedBox(height: 4),
-              Text('\$${p.price.toInt()}',
+              Text(p.priceDisplay,
                 style: GoogleFonts.manrope(
                   fontSize: 26, fontWeight: FontWeight.bold,
                   color: c.t1)),
@@ -629,19 +612,9 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
   }
 
   void _doAddToCart(CartProvider cart) {
-    final c = AppColors.of(context);
     if (_isSoldOut) return;
-    HapticFeedback.lightImpact();
-    cart.addToCart(widget.product, 'Standard', _quantity);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      backgroundColor: c.surf,
-      behavior: SnackBarBehavior.floating,
-      margin: const EdgeInsets.all(16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      content: Text('${widget.product.name} added to cart',
-          style: GoogleFonts.manrope(color: c.t1, fontSize: 13)),
-      duration: const Duration(seconds: 2),
-    ));
+    HapticFeedback.mediumImpact();
+    addToCartWithFeedback(context, widget.product, quantity: _quantity);
   }
 
   void _doBuyNow(CartProvider cart) {
@@ -651,28 +624,6 @@ class _ShopProductDetailScreenState extends State<ShopProductDetailScreen> {
         MaterialPageRoute(builder: (_) => const ShopCartScreen()));
   }
 
-  // category gradient/icon helpers
-  static List<Color> _categoryGradient(String catId) {
-    switch (catId) {
-      case 'fragrance': return const [Color(0xFF1a1206), Color(0xFF2d1f08)];
-      case 'salah':     return const [Color(0xFF1a0f1a), Color(0xFF2d1a2d)];
-      case 'home':      return const [Color(0xFF0a0f1a), Color(0xFF101825)];
-      case 'women':     return const [Color(0xFF0f1a0f), Color(0xFF1a2d1a)];
-      case 'men':       return const [Color(0xFF1a1a1a), Color(0xFF2d2d2d)];
-      default:          return const [Color(0xFF1a1206), Color(0xFF2d1f08)];
-    }
-  }
-
-  static IconData _categoryIcon(String catId) {
-    switch (catId) {
-      case 'fragrance': return Icons.water_drop_outlined;
-      case 'salah':     return Icons.mosque_outlined;
-      case 'home':      return Icons.home_outlined;
-      case 'women':     return Icons.woman_outlined;
-      case 'men':       return Icons.person_outlined;
-      default:          return Icons.shopping_bag_outlined;
-    }
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -73,11 +73,11 @@
 		</array>
 		<!-- ── Location usage descriptions ────────────────────────────────── -->
 		<key>NSLocationWhenInUseUsageDescription</key>
-		<string>Sunnah Grandeur uses your location to calculate accurate prayer times.</string>
+		<string>Daily Muslim uses your location to calculate accurate prayer times.</string>
 		<key>NSLocationAlwaysUsageDescription</key>
-		<string>Sunnah Grandeur uses your location to calculate accurate prayer times.</string>
+		<string>Daily Muslim uses your location to calculate accurate prayer times.</string>
 		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-		<string>Sunnah Grandeur uses your location to calculate accurate prayer times.</string>
+		<string>Daily Muslim uses your location to calculate accurate prayer times.</string>
 		<!-- ── Camera / microphone usage descriptions (Apple error 90683) ──── -->
 		<!-- The app has no camera/mic feature of its own. youtube_player_flutter -->
 		<!-- (used for embedded lecture/nasheed videos) pulls in flutter_inappwebview, -->
@@ -109,7 +109,7 @@
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>
-		<string>Sunnah Grandeur</string>
+		<string>Daily Muslim</string>
 		<key>CFBundleExecutable</key>
 		<string>$(EXECUTABLE_NAME)</string>
 		<key>CFBundleIdentifier</key>

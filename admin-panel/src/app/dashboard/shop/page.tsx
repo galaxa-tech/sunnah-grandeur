@@ -5,7 +5,8 @@ import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import { collection, doc, addDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, onSnapshot, query, orderBy } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
-import { db, functions } from "@/lib/firebase";
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, functions, storage } from "@/lib/firebase";
 import { storedToUsd, usdToStored, formatUsd, DEFAULT_BDT_TO_USD_RATE } from "@/lib/currency";
 import { isCancelledOrder, orderTotalCents } from "@/lib/orders";
 
@@ -77,6 +78,27 @@ export default function ShopManagementPage() {
   const [price, setPrice] = useState("");
   const [originalPrice, setOriginalPrice] = useState("");
   const [image, setImage] = useState("");
+  const [uploading, setUploading] = useState(false);
+
+  // Uploads to Storage products/ (public read, admin write) and stores the
+  // absolute download URL, which loads everywhere (website, app, web app).
+  const handleImageUpload = async (file: File | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { alert("Please choose an image file."); return; }
+    if (file.size > 5 * 1024 * 1024) { alert("Image must be under 5 MB."); return; }
+    setUploading(true);
+    try {
+      const safe = file.name.toLowerCase().replace(/[^a-z0-9.]+/g, "-");
+      const r = storageRef(storage, `products/${Date.now()}-${safe}`);
+      await uploadBytes(r, file, { contentType: file.type, cacheControl: "public,max-age=31536000" });
+      setImage(await getDownloadURL(r));
+    } catch (err) {
+      console.error("Image upload failed:", err);
+      alert("Image upload failed. Check that you are signed in as an admin.");
+    } finally {
+      setUploading(false);
+    }
+  };
   const [stockQuantity, setStockQuantity] = useState("");
 
   useEffect(() => {
@@ -188,6 +210,11 @@ export default function ShopManagementPage() {
         await setDoc(doc(db, "categories", id), {
           name: catName.trim(),
           description: catDescription.trim(),
+          // Required by the app's category query (isActive == true, sorted).
+          isActive: true,
+          sortOrder: categories.length,
+          icon: "storefront",
+          accentColor: "#C9A84C",
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         });
@@ -375,7 +402,9 @@ export default function ShopManagementPage() {
       price: storedPrice,
       priceInCents: Math.round(storedPrice * 100),
       originalPrice: storedOriginalPrice,
-      image: image || "/products/PhotoshopExtension_Image_1.png", // default fallback
+      // No image → null; the app/site show a branded placeholder instead of
+      // silently reusing another product's photo.
+      image: image.trim() || null,
       stockQuantity: parseInt(stockQuantity, 10) || 0,
       updatedAt: serverTimestamp()
     };
@@ -865,14 +894,35 @@ export default function ShopManagementPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block font-label-accent text-[10px] text-primary tracking-widest uppercase">Image URL / Path</label>
-                    <input
-                      value={image}
-                      onChange={(e) => setImage(e.target.value)}
-                      className="w-full bg-[#1A1A1A] border border-outline-variant rounded px-4 py-3 text-sm focus:outline-none focus:border-primary transition-all"
-                      placeholder="e.g. /products/p 1.png"
-                      type="text"
-                    />
+                    <label className="block font-label-accent text-[10px] text-primary tracking-widest uppercase">Product Image</label>
+                    <div className="flex items-center gap-4">
+                      <div className="w-20 h-20 rounded-lg border border-outline-variant bg-[#1A1A1A] overflow-hidden flex items-center justify-center shrink-0">
+                        {image ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={image.startsWith("http") ? image : `https://sunnahgrandeur.com${encodeURI(image.startsWith("/") ? image : `/${image}`)}`}
+                            alt="Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="material-symbols-outlined text-primary/50">image</span>
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <label className={`inline-flex items-center gap-2 px-4 py-2 rounded border border-primary/50 text-primary text-xs cursor-pointer hover:bg-primary/10 ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+                          <span className="material-symbols-outlined text-base">upload</span>
+                          {uploading ? "UPLOADING…" : "UPLOAD IMAGE"}
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e.target.files?.[0])} />
+                        </label>
+                        <input
+                          value={image}
+                          onChange={(e) => setImage(e.target.value)}
+                          className="w-full bg-[#1A1A1A] border border-outline-variant rounded px-3 py-2 text-xs focus:outline-none focus:border-primary transition-all"
+                          placeholder="…or paste an image URL / storefront path (/products/p 1.png)"
+                          type="text"
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-2">

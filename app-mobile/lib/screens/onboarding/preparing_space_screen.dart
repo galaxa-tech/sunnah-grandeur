@@ -1,5 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../../providers/language_provider.dart';
+import '../../widgets/brand_lockup.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
@@ -31,11 +35,11 @@ class _PreparingSpaceScreenState extends State<PreparingSpaceScreen> {
   @override
   void initState() {
     super.initState();
-    _rotateTimer = Timer.periodic(const Duration(milliseconds: 900), (_) {
+    _rotateTimer = Timer.periodic(const Duration(milliseconds: 650), (_) {
       if (!mounted) return;
       setState(() => _dhikrIndex = (_dhikrIndex + 1) % _dhikrs.length);
     });
-    Future.delayed(const Duration(milliseconds: 2200), _finish);
+    Future.delayed(const Duration(milliseconds: 1400), _finish);
   }
 
   @override
@@ -73,13 +77,15 @@ class _PreparingSpaceScreenState extends State<PreparingSpaceScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                const BrandLockup(logoSize: 104, wordmarkSize: 28),
+                const SizedBox(height: 26),
                 SizedBox(
-                  width: 44, height: 44,
-                  child: CircularProgressIndicator(strokeWidth: 2.5, color: c.gold),
+                  width: 22, height: 22,
+                  child: CircularProgressIndicator(strokeWidth: 2.2, color: c.gold),
                 ),
-                const SizedBox(height: 28),
-                Text('Preparing your space...',
-                    style: AppTextStyles.displaySm(c).copyWith(color: c.t1)),
+                const SizedBox(height: 16),
+                Text(context.watch<LanguageProvider>().tr('preparing_space'),
+                    style: AppTextStyles.body(c, size: 14, color: c.t2)),
                 const SizedBox(height: 16),
                 AnimatedSwitcher(
                   duration: AppMotion.base,
@@ -87,7 +93,7 @@ class _PreparingSpaceScreenState extends State<PreparingSpaceScreen> {
                     key: ValueKey(_dhikrIndex),
                     children: [
                       Text(_dhikrs[_dhikrIndex],
-                          style: AppTextStyles.heading(c, fontSize: 20, color: c.gold)),
+                          style: GoogleFonts.amiri(fontSize: 22, color: c.gold, height: 1.5)),
                       const SizedBox(height: 4),
                       Text(_dhikrsEn[_dhikrIndex], style: AppTextStyles.bodyMuted(c, size: 12)),
                     ],

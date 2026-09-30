@@ -1,17 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/language_provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import '../widgets/app_snackbar.dart';
 import '../widgets/onboarding_celebration_dialog.dart';
+import '../providers/cart_provider.dart';
+import 'prayer_tools/adhan_settings_screen.dart';
+import 'prayer_tools/hijri_calendar_screen.dart';
+import 'prayer_tools/zakat_calculator_screen.dart';
+import 'profile/location_settings_screen.dart';
 import 'home/home_screen.dart';
 import 'media/media_hub_screen.dart';
 import 'shop/shop_home_screen.dart';
 import 'profile/profile_screen.dart';
 
+/// Named routes that may be pushed from *inside* a tab (Navigator.pushNamed
+/// resolves against the tab's own Navigator, not the root MaterialApp).
+final Map<String, WidgetBuilder> _tabRoutes = {
+  '/settings/notifications': (_) => const AdhanSettingsScreen(),
+  '/settings/location':      (_) => const LocationSettingsScreen(),
+  '/tools/zakat':            (_) => const ZakatCalculatorScreen(),
+  '/tools/hijri-calendar':   (_) => const HijriCalendarScreen(),
+};
+
 /// ShellScreen — persistent scaffold with a 4-tab bottom navigation bar.
 /// Each tab has its own Navigator so sub-screens push within the tab.
+///
+/// System Back (Android button / gesture, browser back on web):
+///   1. pops the current tab's stack if it has screens pushed,
+///   2. otherwise returns to the Home tab,
+///   3. on Home, a second Back within 2 s exits the app.
 class ShellScreen extends StatefulWidget {
   const ShellScreen({super.key});
 
@@ -50,6 +71,29 @@ class _ShellScreenState extends State<ShellScreen> {
     await showOnboardingCelebration(context);
   }
 
+  DateTime? _lastBackAt;
+
+  Future<void> _handleBack() async {
+    // maybePop respects PopScopes inside the tab (e.g. the store resetting
+    // its category filter) and returns false only at the tab's root.
+    final nav = _navigatorKeys[_currentIndex].currentState;
+    if (nav != null && await nav.maybePop()) return;
+    if (!mounted) return;
+    if (_currentIndex != 0) {
+      setState(() => _currentIndex = 0);
+      return;
+    }
+    final now = DateTime.now();
+    if (_lastBackAt != null &&
+        now.difference(_lastBackAt!) < const Duration(seconds: 2)) {
+      SystemNavigator.pop();
+      return;
+    }
+    _lastBackAt = now;
+    showAppSnackbar(context, context.read<LanguageProvider>().tr('press_back_again'),
+        duration: const Duration(seconds: 2));
+  }
+
   void _onTabTapped(int index) {
     if (_currentIndex == index) {
       _navigatorKeys[index].currentState?.popUntil((r) => r.isFirst);
@@ -63,15 +107,26 @@ class _ShellScreenState extends State<ShellScreen> {
     final c    = AppColors.of(context);
     final lang = context.watch<LanguageProvider>();
 
-    return Scaffold(
+    final cartCount = context.watch<CartProvider>().itemCount;
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _handleBack();
+      },
+      child: Scaffold(
       backgroundColor: c.bg,
       body: IndexedStack(
         index: _currentIndex,
         children: List.generate(4, (i) => Navigator(
-          key: _navigatorKeys[i],
-          onGenerateRoute: (_) => MaterialPageRoute(
-            builder: (_) => _roots[i],
-          ),
+            key: _navigatorKeys[i],
+            onGenerateRoute: (settings) {
+              final named = _tabRoutes[settings.name];
+              return MaterialPageRoute(
+                settings: settings,
+                builder: named ?? (_) => _roots[i],
+              );
+            },
         )),
       ),
       bottomNavigationBar: _SgBottomNav(
@@ -84,7 +139,9 @@ class _ShellScreenState extends State<ShellScreen> {
           lang.tr('profile'),
         ],
         c: c,
+        badges: [0, 0, cartCount, 0],
       ),
+    ),
     );
   }
 }
@@ -97,16 +154,20 @@ class _SgBottomNav extends StatelessWidget {
     required this.onTap,
     required this.labels,
     required this.c,
+    this.badges = const [0, 0, 0, 0],
   });
   final int currentIndex;
   final void Function(int) onTap;
   final List<String> labels;
   final AppColors c;
+  final List<int> badges;
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
     return Container(
-      height: 76,
+      height: 68 + bottomInset,
+      padding: EdgeInsets.only(bottom: bottomInset),
       decoration: BoxDecoration(
         color: c.bg2,
         border: Border(top: BorderSide(color: c.bd, width: 1)),
@@ -122,22 +183,22 @@ class _SgBottomNav extends StatelessWidget {
         _NavItem(
           activeIcon:   (color) => CustomPaint(size: const Size(22, 22), painter: _HomeIconPainter(color, filled: true)),
           inactiveIcon: (color) => CustomPaint(size: const Size(22, 22), painter: _HomeIconPainter(color, filled: false)),
-          label: labels[0], index: 0, currentIndex: currentIndex, onTap: () => onTap(0), c: c,
+          label: labels[0], index: 0, currentIndex: currentIndex, onTap: () => onTap(0), c: c, badge: badges[0],
         ),
         _NavItem(
           activeIcon:   (color) => Icon(Icons.play_circle_rounded, color: color, size: 23),
           inactiveIcon: (color) => Icon(Icons.play_circle_outline_rounded, color: color, size: 23),
-          label: labels[1], index: 1, currentIndex: currentIndex, onTap: () => onTap(1), c: c,
+          label: labels[1], index: 1, currentIndex: currentIndex, onTap: () => onTap(1), c: c, badge: badges[1],
         ),
         _NavItem(
           activeIcon:   (color) => Icon(Icons.shopping_cart_rounded, color: color, size: 22),
           inactiveIcon: (color) => Icon(Icons.shopping_cart_outlined, color: color, size: 22),
-          label: labels[2], index: 2, currentIndex: currentIndex, onTap: () => onTap(2), c: c,
+          label: labels[2], index: 2, currentIndex: currentIndex, onTap: () => onTap(2), c: c, badge: badges[2],
         ),
         _NavItem(
           activeIcon:   (color) => Icon(Icons.person_rounded, color: color, size: 23),
           inactiveIcon: (color) => Icon(Icons.person_outline_rounded, color: color, size: 23),
-          label: labels[3], index: 3, currentIndex: currentIndex, onTap: () => onTap(3), c: c,
+          label: labels[3], index: 3, currentIndex: currentIndex, onTap: () => onTap(3), c: c, badge: badges[3],
         ),
       ]),
     );
@@ -153,7 +214,9 @@ class _NavItem extends StatelessWidget {
     required this.currentIndex,
     required this.onTap,
     required this.c,
+    this.badge = 0,
   });
+  final int badge;
   final Widget Function(Color) activeIcon;
   final Widget Function(Color) inactiveIcon;
   final String label;
@@ -184,8 +247,47 @@ class _NavItem extends StatelessWidget {
                 color: isOn ? c.gold.withValues(alpha: 0.13) : Colors.transparent,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Center(
-                child: isOn ? activeIcon(color) : inactiveIcon(color),
+              child: Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.center,
+                children: [
+                  isOn ? activeIcon(color) : inactiveIcon(color),
+                  if (badge > 0)
+                    Positioned(
+                      top: -3,
+                      right: 2,
+                      // Keyed on the count so every change replays the pop —
+                      // the "bump" that confirms an add-to-cart.
+                      child: TweenAnimationBuilder<double>(
+                        key: ValueKey(badge),
+                        tween: Tween(begin: 1.6, end: 1.0),
+                        duration: const Duration(milliseconds: 420),
+                        curve: Curves.elasticOut,
+                        builder: (_, scale, child) =>
+                            Transform.scale(scale: scale, child: child),
+                        child: Container(
+                          constraints: const BoxConstraints(minWidth: 17),
+                          height: 17,
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          decoration: BoxDecoration(
+                            color: c.gold,
+                            borderRadius: BorderRadius.circular(9),
+                            border: Border.all(color: c.bg2, width: 1.5),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            badge > 99 ? '99+' : '$badge',
+                            style: const TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF1A1200),
+                              height: 1,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(height: 3),

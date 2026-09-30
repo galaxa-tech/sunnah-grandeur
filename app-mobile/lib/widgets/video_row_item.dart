@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import 'net_image.dart';
 
 /// A horizontal video/media row item showing a thumbnail, play button,
 /// duration badge, title, metadata, and optional pill.
@@ -54,14 +55,10 @@ class VideoRowItem extends StatelessWidget {
             child: Stack(alignment: Alignment.center, children: [
               if (thumbnailUrl != null)
                 Positioned.fill(
-                  child: Image.network(
+                  child: NetImage(
                     thumbnailUrl!,
                     fit: BoxFit.cover,
-                    frameBuilder: (_, child, frame, loaded) =>
-                        frame == null && !loaded
-                            ? Container(color: tColor)
-                            : child,
-                    errorBuilder: (_, __, ___) => Container(color: tColor),
+                    fallback: Container(color: tColor),
                   ),
                 ),
               Container(

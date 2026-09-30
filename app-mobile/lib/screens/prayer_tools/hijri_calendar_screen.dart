@@ -16,7 +16,7 @@ class HijriCalendarScreen extends StatefulWidget {
 }
 
 class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
-  late final HijriDate _today;
+  late HijriDate _today;
   late HijriDate _viewedMonth; // day is irrelevant, only year/month matter
 
   @override
@@ -28,6 +28,14 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
 
   void _goToMonth(int delta) {
     setState(() => _viewedMonth = _viewedMonth.addMonths(delta));
+  }
+
+  Future<void> _adjust(int delta) async {
+    await HijriDate.setAdjustment(HijriDate.adjustmentDays + delta);
+    setState(() {
+      _today = HijriDate.today();
+      _viewedMonth = HijriDate(_today.year, _today.month, 1);
+    });
   }
 
   void _goToToday() {
@@ -70,6 +78,39 @@ class _HijriCalendarScreenState extends State<HijriCalendarScreen> {
                 ),
               ),
             ]),
+          ),
+          // Umm al-Qura + local moon-sighting adjustment
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 4, 18, 2),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
+              decoration: BoxDecoration(
+                color: c.surf,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: c.bd),
+              ),
+              child: Row(children: [
+                Icon(Icons.nightlight_round, size: 16, color: c.gold),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${lang.tr('umm_al_qura')} · ${lang.tr('moon_adjust')} '
+                    '${HijriDate.adjustmentDays > 0 ? '+' : ''}${HijriDate.adjustmentDays}',
+                    style: AppTextStyles.bodyMuted(c, size: 11.5),
+                  ),
+                ),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  onPressed: HijriDate.adjustmentDays <= -2 ? null : () => _adjust(-1),
+                  icon: Icon(Icons.remove_circle_outline_rounded, color: c.gold, size: 20),
+                ),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  onPressed: HijriDate.adjustmentDays >= 2 ? null : () => _adjust(1),
+                  icon: Icon(Icons.add_circle_outline_rounded, color: c.gold, size: 20),
+                ),
+              ]),
+            ),
           ),
 
           Expanded(

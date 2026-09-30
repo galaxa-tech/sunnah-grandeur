@@ -32,8 +32,21 @@ class CartProvider extends ChangeNotifier {
   List<CartItem> get items => List.unmodifiable(_items);
   int get itemCount => _items.fold(0, (acc, item) => acc + item.quantity);
   double get subtotal => _items.fold(0.0, (acc, item) => acc + item.totalPrice);
-  double get shipping => subtotal > 0 ? 10.0 : 0.0;
+  // Mirrors createOrder (backend/functions/src/domains/orders) and the
+  // storefront cart: standard shipping $9.99, free at $50+. Keep in sync
+  // with settings/app_config.freeShippingThreshold / standardShippingCents.
+  static const double freeShippingThreshold = 50.0;
+  static const double standardShipping = 9.99;
+
+  double get shipping =>
+      subtotal == 0 || subtotal >= freeShippingThreshold ? 0 : standardShipping;
+  double get amountToFreeShipping =>
+      (freeShippingThreshold - subtotal).clamp(0, freeShippingThreshold).toDouble();
   double get total => subtotal + shipping;
+
+  /// Puts a removed line back (used by the cart's Undo).
+  Future<void> restoreItem(CartItem item) =>
+      addToCart(item.product, item.variant, item.quantity);
 
   Future<void> addToCart(ProductModel product, String variant, int quantity) async {
     if (quantity <= 0) return;

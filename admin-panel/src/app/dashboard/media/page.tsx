@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
-import { collection, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, deleteDoc, updateDoc, doc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 // Matches app-mobile/lib/models/video_model.dart + MediaProvider._firestoreFetch —
@@ -21,11 +21,16 @@ interface MediaItem {
   isActive: boolean;
 }
 
-const SECTIONS: { value: MediaItem["type"]; label: string }[] = [
-  { value: "video", label: "Islamic Videos" },
-  { value: "quran", label: "Quran" },
-  { value: "ruqyah", label: "Ruqyah" },
+// Where each section appears in the Daily Muslim app. The Quran section of
+// the app is now text + audio (not videos) — lectures and tafsir belong in
+// Islamic Videos. "quran" is kept only so legacy items still display here.
+const SECTIONS: { value: MediaItem["type"]; label: string; help: string }[] = [
+  { value: "video", label: "Islamic Videos", help: "Lectures, tafsir, reminders — Media → Islamic Videos." },
+  { value: "ruqyah", label: "Ruqyah", help: "Ruqyah recitations — Media → Ruqyah (below the built-in Quran ruqyah)." },
 ];
+const LEGACY_LABELS: Record<string, string> = { quran: "Quran (legacy — not shown in app)" };
+const sectionLabel = (t: string) =>
+  SECTIONS.find((s) => s.value === t)?.label ?? LEGACY_LABELS[t] ?? t;
 
 function extractYoutubeId(input: string): string | null {
   const trimmed = input.trim();
@@ -55,6 +60,8 @@ export default function MediaManagementPage() {
   const [description, setDescription] = useState("");
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"all" | MediaItem["type"]>("all");
 
   useEffect(() => {
     setLoading(true);
@@ -74,6 +81,7 @@ export default function MediaManagementPage() {
   }, []);
 
   const resetForm = () => {
+    setEditingId(null);
     setSection("video");
     setTitle("");
     setAuthor("");
@@ -97,11 +105,26 @@ export default function MediaManagementPage() {
     }
     setSaving(true);
     try {
+      if (editingId) {
+        await updateDoc(doc(db, "media", editingId), {
+          type: section,
+          title: title.trim(),
+          author: author.trim() || "Sunnah Grandeur",
+          category: category.trim() || sectionLabel(section),
+          description: description.trim(),
+          youtubeId,
+          thumbnail: `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`,
+          updatedAt: serverTimestamp(),
+        });
+        setIsModalOpen(false);
+        resetForm();
+        return;
+      }
       await addDoc(collection(db, "media"), {
         type: section,
         title: title.trim(),
         author: author.trim() || "Sunnah Grandeur",
-        category: category.trim() || SECTIONS.find((s) => s.value === section)?.label,
+        category: category.trim() || sectionLabel(section),
         description: description.trim(),
         youtubeId,
         duration: "—",
@@ -120,6 +143,29 @@ export default function MediaManagementPage() {
       setSaving(false);
     }
   };
+
+  const openEdit = (item: MediaItem) => {
+    setEditingId(item.id);
+    setSection(item.type === "quran" ? "video" : item.type);
+    setTitle(item.title ?? "");
+    setAuthor(item.author ?? "");
+    setCategory(item.category ?? "");
+    setYoutubeInput(item.youtubeId ?? "");
+    setDescription(item.description ?? "");
+    setFormError("");
+    setIsModalOpen(true);
+  };
+
+  const toggleActive = async (item: MediaItem) => {
+    try {
+      await updateDoc(doc(db, "media", item.id), { isActive: !item.isActive, updatedAt: serverTimestamp() });
+    } catch (e) {
+      console.error("Error toggling media:", e);
+    }
+  };
+
+  const visibleItems = mediaItems.filter((m) => filter === "all" || m.type === filter);
+  const countOf = (t: string) => mediaItems.filter((m) => m.type === t).length;
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Remove this video from the app's Media tab?")) return;
@@ -154,18 +200,31 @@ export default function MediaManagementPage() {
             </button>
           </div>
 
+          <div className="flex flex-wrap gap-2">
+            {([["all", `All (${mediaItems.length})`], ...SECTIONS.map((s) => [s.value, `${s.label} (${countOf(s.value)})`]),
+              ...(countOf("quran") > 0 ? [["quran", `Legacy Quran (${countOf("quran")})`]] : [])] as [string, string][]).map(([v, label]) => (
+              <button
+                key={v}
+                onClick={() => setFilter(v as typeof filter)}
+                className={`px-4 py-2 rounded-full text-xs border transition-colors ${filter === v ? "bg-primary text-on-primary border-primary" : "border-border-subtle text-on-surface-variant hover:border-primary/50"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {loading ? (
               <div className="col-span-full p-12 text-center text-on-surface-variant">
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary mx-auto mb-4"></div>
                 Loading live media...
               </div>
-            ) : mediaItems.length === 0 ? (
+            ) : visibleItems.length === 0 ? (
               <div className="col-span-full p-12 text-center text-on-surface-variant bg-surface-container rounded-xl">
                 No videos added yet. Click &apos;Add Video&apos; to add the first one.
               </div>
             ) : (
-              mediaItems.map((item) => (
+              visibleItems.map((item) => (
                 <div key={item.id} className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden group hover:border-primary/50 transition-colors relative">
                   <div className="h-40 bg-surface-container-high flex items-center justify-center relative border-b border-border-subtle overflow-hidden">
                     {item.youtubeId ? (
@@ -177,15 +236,35 @@ export default function MediaManagementPage() {
                     ) : (
                       <span className="material-symbols-outlined text-4xl text-primary/60">play_circle</span>
                     )}
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      className="absolute top-2 right-2 bg-red-500/80 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                    >
-                      <span className="material-symbols-outlined text-sm">delete</span>
-                    </button>
-                    <span className="absolute bottom-2 left-2 bg-black/70 text-white text-[10px] uppercase tracking-widest px-2 py-1 rounded">
-                      {SECTIONS.find((s) => s.value === item.type)?.label ?? item.type}
+                    <div className="absolute top-2 right-2 flex gap-1.5">
+                      <button
+                        onClick={() => openEdit(item)}
+                        title="Edit"
+                        className="bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-primary hover:text-on-primary"
+                      >
+                        <span className="material-symbols-outlined text-sm">edit</span>
+                      </button>
+                      <button
+                        onClick={() => toggleActive(item)}
+                        title={item.isActive ? "Hide from app" : "Show in app"}
+                        className="bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-primary hover:text-on-primary"
+                      >
+                        <span className="material-symbols-outlined text-sm">{item.isActive ? "visibility" : "visibility_off"}</span>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(item.id)}
+                        title="Delete"
+                        className="bg-red-500/80 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600"
+                      >
+                        <span className="material-symbols-outlined text-sm">delete</span>
+                      </button>
+                    </div>
+                    <span className={`absolute bottom-2 left-2 text-white text-[10px] uppercase tracking-widest px-2 py-1 rounded ${item.type === "quran" ? "bg-amber-700/90" : "bg-black/70"}`}>
+                      {sectionLabel(item.type)}
                     </span>
+                    {!item.isActive && (
+                      <span className="absolute bottom-2 right-2 bg-zinc-700/90 text-white text-[10px] uppercase tracking-widest px-2 py-1 rounded">Hidden</span>
+                    )}
                   </div>
                   <div className="p-4 space-y-1">
                     <h4 className="font-semibold text-sm text-on-background truncate">{item.title}</h4>
@@ -201,7 +280,7 @@ export default function MediaManagementPage() {
           <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-4">
             <div className="max-w-[500px] w-full bg-surface-card border border-border-subtle rounded-2xl shadow-2xl">
               <div className="px-8 py-6 border-b border-border-subtle flex justify-between items-center">
-                <h2 className="font-headline-lg text-xl text-primary">Add Video</h2>
+                <h2 className="font-headline-lg text-xl text-primary">{editingId ? "Edit Video" : "Add Video"}</h2>
                 <button
                   onClick={() => { setIsModalOpen(false); resetForm(); }}
                   className="text-on-surface-variant hover:text-primary transition-colors"
@@ -226,6 +305,7 @@ export default function MediaManagementPage() {
                       <option key={s.value} value={s.value}>{s.label}</option>
                     ))}
                   </select>
+                  <p className="text-[11px] text-on-surface-variant">{SECTIONS.find((s) => s.value === section)?.help}</p>
                 </div>
                 <div className="space-y-2">
                   <label className="block text-xs font-label-accent text-primary tracking-widest uppercase">YouTube Link or Video ID</label>
@@ -272,7 +352,7 @@ export default function MediaManagementPage() {
                 <div className="pt-2 flex justify-end gap-4">
                   <button type="button" onClick={() => { setIsModalOpen(false); resetForm(); }} className="text-on-surface-variant text-xs">CANCEL</button>
                   <button type="submit" disabled={saving} className="bg-primary text-on-primary px-6 py-2 rounded text-xs disabled:opacity-50">
-                    {saving ? "SAVING..." : "ADD VIDEO"}
+                    {saving ? "SAVING..." : editingId ? "SAVE CHANGES" : "ADD VIDEO"}
                   </button>
                 </div>
               </form>

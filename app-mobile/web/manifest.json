@@ -1,11 +1,11 @@
 {
-    "name": "sunnah_grandeur",
-    "short_name": "sunnah_grandeur",
+    "name": "Daily Muslim — by Sunnah Grandeur",
+    "short_name": "Daily Muslim",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0D0D0F",
+    "theme_color": "#0D0D0F",
+    "description": "Prayer times, adhan alerts, Qibla, Quran, Islamic media and the Sunnah Grandeur store — your daily Muslim companion.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

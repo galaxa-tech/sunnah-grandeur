@@ -4,7 +4,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { validate }           = require("../../middleware/validate");
 const { db, COL }            = require("../../lib/db");
 
-const VALID_TYPES      = ["lecture", "short", "quran", "ruqyah"];
+const VALID_TYPES      = ["video", "ruqyah", "quran", "lecture", "short"];
 const DEFAULT_LIMIT    = 50;
 const MAX_LIMIT        = 100;
 

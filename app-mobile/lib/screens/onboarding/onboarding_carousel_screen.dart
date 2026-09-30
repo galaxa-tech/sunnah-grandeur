@@ -1,4 +1,5 @@
 import 'dart:ui' show PlatformDispatcher;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -12,6 +13,7 @@ import '../../widgets/gold_button.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../widgets/illustrations/mosque_silhouette.dart';
 import '../../widgets/illustrations/star_field.dart';
+import '../../services/notification_service.dart';
 import 'preparing_space_screen.dart';
 
 /// The app's real first-run experience: one swipeable carousel (language →
@@ -101,6 +103,11 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
       final ok = await loc.useCurrentLocation();
       if (!mounted) return;
       if (ok) {
+        if (loc.lat != null && loc.lng != null) {
+          await context.read<AdhanSettingsProvider>()
+              .applyRegionalDefaults(loc.lat!, loc.lng!);
+          if (!mounted) return;
+        }
         _goToPage(2);
       } else if (loc.error != null) {
         showAppSnackbar(context, loc.error!,
@@ -108,6 +115,16 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
       }
       return;
     }
+    // Ask for the OS notification (+ exact alarm) permission right when the
+    // user opts into adhan alerts — the moment the request makes sense.
+    if (!kIsWeb && context.read<AdhanSettingsProvider>().settings.enabled) {
+      try {
+        await NotificationService.instance.requestPermissions();
+      } catch (e) {
+        debugPrint('[Onboarding] notification permission: $e');
+      }
+    }
+    if (!mounted) return;
     _finishOnboarding();
   }
 
@@ -479,13 +496,13 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
       child: Column(
         children: [
-          _pageHeading(c, 'Never Miss a Prayer',
-              'Enable alerts so we can remind you at\neach prayer time.'),
+          _pageHeading(c, context.watch<LanguageProvider>().tr('never_miss_prayer'),
+              context.watch<LanguageProvider>().tr('never_miss_prayer_sub')),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('All Prayer Alerts', style: AppTextStyles.label(c, size: 13)),
+              Text(context.watch<LanguageProvider>().tr('all_prayer_alerts'), style: AppTextStyles.label(c, size: 13)),
               _Toggle(
                 value: settings.enabled,
                 c: c,

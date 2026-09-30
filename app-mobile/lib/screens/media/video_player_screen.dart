@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:provider/provider.dart';
@@ -6,6 +7,8 @@ import '../../models/video_model.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../providers/language_provider.dart';
+import '../../widgets/net_image.dart';
+import '../../widgets/youtube_web_embed.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
   final VideoModel video;
@@ -23,6 +26,16 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   Timer? _readyTimeout;
 
   @override
+  void initState() {
+    super.initState();
+    // Start straight away — the user already chose this video; making them
+    // tap a second play button felt broken.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _startPlayer();
+    });
+  }
+
+  @override
   void dispose() {
     _readyTimeout?.cancel();
     _ctrl?.removeListener(_onCtrlChange);
@@ -33,6 +46,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   void _startPlayer() {
     if (widget.video.youtubeId.isEmpty) {
       setState(() => _hasError = true);
+      return;
+    }
+    if (kIsWeb) {
+      setState(() { _started = true; _ready = true; });
       return;
     }
 
@@ -84,10 +101,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           onTap: _startPlayer,
           child: Stack(alignment: Alignment.center, children: [
             Positioned.fill(
-              child: Image.network(
+              child: NetImage(
                 'https://img.youtube.com/vi/${widget.video.youtubeId}/hqdefault.jpg',
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(color: Colors.black87),
+                fallback: Container(color: Colors.black87),
               ),
             ),
             Container(color: Colors.black.withValues(alpha: 0.28)),
@@ -215,14 +232,26 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     final c = AppColors.of(context);
     final lang = context.watch<LanguageProvider>();
 
-    // Before player starts: show thumbnail
-    if (!_started) {
+    // Before player starts (or on web, where YouTube's own iframe player is
+    // embedded directly).
+    if (!_started || kIsWeb) {
       return Scaffold(
         backgroundColor: Colors.black,
-        body: Column(children: [
-          _buildThumbnail(c),
-          _buildMeta(c, lang, context),
-        ]),
+        body: SafeArea(
+          bottom: false,
+          child: Column(children: [
+            if (kIsWeb && _started && !_hasError)
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: YoutubeWebEmbed(videoId: widget.video.youtubeId),
+              )
+            else if (_hasError)
+              _ErrorTile(c: c, lang: lang, onRetry: _retry)
+            else
+              _buildThumbnail(c),
+            _buildMeta(c, lang, context),
+          ]),
+        ),
       );
     }
 
@@ -245,7 +274,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       ),
       builder: (ctx, player) => Scaffold(
         backgroundColor: Colors.black,
-        body: Column(children: [
+        body: SafeArea(
+          bottom: false,
+          child: Column(children: [
           // Error overlay replaces player area
           if (_hasError)
             _ErrorTile(c: c, lang: lang, onRetry: _retry)
@@ -259,11 +290,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                     color: Colors.black,
                     child: Stack(children: [
                       Positioned.fill(
-                        child: Image.network(
+                        child: NetImage(
                           'https://img.youtube.com/vi/${widget.video.youtubeId}/hqdefault.jpg',
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
-                              Container(color: Colors.black87),
+                          fallback: Container(color: Colors.black87),
                         ),
                       ),
                       Container(color: Colors.black.withValues(alpha: 0.55)),
@@ -277,6 +307,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             ]),
           _buildMeta(c, lang, ctx),
         ]),
+        ),
       ),
     );
   }

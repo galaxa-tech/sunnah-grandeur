@@ -1,7 +1,7 @@
 name: sunnah_grandeur
 description: Sunnah Grandeur — Islamic Lifestyle App UI Prototype
 publish_to: "none"
-version: 1.0.0+1
+version: 2.0.0+200
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -37,6 +37,8 @@ dependencies:
   url_launcher: ^6.3.1
   geocoding: ^3.0.0
   flutter_animate: ^4.5.2
+  web: ^1.1.0
+  hijri: ^3.0.1
 
 dev_dependencies:
   flutter_test:
