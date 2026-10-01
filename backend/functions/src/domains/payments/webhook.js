@@ -4,6 +4,7 @@ const { onRequest }    = require("firebase-functions/v2/https");
 const { FieldValue }   = require("firebase-admin/firestore");
 const { db, COL }      = require("../../lib/db");
 const { getStripe }    = require("../../lib/stripe");
+const { cancelUnpaidOrder } = require("./restock");
 
 // ── stripeWebhook ─────────────────────────────────────────────────────────────
 //
@@ -11,9 +12,10 @@ const { getStripe }    = require("../../lib/stripe");
 // Signature verification ensures only genuine Stripe events are processed.
 //
 // Handled events:
-//   payment_intent.succeeded      → status: 'paid'
-//   payment_intent.payment_failed → status: 'failed', stock restored
-//   charge.refunded               → status: 'refunded'
+//   payment_intent.succeeded      → Processing + paymentStatus 'paid'
+//   payment_intent.payment_failed → error recorded (customer may retry)
+//   checkout.session.expired      → order Cancelled, stock restored
+//   charge.refunded               → paymentStatus 'refunded'
 
 const stripeWebhook = onRequest(
   { region: "us-central1", rawBody: true, timeoutSeconds: 60 },
@@ -48,6 +50,9 @@ const stripeWebhook = onRequest(
         case "payment_intent.payment_failed":
           await _onPaymentFailed(event.data.object);
           break;
+        case "checkout.session.expired":
+          await _onSessionExpired(event.data.object);
+          break;
         case "charge.refunded":
           await _onChargeRefunded(event.data.object);
           break;
@@ -65,49 +70,53 @@ const stripeWebhook = onRequest(
 );
 
 // ── Event handlers ────────────────────────────────────────────────────────────
+// Order statuses are the admin-panel lifecycle (pending_payment | Processing |
+// Shipped | Delivered | Cancelled); payment state lives in `paymentStatus`.
 
 async function _onPaymentSucceeded(intent) {
   const orderId = intent.metadata?.orderId;
   if (!orderId) return;
 
   const ref = db.collection(COL.ORDERS).doc(orderId);
-  const doc = await ref.get();
-  if (!doc.exists) return;
-
-  // Idempotency: never downgrade a status that is already past 'paid'
-  const currentStatus = doc.data().status;
-  if (["paid", "processing", "shipped", "delivered"].includes(currentStatus)) return;
-
-  await ref.update({
-    status:          "paid",
-    paymentIntentId: intent.id,
-    paidAt:          FieldValue.serverTimestamp(),
-    updatedAt:       FieldValue.serverTimestamp(),
+  await db.runTransaction(async (t) => {
+    const doc = await t.get(ref);
+    if (!doc.exists) return;
+    const { status } = doc.data();
+    // Idempotent: only a pending order is promoted. A "Cancelled" order that
+    // got paid late (stock already released) is flagged for manual review.
+    if (status === "pending_payment") {
+      t.update(ref, {
+        status:          "Processing",
+        paymentStatus:   "paid",
+        paymentIntentId: intent.id,
+        paidAt:          FieldValue.serverTimestamp(),
+        updatedAt:       FieldValue.serverTimestamp(),
+      });
+    } else if (status === "Cancelled") {
+      t.update(ref, {
+        paymentStatus:   "paid_after_cancel",
+        paymentIntentId: intent.id,
+        updatedAt:       FieldValue.serverTimestamp(),
+      });
+    }
   });
 }
 
+// A single failed attempt is NOT terminal — the customer can retry on the same
+// intent/session. Abandonment is handled by checkout.session.expired and the
+// scheduled cleanup, so here we only record the failure.
 async function _onPaymentFailed(intent) {
   const orderId = intent.metadata?.orderId;
   if (!orderId) return;
+  await db.collection(COL.ORDERS).doc(orderId).update({
+    lastPaymentError: intent.last_payment_error?.message ?? "payment_failed",
+    updatedAt:        FieldValue.serverTimestamp(),
+  }).catch(() => {});
+}
 
-  const ref = db.collection(COL.ORDERS).doc(orderId);
-  const doc = await ref.get();
-  if (!doc.exists || doc.data().status !== "pending_payment") return;
-
-  // Restore stock for each line item
-  const batch = db.batch();
-  for (const item of (doc.data().items ?? [])) {
-    batch.update(
-      db.collection(COL.PRODUCTS).doc(item.productId),
-      { stockQuantity: FieldValue.increment(item.quantity), updatedAt: FieldValue.serverTimestamp() },
-    );
-  }
-  batch.update(ref, {
-    status:    "failed",
-    failedAt:  FieldValue.serverTimestamp(),
-    updatedAt: FieldValue.serverTimestamp(),
-  });
-  await batch.commit();
+async function _onSessionExpired(session) {
+  const orderId = session.metadata?.orderId;
+  if (orderId) await cancelUnpaidOrder(orderId, "checkout_expired");
 }
 
 async function _onChargeRefunded(charge) {
@@ -122,9 +131,9 @@ async function _onChargeRefunded(charge) {
   if (snap.empty) return;
 
   await snap.docs[0].ref.update({
-    status:     "refunded",
-    refundedAt: FieldValue.serverTimestamp(),
-    updatedAt:  FieldValue.serverTimestamp(),
+    paymentStatus: "refunded",
+    refundedAt:    FieldValue.serverTimestamp(),
+    updatedAt:     FieldValue.serverTimestamp(),
   });
 }
 

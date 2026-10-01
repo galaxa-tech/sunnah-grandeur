@@ -49,9 +49,12 @@ exports.getOrdersByUser   = getOrdersByUser;
 exports.updateOrderStatus = updateOrderStatus;
 
 // ── Payments ──────────────────────────────────────────────────────────────────
-const { createPaymentIntent, verifyPayment } =
+const { createPaymentIntent, createCheckoutSession, verifyPayment } =
   require("./src/domains/payments");
-exports.createPaymentIntent = createPaymentIntent;
+const { cancelAbandonedOrders } = require("./src/domains/payments/cleanup");
+exports.createPaymentIntent   = createPaymentIntent;
+exports.createCheckoutSession = createCheckoutSession;
+exports.cancelAbandonedOrders = cancelAbandonedOrders;
 exports.verifyPayment       = verifyPayment;
 
 // ── Stripe Webhook ────────────────────────────────────────────────────────────

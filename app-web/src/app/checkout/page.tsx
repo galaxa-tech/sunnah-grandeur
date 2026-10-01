@@ -38,6 +38,7 @@ export default function CheckoutPage() {
   const [state, setState] = useState('NY');
   const [postalCode, setPostalCode] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'cod'>('card');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [orderConfirmed, setOrderConfirmed] = useState<{ id: string; trackingCode: string; totalInCents: number } | null>(null);
   const [wasGuest, setWasGuest] = useState(false);
@@ -54,8 +55,9 @@ export default function CheckoutPage() {
     if (user.displayName) setFullName((prev) => prev || user.displayName!);
   }, [user]);
 
-  // Cash on Delivery — the only payment method wired up right now. Card
-  // checkout is deferred until live Stripe keys are available.
+  // Handles both payment methods. COD confirms immediately; card creates a
+  // pending_payment order, then redirects to Stripe-hosted Checkout — the
+  // webhook flips the order to Processing once Stripe confirms the charge.
   const handleSubmitCOD = async (e: React.FormEvent) => {
     e.preventDefault();
     if (items.length === 0) return;
@@ -93,10 +95,19 @@ export default function CheckoutPage() {
           country: 'US',
           method: 'standard',
         },
-        paymentMethod: 'cod',
+        paymentMethod,
       });
 
       const { orderId, totalInCents } = result.data as { orderId: string; totalInCents: number };
+
+      if (paymentMethod === 'card') {
+        const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');
+        const session: any = await createCheckoutSession({ orderId, origin: window.location.origin });
+        // Cart is cleared on the success page, so a cancelled payment keeps it.
+        window.location.href = session.data.url;
+        return;
+      }
+
       setOrderConfirmed({ id: orderId, trackingCode: orderId, totalInCents });
       clearCart();
     } catch (error: any) {
@@ -323,19 +334,16 @@ export default function CheckoutPage() {
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label
-                  className="p-4 rounded-lg border border-border-subtle opacity-50 cursor-not-allowed flex items-center gap-3"
-                  title="Card payments are coming soon."
-                >
-                  <input type="radio" name="payment" checked={false} disabled onChange={() => {}} className="accent-amber-500" />
+                <label className={`p-4 rounded-lg border cursor-pointer flex items-center gap-3 ${paymentMethod === 'card' ? 'border-primary-container bg-primary-container/10' : 'border-border-subtle'}`}>
+                  <input type="radio" name="payment" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} className="accent-amber-500" />
                   <div>
-                    <p className="font-semibold text-sm text-text-primary">Stripe Credit / Debit Card</p>
-                    <p className="text-xs text-text-secondary">Coming soon</p>
+                    <p className="font-semibold text-sm text-text-primary">Credit / Debit Card</p>
+                    <p className="text-xs text-text-secondary">Secure payment via Stripe</p>
                   </div>
                 </label>
 
-                <label className="p-4 rounded-lg border border-primary-container bg-primary-container/10 flex items-center gap-3">
-                  <input type="radio" name="payment" checked readOnly className="accent-amber-500" />
+                <label className={`p-4 rounded-lg border cursor-pointer flex items-center gap-3 ${paymentMethod === 'cod' ? 'border-primary-container bg-primary-container/10' : 'border-border-subtle'}`}>
+                  <input type="radio" name="payment" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} className="accent-amber-500" />
                   <div>
                     <p className="font-semibold text-sm text-text-primary">Cash on Delivery</p>
                     <p className="text-xs text-text-secondary">Pay upon package arrival</p>
@@ -382,10 +390,10 @@ export default function CheckoutPage() {
                 className="w-full bg-primary-container text-bg-primary py-4 rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-[#e6c364] transition-all duration-300 shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (
-                  <span>Placing Order...</span>
+                  <span>{paymentMethod === 'card' ? 'Redirecting to payment...' : 'Placing Order...'}</span>
                 ) : (
                   <>
-                    <span>Place COD Order</span>
+                    <span>{paymentMethod === 'card' ? 'Pay Securely' : 'Place COD Order'}</span>
                     <span className="material-symbols-outlined text-sm">check</span>
                   </>
                 )}

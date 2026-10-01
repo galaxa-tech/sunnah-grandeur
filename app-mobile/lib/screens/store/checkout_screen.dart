@@ -12,6 +12,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/store_provider.dart';
 import '../../providers/language_provider.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
+import '../../config/api_config.dart';
 import '../../services/functions/payment_service.dart';
 import '../../services/functions/order_service.dart';
 import '../../widgets/auth_gate.dart';
@@ -31,10 +32,10 @@ class CheckoutScreen extends StatefulWidget {
   State<CheckoutScreen> createState() => _CheckoutScreenState();
 }
 
-/// Card checkout stays off until live Stripe keys are configured in
-/// backend/functions/.env. Flip to true to re-enable (native only — Stripe's
-/// PaymentSheet is a no-op on web).
-const bool kCardPaymentsEnabled = false;
+/// Card checkout is on whenever the build was given a Stripe publishable key
+/// (STRIPE_KEY in api_keys.json); builds without one fall back to COD only.
+/// Native only — Stripe's PaymentSheet is a no-op on web.
+bool get kCardPaymentsEnabled => ApiConfig.isStripeConfigured;
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
   final _formKey    = GlobalKey<FormState>();
