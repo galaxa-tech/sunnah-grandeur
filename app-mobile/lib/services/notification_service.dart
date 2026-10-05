@@ -173,7 +173,24 @@ class NotificationService {
 
     await ios?.requestPermissions(alert: true, badge: true, sound: true);
     await android?.requestNotificationsPermission();
-    await android?.requestExactAlarmsPermission();
+    // Only prompts when exact alarms are not already allowed; scheduling
+    // falls back to inexact if the user declines.
+    if (android != null && !await _canScheduleExact()) {
+      await android.requestExactAlarmsPermission();
+    }
+  }
+
+  /// True on iOS / pre-Android-12 / when SCHEDULE_EXACT_ALARM is granted.
+  Future<bool> _canScheduleExact() async {
+    if (kIsWeb) return false;
+    final android = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    if (android == null) return true;
+    try {
+      return await android.canScheduleExactNotifications() ?? false;
+    } catch (_) {
+      return false;
+    }
   }
 
   // ── Scheduling ────────────────────────────────────────────────────────────
@@ -194,6 +211,10 @@ class NotificationService {
       debugPrint('[NotificationService] alarms disabled — cancelled all.');
       return;
     }
+
+    final scheduleMode = await _canScheduleExact()
+        ? AndroidScheduleMode.exactAllowWhileIdle
+        : AndroidScheduleMode.inexactAllowWhileIdle;
 
     final now       = DateTime.now();
     final sound     = soundByKey(settings.soundKey);
@@ -229,7 +250,6 @@ class NotificationService {
                 priority:           Priority.max,
                 category:           AndroidNotificationCategory.alarm,
                 visibility:         NotificationVisibility.public,
-                fullScreenIntent:   true,        // shows over lock screen
                 ongoing:            false,
                 autoCancel:         true,
                 icon:               '@mipmap/ic_launcher',
@@ -261,7 +281,7 @@ class NotificationService {
                 categoryIdentifier: 'prayer_alarm',
               ),
             ),
-            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            androidScheduleMode: scheduleMode,
             uiLocalNotificationDateInterpretation:
                 UILocalNotificationDateInterpretation.absoluteTime,
             payload: 'prayer:${p.name}:${p.time.toIso8601String()}',
@@ -296,7 +316,7 @@ class NotificationService {
                     interruptionLevel: InterruptionLevel.timeSensitive,
                   ),
                 ),
-                androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+                androidScheduleMode: scheduleMode,
                 uiLocalNotificationDateInterpretation:
                     UILocalNotificationDateInterpretation.absoluteTime,
                 payload: 'reminder:${p.name}',
