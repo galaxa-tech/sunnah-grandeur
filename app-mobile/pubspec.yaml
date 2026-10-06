@@ -1,7 +1,7 @@
 name: sunnah_grandeur
 description: Sunnah Grandeur — Islamic Lifestyle App UI Prototype
 publish_to: "none"
-version: 2.0.0+2072
+version: 2.0.0+2073
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -64,8 +64,8 @@ flutter_launcher_icons:
   image_path: "assets/images/logo.png"
   image_path_ios: "assets/images/logo_icon_flattened.png"
   min_sdk_android: 21
-  adaptive_icon_background: "#0A0A0C"
-  adaptive_icon_foreground: "assets/images/logo.png"
+  adaptive_icon_background: "#000000"
+  adaptive_icon_foreground: "assets/images/logo_adaptive_fg.png"
   remove_alpha_ios: true
 
 # flutter_native_splash config — run `dart run flutter_native_splash:create`
