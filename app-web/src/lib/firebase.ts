@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { getFirestore, initializeFirestore, connectFirestoreEmulator, Firestore } from "firebase/firestore";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 
@@ -13,7 +13,22 @@ const firebaseConfig = {
 };
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-export const db = getFirestore(app);
+// Safari/WebKit (and some Firefox/proxy setups) block Firestore's default streaming
+// channel ("access control checks"), which left the shop empty there. Auto-detect
+// switches to long-polling when streaming fails; harmless in Chrome.
+function createDb(): Firestore {
+  try {
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    const isWebKit = /AppleWebKit/i.test(ua) && !/Chrome|Chromium|Edg|Android/i.test(ua); // Safari, all iOS browsers
+    return initializeFirestore(
+      app,
+      isWebKit ? { experimentalForceLongPolling: true } : { experimentalAutoDetectLongPolling: true },
+    );
+  } catch {
+    return getFirestore(app); // already initialised (hot reload)
+  }
+}
+export const db = createDb();
 export const auth = getAuth(app);
 export const functions = getFunctions(app);
 

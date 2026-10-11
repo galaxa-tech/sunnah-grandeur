@@ -31,6 +31,9 @@ const ZIP_RANGES: Record<string, [number, number][]> = {
 
 /** "2125550100" -> "(212) 555-0100" while typing. */
 export function formatUsPhone(raw: string): string {
+  const t = raw.trim();
+  // Keep international numbers (+44…) as typed so validation can reject them.
+  if (t.startsWith('+') && !t.startsWith('+1')) return t.slice(0, 20);
   let d = raw.replace(/\D/g, '');
   if (d.length === 11 && d.startsWith('1')) d = d.slice(1);
   d = d.slice(0, 10);
@@ -46,7 +49,8 @@ export function validateCheckout(f: CheckoutFields): Partial<Record<keyof Checko
 
   const digits = f.phone.replace(/\D/g, '');
   const ten = digits.length === 11 && digits.startsWith('1') ? digits.slice(1) : digits;
-  if (!/^[2-9]\d{2}[2-9]\d{6}$/.test(ten)) {
+  const intl = f.phone.trim().startsWith('+') && !f.phone.trim().startsWith('+1');
+  if (intl || !/^[2-9]\d{2}[2-9]\d{6}$/.test(ten)) {
     e.phone = 'Enter a valid US phone number (10 digits). We deliver within the United States only.';
   }
 
