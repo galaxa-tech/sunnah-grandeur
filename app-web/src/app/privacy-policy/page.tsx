@@ -72,7 +72,7 @@ export default function PrivacyPolicyPage() {
 
               <h3 className={H3}>c) Payment information</h3>
               <p>
-                We currently accept <strong className={B}>Cash on Delivery</strong> only, so we do not collect any card or bank details. When card payments launch, they will be processed by Stripe, and your full card number will be handled by Stripe and never stored on our servers.
+                Payments are processed by <strong className={B}>Stripe</strong> (cards, Apple Pay, Google Pay) and <strong className={B}>PayPal</strong> (PayPal and Venmo). Your full card number is entered directly with the payment provider and is never stored on our servers. We keep only your order details and the payment status.
               </p>
             </section>
 

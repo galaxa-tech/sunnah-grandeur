@@ -11,10 +11,13 @@ import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useCartStore } from '@/store/useCartStore';
 import CartDrawer from '@/components/CartDrawer';
+import ProductMenu from '@/components/ProductMenu';
+import { useWishlist } from '@/lib/wishlist';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ProductCard({ product, t, onQuickAdd }: { product: Product; t: any; onQuickAdd: (p: Product) => void }) {
   const { usdRate } = useCurrency();
+  const wishlist = useWishlist();
   return (
     <div className="group relative rounded-2xl glass-card glass-card-hover overflow-hidden flex flex-col justify-between h-full">
       {/* Image Area with Ambient Spotlight */}
@@ -35,10 +38,18 @@ function ProductCard({ product, t, onQuickAdd }: { product: Product; t: any; onQ
         </div>
 
         {product.originalPrice && product.originalPrice > product.price && !product.isSoldOut && (
-          <span className="absolute top-3 right-3 z-10 bg-red-500/90 backdrop-blur-md text-white font-mono px-2 py-0.5 text-[9px] font-bold rounded-full">
+          <span className="absolute top-3 right-14 z-10 bg-red-500/90 backdrop-blur-md text-white font-mono px-2 py-0.5 text-[9px] font-bold rounded-full">
             {formatUsd(product.originalPrice - product.price, usdRate)} Off
           </span>
         )}
+
+        <ProductMenu
+          productId={product.id}
+          saved={wishlist.has(product.id)}
+          onToggleSave={() => wishlist.toggle(product.id)}
+          onAddToCart={() => onQuickAdd(product)}
+          soldOut={product.isSoldOut}
+        />
 
         <Link href={`/product/${product.id}`} className="w-full h-full flex items-center justify-center p-4 block">
           {product.image ? (
@@ -69,7 +80,7 @@ function ProductCard({ product, t, onQuickAdd }: { product: Product; t: any; onQ
 
         {/* Slide-Up Quick Add Overlay */}
         {!product.isSoldOut && (
-          <div className="absolute bottom-0 left-0 w-full p-2.5 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-gradient-to-t from-black via-black/80 to-transparent z-20">
+          <div className="absolute bottom-0 left-0 w-full p-2.5 translate-y-full group-hover:translate-y-0 [@media(hover:none)]:translate-y-0 transition-transform duration-300 bg-gradient-to-t from-black via-black/80 to-transparent z-20">
             <button
               onClick={() => onQuickAdd(product)}
               className="w-full bg-gradient-to-r from-[#E6C364] to-[#C9A84C] text-black font-cinzel font-bold py-2 px-3 rounded text-[10px] uppercase tracking-widest hover:brightness-110 shadow transition-all"
@@ -127,6 +138,7 @@ export default function ShopPage() {
   const [dbProducts, setDbProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [group, setGroup] = useState<'all' | 'perfumes' | 'lifestyle'>('all');
   const [sortBy, setSortBy] = useState('featured');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [hoveredCat, setHoveredCat] = useState<string | null>(null);
@@ -144,6 +156,12 @@ export default function ShopPage() {
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Deep links: /shop?group=perfumes | /shop?group=lifestyle
+  useEffect(() => {
+    const g = new URLSearchParams(window.location.search).get('group');
+    if (g === 'perfumes' || g === 'lifestyle') setGroup(g);
   }, []);
 
   useEffect(() => {
@@ -177,14 +195,16 @@ export default function ShopPage() {
   };
 
   const filteredProducts = useMemo(() => {
-    let list = activeFilter
-      ? dbProducts.filter((p) => p.categoryId === activeFilter)
+    const isPerfume = (p: Product) => p.categoryId === 'fragrance' || p.type === 'perfume';
+    let list = group === 'perfumes' ? dbProducts.filter(isPerfume)
+      : group === 'lifestyle' ? dbProducts.filter((p) => !isPerfume(p))
       : dbProducts;
+    if (activeFilter) list = list.filter((p) => p.categoryId === activeFilter);
     if (sortBy === 'priceLow') list = [...list].sort((a, b) => a.price - b.price);
     else if (sortBy === 'priceHigh') list = [...list].sort((a, b) => b.price - a.price);
     else if (sortBy === 'newest') list = [...list].reverse();
     return list;
-  }, [dbProducts, activeFilter, sortBy]);
+  }, [dbProducts, activeFilter, sortBy, group]);
 
   const activeCategory = categories.find((c) => c.id === activeFilter);
 
@@ -201,10 +221,25 @@ export default function ShopPage() {
                 Artisanal Islamic Boutique
               </span>
               <h1 className="font-serif-luxury text-3xl sm:text-4xl font-bold text-text-primary leading-tight">
-                {activeCategory ? activeCategory.name : 'Exclusive Boutique Catalog'}
+                {activeCategory ? activeCategory.name : group === 'perfumes' ? 'Perfumes' : group === 'lifestyle' ? 'Islamic Lifestyle' : 'Exclusive Boutique Catalog'}
               </h1>
-              <p className="text-text-secondary text-xs mt-1 font-mono">
-                Showing {filteredProducts.length} verified item{filteredProducts.length !== 1 ? 's' : ''} in inventory
+              <div role="tablist" aria-label="Product section" className="flex flex-wrap gap-2 mt-4">
+                {([['all', 'All Products'], ['perfumes', 'Perfumes'], ['lifestyle', 'Islamic Lifestyle']] as const).map(([key, label]) => (
+                  <button
+                    key={key}
+                    role="tab"
+                    aria-selected={group === key}
+                    onClick={() => { setGroup(key); setActiveFilter(null); }}
+                    className={`px-4 py-2 rounded-full text-[11px] font-mono font-bold uppercase tracking-wider border transition-colors ${
+                      group === key ? 'bg-primary text-black border-primary' : 'border-primary/30 text-text-secondary hover:text-primary'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-text-secondary text-xs mt-3 font-mono">
+                Showing {filteredProducts.length} item{filteredProducts.length !== 1 ? 's' : ''} in inventory
               </p>
             </div>
             

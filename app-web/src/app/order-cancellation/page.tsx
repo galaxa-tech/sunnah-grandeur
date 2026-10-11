@@ -19,7 +19,7 @@ export default function OrderCancellationPage() {
           {/* Header */}
           <div className="border-b border-border-subtle pb-8 mb-10">
             <h1 className="font-serif text-3xl md:text-5xl font-bold text-text-primary mb-4">Order Cancellation</h1>
-            <p className="text-text-secondary text-sm">Last Updated: August 2, 2026</p>
+            <p className="text-text-secondary text-sm">Last Updated: October 12, 2026</p>
           </div>
 
           {/* Content */}
@@ -31,25 +31,26 @@ export default function OrderCancellationPage() {
             <section className="space-y-4">
               <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">Cancellation Policy</h2>
               <p>
-                Orders can be cancelled <strong>before shipment only</strong>. 
-              </p>
-              <p>
-                Once an order has been handed over to our courier partners and a tracking number has been generated, it is considered shipped and can no longer be cancelled.
+                Orders can be cancelled <strong>before shipment only</strong>. Once an order has been handed to our courier and a tracking number has been generated, it is considered shipped and can no longer be cancelled (see our <Link href="/returns-and-exchanges" className="text-primary-container hover:underline">Returns &amp; Refunds</Link> policy instead).
               </p>
             </section>
 
             <section className="space-y-4">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">How to Request a Cancellation</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">How to Cancel Your Order</h2>
+              <ol className="list-decimal pl-6 space-y-2">
+                <li>Go to <Link href="/account?tab=orders" className="text-primary-container hover:underline font-semibold">My Account → My Orders</Link> (sign in with the email you used at checkout).</li>
+                <li>Find your order and press <strong>Cancel Order</strong>.</li>
+                <li>You will see a confirmation immediately.</li>
+              </ol>
               <p>
-                To cancel your order, please contact our support team immediately:
+                If the Cancel button is not shown, your order has already shipped. Cannot sign in? Email <a href="mailto:info@sunnahgrandeur.us" className="text-primary-container hover:underline font-semibold">info@sunnahgrandeur.us</a> with the subject <strong>Order Cancellation Request - [Your Order Number]</strong> and we will help.
               </p>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Send an email to <a href="mailto:info@sunnahgrandeur.us" className="text-primary-container hover:underline font-semibold">info@sunnahgrandeur.us</a>.</li>
-                <li>Use the subject line: <strong>Order Cancellation Request - [Your Order Number]</strong>.</li>
-                <li>Provide your full name and the order details.</li>
-              </ul>
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">Refunds for Cancelled Orders</h2>
               <p>
-                Our support team will verify if your order has shipped and assist you with the cancellation process. Because we currently accept Cash on Delivery only, no payment is collected for an order cancelled before shipment, so there is nothing to refund. (Once online card payments launch, prepaid orders cancelled before shipment will be refunded to the original payment method.)
+                If you already paid, the full amount (including tax) is refunded to your original payment method. Card refunds usually appear within 5-10 business days depending on your bank; PayPal and Venmo refunds are processed by our team shortly after cancellation.
               </p>
             </section>
 

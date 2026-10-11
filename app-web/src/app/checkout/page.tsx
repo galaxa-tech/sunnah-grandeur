@@ -1,7 +1,10 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useCartStore } from '@/store/useCartStore';
 import { httpsCallable } from 'firebase/functions';
 import { signInAnonymously, updateProfile } from 'firebase/auth';
@@ -9,6 +12,7 @@ import { auth, functions } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { formatUsd, formatUsdFromCents } from '@/lib/currency';
+import { validateCheckout, formatUsPhone, type CheckoutFields } from '@/lib/checkoutValidation';
 
 const US_STATES = [
   'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA',
@@ -17,213 +21,250 @@ const US_STATES = [
   'VA','WA','WV','WI','WY','DC',
 ];
 
+const STRIPE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
+const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '';
+const stripePromise = STRIPE_KEY ? loadStripe(STRIPE_KEY) : null;
+
+type Quote = { subtotalInCents: number; taxInCents: number; shippingInCents: number; totalInCents: number };
+type PendingOrder = Quote & { orderId: string; clientSecret: string };
+
+const inputCls =
+  'w-full bg-bg-primary border rounded px-3 py-2.5 text-text-primary focus:border-primary-container focus:outline-none';
+const labelCls = 'text-text-secondary uppercase font-bold text-[10px] block mb-1';
+
+function friendlyError(err: any, fallback: string): string {
+  const msg: string = err?.message || '';
+  // Firebase wraps server messages like "FirebaseError: Message (functions/...)".
+  return msg.replace(/^.*?:\s*/, '').replace(/\s*\(functions\/[\w-]+\)\.?$/, '') || fallback;
+}
+
+/* ── Stripe card / wallet form (rendered inside <Elements>) ───────────────── */
+function StripePayForm({ orderId, totalInCents, onError }: { orderId: string; totalInCents: number; onError: (m: string | null) => void }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+
+  const pay = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+    setBusy(true);
+    onError(null);
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: { return_url: `${window.location.origin}/checkout/success/?order=${encodeURIComponent(orderId)}` },
+      redirect: 'if_required',
+    });
+    if (error) {
+      onError(`${error.message || 'Your payment could not be completed.'} You have not been charged — please check your details or try another payment method.`);
+      setBusy(false);
+      return;
+    }
+    router.push(`/checkout/success/?order=${encodeURIComponent(orderId)}`);
+  };
+
+  return (
+    <form onSubmit={pay} className="space-y-4">
+      <PaymentElement options={{ layout: 'tabs' }} />
+      <button
+        type="submit"
+        disabled={!stripe || busy}
+        className="w-full bg-primary-container text-bg-primary py-4 rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-[#e6c364] transition-all disabled:opacity-50"
+      >
+        {busy ? 'Processing payment…' : `Pay ${formatUsdFromCents(totalInCents)}`}
+      </button>
+    </form>
+  );
+}
+
+/* ── PayPal + Venmo buttons ───────────────────────────────────────────────── */
+declare global { interface Window { paypal?: any } }
+
+function PayPalButtons({ orderId, onError }: { orderId: string; onError: (m: string | null) => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (!PAYPAL_CLIENT_ID) return;
+    let cancelled = false;
+    const render = () => {
+      if (cancelled || !ref.current || !window.paypal) return;
+      ref.current.replaceChildren();
+      const funding = [window.paypal.FUNDING.PAYPAL, window.paypal.FUNDING.VENMO];
+      funding.forEach((fundingSource: any) => {
+        const btn = window.paypal.Buttons({
+          fundingSource,
+          style: { layout: 'vertical', shape: 'rect', height: 44 },
+          createOrder: async () => {
+            const r: any = await httpsCallable(functions, 'createPaypalOrder')({ orderId });
+            return r.data.paypalOrderId;
+          },
+          onApprove: async (data: any) => {
+            try {
+              await httpsCallable(functions, 'capturePaypalOrder')({ orderId, paypalOrderId: data.orderID });
+              router.push(`/checkout/success/?order=${encodeURIComponent(orderId)}`);
+            } catch (err: any) {
+              onError(friendlyError(err, 'PayPal payment was not completed. You have not been charged.'));
+            }
+          },
+          onCancel: () => onError('Payment cancelled — you have not been charged. You can try again below.'),
+          onError: () => onError('PayPal could not complete the payment. You have not been charged — please try again or use a card.'),
+        });
+        if (btn.isEligible()) btn.render(ref.current!);
+      });
+      setReady(true);
+    };
+    if (window.paypal) {
+      render();
+    } else {
+      const s = document.createElement('script');
+      s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(PAYPAL_CLIENT_ID)}&currency=USD&intent=capture&components=buttons&enable-funding=venmo`;
+      s.async = true;
+      s.onload = render;
+      s.onerror = () => onError('Could not load PayPal. Please use a card instead.');
+      document.body.appendChild(s);
+    }
+    return () => { cancelled = true; };
+  }, [orderId, onError, router]);
+
+  if (!PAYPAL_CLIENT_ID) return null;
+  return (
+    <div className="space-y-2">
+      <p className="text-[11px] text-text-secondary uppercase tracking-widest font-bold">Or pay with PayPal / Venmo</p>
+      <div ref={ref} className="min-h-[44px]" />
+      {!ready && <p className="text-[11px] text-text-secondary">Loading PayPal…</p>}
+    </div>
+  );
+}
+
+/* ── Page ─────────────────────────────────────────────────────────────────── */
 export default function CheckoutPage() {
-  const { items, getSubtotal, clearCart } = useCartStore();
-  const { user, linkGuestAccount } = useAuth();
+  const { items, getSubtotal } = useCartStore();
+  const { user } = useAuth();
   const { usdRate } = useCurrency();
-
-  // Estimate shown before the order is placed. The Cloud Function computes
-  // the authoritative total server-side from real settings — this estimate
-  // is replaced by that authoritative figure the moment the order confirms.
   const subtotal = getSubtotal();
-  const estimatedTax = Math.round(subtotal * 0.0 /* no live per-state tax engine yet */);
-  const total = subtotal + estimatedTax;
 
-  // Form state
-  const [fullName, setFullName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
-  const [address, setAddress] = useState('');
-  const [city, setCity] = useState('');
-  const [state, setState] = useState('NY');
-  const [postalCode, setPostalCode] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'cod'>('card');
+  const [f, setF] = useState<CheckoutFields>({
+    fullName: '', phone: '', email: '', address: '', city: '', state: 'NY', postalCode: '',
+  });
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [submitted, setSubmitted] = useState(false);
+  const [quote, setQuote] = useState<Quote | null>(null);
+  const [quoting, setQuoting] = useState(false);
+  const [pending, setPending] = useState<PendingOrder | null>(null);
+  const [creating, setCreating] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [orderConfirmed, setOrderConfirmed] = useState<{ id: string; trackingCode: string; totalInCents: number } | null>(null);
-  const [wasGuest, setWasGuest] = useState(false);
-  const [upgradePassword, setUpgradePassword] = useState('');
-  const [upgradeError, setUpgradeError] = useState('');
-  const [upgradeSuccess, setUpgradeSuccess] = useState(false);
-  const [upgrading, setUpgrading] = useState(false);
+  const requestId = useRef<string>('');
 
-  // A signed-in customer shouldn't have to retype what we already know.
-  // Anonymous/guest users (auth.currentUser but no real email) get no prefill.
+  const set = (k: keyof CheckoutFields) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setF((p) => ({ ...p, [k]: e.target.value }));
+  const blur = (k: string) => () => setTouched((p) => ({ ...p, [k]: true }));
+
+  const errors = useMemo(() => validateCheckout(f), [f]);
+  const err = (k: keyof CheckoutFields) => (touched[k] || submitted ? errors[k] : undefined);
+  const locked = !!pending;
+
   useEffect(() => {
     if (!user || user.isAnonymous) return;
-    if (user.email) setEmail((prev) => prev || user.email!);
-    if (user.displayName) setFullName((prev) => prev || user.displayName!);
+    if (user.email) setF((p) => ({ ...p, email: p.email || user.email! }));
+    if (user.displayName) setF((p) => ({ ...p, fullName: p.fullName || user.displayName! }));
   }, [user]);
 
-  // Handles both payment methods. COD confirms immediately; card creates a
-  // pending_payment order, then redirects to Stripe-hosted Checkout — the
-  // webhook flips the order to Processing once Stripe confirms the charge.
-  const handleSubmitCOD = async (e: React.FormEvent) => {
+  // Live tax quote by ZIP/state (free shipping on all US orders).
+  const cartKey = items.map((i) => `${i.id}:${i.quantity}`).join(',');
+  useEffect(() => {
+    if (errors.postalCode || errors.state || items.length === 0) { setQuote(null); return; }
+    let live = true;
+    setQuoting(true);
+    const t = setTimeout(async () => {
+      try {
+        if (!auth.currentUser) await signInAnonymously(auth);
+        const r: any = await httpsCallable(functions, 'quoteOrder')({
+          items: items.map((i) => ({ productId: i.id, quantity: i.quantity })),
+          shipping: { line1: f.address, city: f.city, state: f.state, postalCode: f.postalCode },
+        });
+        if (live) setQuote(r.data as Quote);
+      } catch {
+        if (live) setQuote(null);
+      } finally {
+        if (live) setQuoting(false);
+      }
+    }, 500);
+    return () => { live = false; clearTimeout(t); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [f.postalCode, f.state, cartKey]);
+
+  const continueToPayment = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitted(true);
+    setErrorMsg(null);
+    if (Object.keys(errors).length > 0) {
+      setErrorMsg('Please fix the highlighted fields before continuing.');
+      return;
+    }
     if (items.length === 0) return;
 
-    setIsSubmitting(true);
-    setErrorMsg(null);
-
+    setCreating(true);
     try {
-      // Firestore rules forbid direct client writes to /orders — order
-      // creation must go through the createOrder Cloud Function, which
-      // prices the order server-side and is the only thing allowed to
-      // write the document.
-      if (!auth.currentUser) {
-        await signInAnonymously(auth);
+      if (!auth.currentUser) await signInAnonymously(auth);
+      if (auth.currentUser?.isAnonymous && f.fullName) {
+        await updateProfile(auth.currentUser, { displayName: f.fullName });
       }
-      setWasGuest(!!auth.currentUser?.isAnonymous);
-      // Populate the session's display name from the checkout form so
-      // "Signed in as" and the Profile tab aren't blank for guest orders —
-      // anonymous users can have a displayName, just not an email/password.
-      if (auth.currentUser?.isAnonymous && fullName) {
-        await updateProfile(auth.currentUser, { displayName: fullName });
-      }
+      if (!requestId.current) requestId.current = crypto.randomUUID();
 
-      const createOrder = httpsCallable(functions, 'createOrder');
-      const result: any = await createOrder({
+      const created: any = await httpsCallable(functions, 'createOrder')({
         items: items.map((i) => ({ productId: i.id, quantity: i.quantity })),
         shipping: {
-          name: fullName,
-          phone,
-          email: email || '',
-          line1: address,
-          city,
-          state,
-          postalCode: postalCode || '00000',
-          country: 'US',
-          method: 'standard',
+          name: f.fullName.trim(), phone: f.phone, email: f.email.trim(),
+          line1: f.address.trim(), city: f.city.trim(), state: f.state,
+          postalCode: f.postalCode.trim(), country: 'US', method: 'standard',
         },
-        paymentMethod,
+        paymentMethod: 'card',
+        requestId: requestId.current,
       });
+      const o = created.data as Quote & { orderId: string };
 
-      const { orderId, totalInCents } = result.data as { orderId: string; totalInCents: number };
-
-      if (paymentMethod === 'card') {
-        const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');
-        const session: any = await createCheckoutSession({ orderId, origin: window.location.origin });
-        // Cart is cleared on the success page, so a cancelled payment keeps it.
+      let clientSecret = '';
+      if (!stripePromise) {
+        // No publishable key configured: use Stripe's hosted payment page.
+        const session: any = await httpsCallable(functions, 'createCheckoutSession')({ orderId: o.orderId, origin: window.location.origin });
         window.location.href = session.data.url;
         return;
       }
-
-      setOrderConfirmed({ id: orderId, trackingCode: orderId, totalInCents });
-      clearCart();
+      if (stripePromise) {
+        const intent: any = await httpsCallable(functions, 'createPaymentIntent')({ orderId: o.orderId });
+        clientSecret = intent.data.clientSecret;
+      }
+      setPending({ ...o, clientSecret });
     } catch (error: any) {
-      console.error('Error placing order:', error);
-      setErrorMsg(
-        error?.message ||
-          'Could not place your order — please check your details and try again.'
-      );
+      requestId.current = '';
+      setErrorMsg(friendlyError(error, 'Could not place your order — please check your details and try again.'));
     } finally {
-      setIsSubmitting(false);
+      setCreating(false);
     }
   };
 
-  if (orderConfirmed) {
-    return (
-      <div className="pt-32 pb-24 px-4 max-w-2xl mx-auto text-center space-y-6">
-        <div className="w-20 h-20 bg-primary-container/20 text-primary-container rounded-full flex items-center justify-center mx-auto border border-primary-container/40 animate-in zoom-in">
-          <span className="material-symbols-outlined text-4xl">check_circle</span>
-        </div>
-        <h1 className="text-3xl font-bold text-text-primary font-serif">Alhamdulillah! Order Placed</h1>
-        <p className="text-text-secondary text-sm">
-          Thank you for shopping with Sunnah Grandeur. Your order reference is{' '}
-          <span className="font-mono font-bold text-primary-container text-base">{orderConfirmed.trackingCode}</span>.
-        </p>
+  // Editing details after the order was reserved: release it, start fresh.
+  const editDetails = async () => {
+    if (pending) {
+      try { await httpsCallable(functions, 'cancelOrder')({ orderId: pending.orderId }); } catch { /* cron releases it */ }
+    }
+    requestId.current = '';
+    setPending(null);
+    setErrorMsg(null);
+  };
 
-        <div className="p-6 bg-surface-card border border-border-subtle rounded-xl text-left space-y-3 text-xs">
-          <div className="flex justify-between border-b border-border-subtle pb-2">
-            <span className="text-text-secondary">Delivery Status</span>
-            <span className="text-emerald-400 font-semibold uppercase tracking-wider">Processing</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-text-secondary">Payment Method</span>
-            <span className="text-text-primary uppercase font-medium">Cash on Delivery</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-text-secondary">Total Amount</span>
-            <span className="text-primary-container font-bold text-sm">{formatUsdFromCents(orderConfirmed.totalInCents)}</span>
-          </div>
-        </div>
-
-        {wasGuest && (
-          <div className="p-6 bg-surface-card border border-primary-container/30 rounded-xl text-left space-y-3">
-            {upgradeSuccess ? (
-              <p className="text-emerald-400 text-sm font-semibold text-center">
-                ✓ Account created! You can now sign in with {email} anytime to track this order.
-              </p>
-            ) : (
-              <>
-                <h3 className="text-text-primary font-bold text-sm">Create an account to track this order anywhere</h3>
-                <p className="text-text-secondary text-xs">
-                  We&apos;ll use <span className="text-text-primary font-semibold">{email || 'the email you provided'}</span>.
-                  Just set a password below — no need to retype anything.
-                </p>
-                {upgradeError && <p className="text-red-400 text-xs">{upgradeError}</p>}
-                <form
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    if (!email) {
-                      setUpgradeError('Please provide an email above before creating an account.');
-                      return;
-                    }
-                    setUpgrading(true);
-                    setUpgradeError('');
-                    try {
-                      await linkGuestAccount(email, upgradePassword, fullName);
-                      setUpgradeSuccess(true);
-                    } catch (err: any) {
-                      setUpgradeError(err?.code?.includes('email-already-in-use')
-                        ? 'An account with this email already exists — sign in from the account menu instead.'
-                        : 'Could not create your account right now. Please try again.');
-                    } finally {
-                      setUpgrading(false);
-                    }
-                  }}
-                  className="flex flex-col sm:flex-row gap-2"
-                >
-                  <input
-                    type="password"
-                    required
-                    minLength={6}
-                    value={upgradePassword}
-                    onChange={(e) => setUpgradePassword(e.target.value)}
-                    placeholder="Set a password"
-                    className="flex-1 bg-bg-primary border border-border-subtle rounded px-3 py-2.5 text-sm text-text-primary focus:border-primary-container focus:outline-none"
-                  />
-                  <button
-                    type="submit"
-                    disabled={upgrading}
-                    className="bg-primary-container text-bg-primary font-bold text-xs uppercase tracking-widest px-5 py-2.5 rounded hover:bg-[#e6c364] transition-colors disabled:opacity-50 whitespace-nowrap"
-                  >
-                    {upgrading ? 'Creating...' : 'Create Account'}
-                  </button>
-                </form>
-              </>
-            )}
-          </div>
-        )}
-
-        <div className="pt-4">
-          <Link
-            href="/shop"
-            className="inline-block bg-primary-container text-bg-primary font-bold text-xs uppercase tracking-widest px-8 py-3.5 rounded hover:bg-[#e6c364] transition-colors"
-          >
-            Return to Storefront
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  const shown = pending ?? quote;
+  const total = shown ? shown.totalInCents : null;
 
   return (
     <div className="flex-grow pt-32 pb-section-padding px-gutter max-w-container-max mx-auto w-full">
-      <h1 className="text-headline-xl font-headline-xl text-primary mb-8 font-serif">Checkout &amp; Payment</h1>
+      <h1 className="text-headline-xl font-headline-xl text-primary mb-2 font-serif">Checkout &amp; Payment</h1>
+      <p className="text-xs text-text-secondary mb-8">Free shipping on all US orders · Delivered in 3–7 business days · Sales tax calculated from your ZIP code</p>
 
       {errorMsg && (
-        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-xs font-semibold text-center">
+        <div role="alert" className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-xs font-semibold text-center">
           {errorMsg}
         </div>
       )}
@@ -236,130 +277,106 @@ export default function CheckoutPage() {
           </Link>
         </div>
       ) : (
-        <form onSubmit={handleSubmitCOD} className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          {/* Shipping & Payment Options */}
+        <form onSubmit={continueToPayment} noValidate className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           <div className="lg:col-span-7 space-y-8">
-            {/* 1. Contact Information */}
+            {/* 1. Shipping */}
             <div className="bg-surface-card border border-border-subtle p-6 rounded-xl space-y-4">
-              <h2 className="text-headline-md text-primary font-bold flex items-center gap-2 text-base">
-                <span className="material-symbols-outlined text-primary-container">local_shipping</span>
-                1. Shipping Information
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="flex items-center justify-between">
+                <h2 className="text-primary font-bold flex items-center gap-2 text-base">
+                  <span className="material-symbols-outlined text-primary-container">local_shipping</span>
+                  1. Shipping Information
+                </h2>
+                {locked && (
+                  <button type="button" onClick={editDetails} className="text-[11px] text-primary-container uppercase font-bold tracking-widest hover:underline">
+                    Edit details
+                  </button>
+                )}
+              </div>
+              <p className="text-[11px] text-text-secondary">We deliver within the United States only.</p>
+              <fieldset disabled={locked} className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs disabled:opacity-60">
                 <div>
-                  <label className="text-text-secondary uppercase font-bold text-[10px] block mb-1">Full Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Ahmed Al-Mansour"
-                    className="w-full bg-bg-primary border border-border-subtle rounded px-3 py-2.5 text-text-primary focus:border-primary-container focus:outline-none"
-                  />
+                  <label className={labelCls} htmlFor="co-name">Full Name *</label>
+                  <input id="co-name" autoComplete="name" value={f.fullName} onChange={set('fullName')} onBlur={blur('fullName')} placeholder="Ahmed Al-Mansour" className={`${inputCls} ${err('fullName') ? 'border-red-500' : 'border-border-subtle'}`} />
+                  {err('fullName') && <p className="text-red-400 text-[11px] mt-1">{err('fullName')}</p>}
                 </div>
                 <div>
-                  <label className="text-text-secondary uppercase font-bold text-[10px] block mb-1">Phone Number *</label>
-                  <input
-                    type="tel"
-                    required
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+1 (212) 555-0100"
-                    className="w-full bg-bg-primary border border-border-subtle rounded px-3 py-2.5 text-text-primary focus:border-primary-container focus:outline-none"
-                  />
+                  <label className={labelCls} htmlFor="co-phone">US Phone Number *</label>
+                  <input id="co-phone" type="tel" inputMode="tel" autoComplete="tel" value={f.phone}
+                    onChange={(e) => setF((p) => ({ ...p, phone: formatUsPhone(e.target.value) }))}
+                    onBlur={blur('phone')} placeholder="(212) 555-0100" className={`${inputCls} ${err('phone') ? 'border-red-500' : 'border-border-subtle'}`} />
+                  {err('phone') && <p className="text-red-400 text-[11px] mt-1">{err('phone')}</p>}
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="text-text-secondary uppercase font-bold text-[10px] block mb-1">Shipping Address *</label>
-                  <input
-                    type="text"
-                    required
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="3715 73rd St, Suite 205"
-                    className="w-full bg-bg-primary border border-border-subtle rounded px-3 py-2.5 text-text-primary focus:border-primary-container focus:outline-none"
-                  />
+                  <label className={labelCls} htmlFor="co-email">Email Address *</label>
+                  <input id="co-email" type="email" autoComplete="email" value={f.email} onChange={set('email')} onBlur={blur('email')} placeholder="you@example.com" className={`${inputCls} ${err('email') ? 'border-red-500' : 'border-border-subtle'}`} />
+                  {err('email') && <p className="text-red-400 text-[11px] mt-1">{err('email')}</p>}
+                </div>
+                <div className="sm:col-span-2">
+                  <label className={labelCls} htmlFor="co-address">Street Address *</label>
+                  <input id="co-address" autoComplete="address-line1" value={f.address} onChange={set('address')} onBlur={blur('address')} placeholder="3715 73rd St, Suite 205" className={`${inputCls} ${err('address') ? 'border-red-500' : 'border-border-subtle'}`} />
+                  {err('address') && <p className="text-red-400 text-[11px] mt-1">{err('address')}</p>}
                 </div>
                 <div>
-                  <label className="text-text-secondary uppercase font-bold text-[10px] block mb-1">City *</label>
-                  <input
-                    type="text"
-                    required
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    placeholder="Jackson Heights"
-                    className="w-full bg-bg-primary border border-border-subtle rounded px-3 py-2.5 text-text-primary focus:border-primary-container focus:outline-none"
-                  />
+                  <label className={labelCls} htmlFor="co-city">City *</label>
+                  <input id="co-city" autoComplete="address-level2" value={f.city} onChange={set('city')} onBlur={blur('city')} placeholder="Jackson Heights" className={`${inputCls} ${err('city') ? 'border-red-500' : 'border-border-subtle'}`} />
+                  {err('city') && <p className="text-red-400 text-[11px] mt-1">{err('city')}</p>}
                 </div>
                 <div>
-                  <label className="text-text-secondary uppercase font-bold text-[10px] block mb-1">State *</label>
-                  <select
-                    value={state}
-                    onChange={(e) => setState(e.target.value)}
-                    className="w-full bg-bg-primary border border-border-subtle rounded px-3 py-2.5 text-text-primary focus:border-primary-container focus:outline-none"
-                  >
-                    {US_STATES.map((abbr) => (
-                      <option key={abbr} value={abbr}>{abbr}</option>
-                    ))}
+                  <label className={labelCls} htmlFor="co-state">State *</label>
+                  <select id="co-state" autoComplete="address-level1" value={f.state} onChange={set('state')} onBlur={blur('state')} className={`${inputCls} border-border-subtle`}>
+                    {US_STATES.map((abbr) => <option key={abbr} value={abbr}>{abbr}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-text-secondary uppercase font-bold text-[10px] block mb-1">ZIP Code *</label>
-                  <input
-                    type="text"
-                    required
-                    value={postalCode}
-                    onChange={(e) => setPostalCode(e.target.value)}
-                    placeholder="11372"
-                    className="w-full bg-bg-primary border border-border-subtle rounded px-3 py-2.5 text-text-primary focus:border-primary-container focus:outline-none"
-                  />
+                  <label className={labelCls} htmlFor="co-zip">ZIP Code *</label>
+                  <input id="co-zip" inputMode="numeric" autoComplete="postal-code" maxLength={10} value={f.postalCode} onChange={set('postalCode')} onBlur={blur('postalCode')} placeholder="11372" className={`${inputCls} ${err('postalCode') ? 'border-red-500' : 'border-border-subtle'}`} />
+                  {err('postalCode') && <p className="text-red-400 text-[11px] mt-1">{err('postalCode')}</p>}
                 </div>
-                <div>
-                  <label className="text-text-secondary uppercase font-bold text-[10px] block mb-1">Email Address</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className="w-full bg-bg-primary border border-border-subtle rounded px-3 py-2.5 text-text-primary focus:border-primary-container focus:outline-none"
-                  />
-                </div>
-              </div>
+              </fieldset>
             </div>
 
-            {/* 2. Payment Method */}
+            {/* 2. Payment */}
             <div className="bg-surface-card border border-border-subtle p-6 rounded-xl space-y-4">
-              <h2 className="text-headline-md text-primary font-bold flex items-center gap-2 text-base">
+              <h2 className="text-primary font-bold flex items-center gap-2 text-base">
                 <span className="material-symbols-outlined text-primary-container">payments</span>
-                2. Select Payment Method
+                2. Payment
               </h2>
+              <p className="text-[11px] text-text-secondary flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm text-emerald-400">lock</span>
+                Credit &amp; debit cards, Apple Pay, Google Pay, PayPal and Venmo. Payments are processed securely by Stripe and PayPal — we never see or store your card details.
+              </p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className={`p-4 rounded-lg border cursor-pointer flex items-center gap-3 ${paymentMethod === 'card' ? 'border-primary-container bg-primary-container/10' : 'border-border-subtle'}`}>
-                  <input type="radio" name="payment" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} className="accent-amber-500" />
-                  <div>
-                    <p className="font-semibold text-sm text-text-primary">Credit / Debit Card</p>
-                    <p className="text-xs text-text-secondary">Secure payment via Stripe</p>
-                  </div>
-                </label>
-
-                <label className={`p-4 rounded-lg border cursor-pointer flex items-center gap-3 ${paymentMethod === 'cod' ? 'border-primary-container bg-primary-container/10' : 'border-border-subtle'}`}>
-                  <input type="radio" name="payment" checked={paymentMethod === 'cod'} onChange={() => setPaymentMethod('cod')} className="accent-amber-500" />
-                  <div>
-                    <p className="font-semibold text-sm text-text-primary">Cash on Delivery</p>
-                    <p className="text-xs text-text-secondary">Pay upon package arrival</p>
-                  </div>
-                </label>
-              </div>
+              {!pending ? (
+                <div className="space-y-3">
+                  <button
+                    type="submit"
+                    disabled={creating}
+                    className="w-full bg-primary-container text-bg-primary py-4 rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-[#e6c364] transition-all disabled:opacity-50"
+                  >
+                    {creating ? 'Reserving your order…' : 'Continue to Payment'}
+                  </button>
+                  <p className="text-[11px] text-text-secondary text-center">Your payment options appear here after your shipping details are confirmed.</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {stripePromise && pending.clientSecret && (
+                    <Elements stripe={stripePromise} options={{ clientSecret: pending.clientSecret, appearance: { theme: 'night', variables: { colorPrimary: '#e9c46a' } } }}>
+                      <StripePayForm orderId={pending.orderId} totalInCents={pending.totalInCents} onError={setErrorMsg} />
+                    </Elements>
+                  )}
+                  <PayPalButtons orderId={pending.orderId} onError={setErrorMsg} />
+                  <p className="text-[11px] text-text-secondary leading-relaxed">
+                    If a payment fails or is cancelled, you are <strong>not charged</strong> and your items stay reserved for 60 minutes so you can try again. After that the order is cancelled automatically.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Right Column: Summary & Checkout Button */}
+          {/* Summary */}
           <div className="lg:col-span-5">
             <div className="sticky top-28 bg-surface-card rounded-xl border border-border-subtle p-8 shadow-xl space-y-6">
-              <h2 className="text-headline-lg font-headline-lg text-primary border-b border-border-subtle pb-4 font-bold text-lg">
-                Order Items ({items.length})
-              </h2>
-
+              <h2 className="text-primary border-b border-border-subtle pb-4 font-bold text-lg">Order Items ({items.length})</h2>
               <div className="max-h-60 overflow-y-auto space-y-3 pr-2 border-b border-border-subtle pb-4">
                 {items.map((i) => (
                   <div key={i.id} className="flex justify-between items-center text-xs">
@@ -371,33 +388,26 @@ export default function CheckoutPage() {
                   </div>
                 ))}
               </div>
-
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between">
                   <span className="text-text-secondary">Subtotal</span>
-                  <span className="text-text-primary font-semibold">{formatUsd(subtotal, usdRate)}</span>
+                  <span className="text-text-primary font-semibold">{shown ? formatUsdFromCents(shown.subtotalInCents) : formatUsd(subtotal, usdRate)}</span>
                 </div>
-                <p className="text-[10px] text-text-secondary/70 -mt-1">Tax and any shipping fee are calculated at checkout confirmation.</p>
+                <div className="flex justify-between">
+                  <span className="text-text-secondary">Shipping (US)</span>
+                  <span className="text-emerald-400 font-semibold">FREE</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-text-secondary">Sales tax</span>
+                  <span className="text-text-primary font-semibold">
+                    {shown ? formatUsdFromCents(shown.taxInCents) : quoting ? 'Calculating…' : 'Enter ZIP code'}
+                  </span>
+                </div>
                 <div className="flex justify-between text-sm font-bold pt-2 border-t border-border-subtle">
-                  <span className="text-text-primary">Estimated Total</span>
-                  <span className="text-primary-container">{formatUsd(total, usdRate)}</span>
+                  <span className="text-text-primary">{total !== null ? 'Total' : 'Subtotal'}</span>
+                  <span className="text-primary-container">{total !== null ? formatUsdFromCents(total) : formatUsd(subtotal, usdRate)}</span>
                 </div>
               </div>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-primary-container text-bg-primary py-4 rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-[#e6c364] transition-all duration-300 shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {isSubmitting ? (
-                  <span>{paymentMethod === 'card' ? 'Redirecting to payment...' : 'Placing Order...'}</span>
-                ) : (
-                  <>
-                    <span>{paymentMethod === 'card' ? 'Pay Securely' : 'Place COD Order'}</span>
-                    <span className="material-symbols-outlined text-sm">check</span>
-                  </>
-                )}
-              </button>
             </div>
           </div>
         </form>

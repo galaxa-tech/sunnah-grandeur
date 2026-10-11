@@ -2,15 +2,11 @@
 import Link from 'next/link';
 
 export default function PaymentInfoPage() {
-  // Cash on Delivery is the only live method. Card checkout (Stripe) is built
-  // but stays "Coming Soon" until live keys are configured — update this list
-  // and the FAQ together when it launches.
-  const comingSoon = [
-    { name: "Visa", icon: "credit_card" },
-    { name: "Mastercard", icon: "credit_card" },
-    { name: "American Express", icon: "credit_card" },
-    { name: "Apple Pay", icon: "contactless" },
-    { name: "Google Pay", icon: "contactless" },
+  const methods = [
+    { name: "Credit & debit cards", note: "Visa, Mastercard, American Express, Discover", icon: "credit_card" },
+    { name: "Apple Pay & Google Pay", note: "On supported devices and browsers", icon: "contactless" },
+    { name: "PayPal", note: "Pay with your PayPal balance, bank or card", icon: "account_balance_wallet" },
+    { name: "Venmo", note: "Available to US customers via PayPal checkout", icon: "smartphone" },
   ];
 
   return (
@@ -30,7 +26,7 @@ export default function PaymentInfoPage() {
           {/* Header */}
           <div className="border-b border-border-subtle pb-8 mb-10">
             <h1 className="font-serif text-3xl md:text-5xl font-bold text-text-primary mb-4">Payment Information</h1>
-            <p className="text-text-secondary text-sm">Last Updated: September 30, 2026</p>
+            <p className="text-text-secondary text-sm">Last Updated: October 12, 2026</p>
           </div>
 
           {/* Content */}
@@ -40,35 +36,45 @@ export default function PaymentInfoPage() {
             </p>
 
             <section className="space-y-4">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">Accepted Payment Method</h2>
-              <div className="bg-surface-card border border-primary-container/40 p-5 rounded-lg flex items-start gap-4 max-w-xl">
-                <span className="material-symbols-outlined text-primary-container text-3xl">local_shipping</span>
-                <div>
-                  <p className="font-semibold text-text-primary">Cash on Delivery (COD)</p>
-                  <p className="text-xs md:text-sm mt-1">
-                    Available on all orders within the USA, on our website and in the Sunnah Grandeur app. Place your order online and pay the courier in cash when your package arrives. Please have the exact order total ready.
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            <section className="space-y-4 pt-4 border-t border-border-subtle">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">Coming Soon</h2>
-              <p>
-                Secure online card and wallet payments are on the way. Until then, these methods cannot be selected at checkout:
-              </p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 pt-2">
-                {comingSoon.map((method) => (
-                  <div key={method.name} className="bg-surface-card border border-border-subtle p-4 rounded-lg flex flex-col items-start gap-2 opacity-70">
-                    <span className="material-symbols-outlined text-primary-container text-2xl">{method.icon}</span>
-                    <span className="font-semibold text-text-primary text-sm">{method.name}</span>
-                    <span className="text-[10px] uppercase tracking-wider text-text-secondary">Coming soon</span>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">Accepted Payment Methods</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                {methods.map((m) => (
+                  <div key={m.name} className="bg-surface-card border border-border-subtle p-4 rounded-lg flex items-start gap-3">
+                    <span className="material-symbols-outlined text-primary-container text-2xl">{m.icon}</span>
+                    <div>
+                      <p className="font-semibold text-text-primary text-sm">{m.name}</p>
+                      <p className="text-xs">{m.note}</p>
+                    </div>
                   </div>
                 ))}
               </div>
               <p className="text-xs">
-                When card payments launch, they will be processed securely by Stripe over encrypted (SSL/TLS) connections. Your full card number is handled by Stripe and never stored on our servers.
+                Cash on Delivery is not available for US orders. All payments are made online at checkout.
               </p>
+            </section>
+
+            <section className="space-y-4 pt-4 border-t border-border-subtle">
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">Payment Security</h2>
+              <ul className="list-disc pl-6 space-y-2">
+                <li>Card and wallet payments are processed by <strong>Stripe</strong>; PayPal and Venmo payments by <strong>PayPal</strong>. Both are PCI-DSS certified payment providers.</li>
+                <li>All payment pages use encrypted (SSL/TLS) connections.</li>
+                <li>Your full card number is entered directly with Stripe and is <strong>never stored on our servers</strong>.</li>
+              </ul>
+            </section>
+
+            <section className="space-y-4 pt-4 border-t border-border-subtle">
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">If a Payment Fails</h2>
+              <ul className="list-disc pl-6 space-y-2">
+                <li>If your payment is declined, cancelled or fails, <strong>you are not charged</strong> and you will see a clear message on the checkout page so you can try again or choose another method.</li>
+                <li>Your items stay reserved for 60 minutes while you retry. If payment is not completed in that time, the order is cancelled automatically and no charge is made.</li>
+                <li>If you ever see a pending authorization from your bank for a failed payment, it is released by your bank automatically, usually within 3-5 business days.</li>
+                <li>Still having trouble? Contact us and we will help right away.</li>
+              </ul>
+            </section>
+
+            <section className="space-y-4 pt-4 border-t border-border-subtle">
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">Sales Tax</h2>
+              <p>Sales tax is calculated from your delivery ZIP code and shown at checkout before you pay.</p>
             </section>
 
             <section className="space-y-4 border-t border-border-subtle pt-8">

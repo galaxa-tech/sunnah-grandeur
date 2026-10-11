@@ -44,6 +44,18 @@ const createPaymentIntent = onCall({ region: "us-central1" }, async (request) =>
   }
 
   const stripe = getStripe();
+
+  // Retrying after a failed/abandoned attempt reuses the same PaymentIntent so
+  // the customer is never charged twice for one order.
+  if (order.paymentIntentId) {
+    try {
+      const prev = await stripe.paymentIntents.retrieve(order.paymentIntentId);
+      if (prev.amount === amount && ["requires_payment_method", "requires_confirmation", "requires_action"].includes(prev.status)) {
+        return { clientSecret: prev.client_secret, paymentIntentId: prev.id, amountInCents: amount };
+      }
+    } catch (_) { /* fall through and create a new intent */ }
+  }
+
   const intent = await stripe.paymentIntents.create({
     amount,
     currency: CURRENCY,
@@ -51,8 +63,9 @@ const createPaymentIntent = onCall({ region: "us-central1" }, async (request) =>
       orderId,
       userId: uid,
     },
+    receipt_email: order.shipping?.email || undefined,
     automatic_payment_methods: { enabled: true },
-  });
+  }, { idempotencyKey: `pi_${orderId}_${amount}_${order.paymentIntentId || "new"}` });
 
   // Store the intent ID so the webhook can match it back to this order
   await orderRef.update({
@@ -72,7 +85,7 @@ const createPaymentIntent = onCall({ region: "us-central1" }, async (request) =>
 // Client polls this after the Payment Sheet resolves.
 
 const verifyPayment = onCall({ region: "us-central1" }, async (request) => {
-  requireAuth(request);
+  const uid = requireAuth(request);
 
   const { paymentIntentId } = request.data || {};
   if (!paymentIntentId || typeof paymentIntentId !== "string") {
@@ -88,6 +101,10 @@ const verifyPayment = onCall({ region: "us-central1" }, async (request) => {
       throw new HttpsError("not-found", "PaymentIntent not found.");
     }
     throw new HttpsError("internal", "Failed to verify payment.");
+  }
+
+  if (intent.metadata?.userId !== uid) {
+    throw new HttpsError("permission-denied", "You do not have access to this payment.");
   }
 
   return {

@@ -12,7 +12,7 @@ export default function FAQPage() {
     },
     {
       q: "How much does shipping cost?",
-      a: "Shipping is completely free for all orders. There are no minimum purchase requirements or hidden delivery charges."
+      a: "Shipping is completely free for all US orders, with no minimum purchase. Sales tax is added based on your delivery ZIP code and shown at checkout before you pay."
     },
     {
       q: "How long does delivery take?",
@@ -24,11 +24,11 @@ export default function FAQPage() {
     },
     {
       q: "What payment methods are accepted?",
-      a: "We currently accept Cash on Delivery (COD) on all U.S. orders — you pay when your package arrives. Card payments (Visa, Mastercard, American Express) are coming soon."
+      a: "You can pay online by credit or debit card (Visa, Mastercard, American Express, Discover), Apple Pay, Google Pay, PayPal or Venmo. Cash on Delivery is not available. Payments are processed securely by Stripe and PayPal. If a payment fails you are not charged and can simply try again."
     },
     {
       q: "Can I cancel my order?",
-      a: "Yes, orders can be cancelled before shipment only. Please contact our support team as soon as possible at info@sunnahgrandeur.us to request a cancellation."
+      a: "Yes. Orders can be cancelled before shipment only. Go to My Account → My Orders and press Cancel Order. If you already paid, you are refunded to your original payment method. Cannot sign in? Email info@sunnahgrandeur.us."
     },
     {
       q: "What should I do if I receive a damaged or incorrect item?",

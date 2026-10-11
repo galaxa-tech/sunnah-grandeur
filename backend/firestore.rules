@@ -64,7 +64,9 @@ service cloud.firestore {
                      (resource.data.userId == request.auth.uid || isAdmin());
 
       // Admin can update order status (fulfillment). Customers cannot write orders directly.
-      allow create: if isAuthenticated();
+      // Orders are created only by the createOrder Cloud Function (Admin SDK),
+      // which prices them server-side — never directly from a client.
+      allow create: if false;
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }

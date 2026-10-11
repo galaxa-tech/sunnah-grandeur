@@ -131,7 +131,7 @@ export default function HomePage() {
               </div>
               <div className="w-[1px] h-3 bg-border-subtle" />
               <div className="flex items-center gap-2 text-text-secondary text-xs">
-                <span className="material-symbols-outlined text-primary text-base">water_drop</span>
+                <span className="material-symbols-outlined text-primary text-base">lock</span>
                 <span className="font-mono text-[11px] uppercase tracking-wider text-text-primary font-semibold">{t.home.badgeAlcohol}</span>
               </div>
               <div className="w-[1px] h-3 bg-border-subtle" />
@@ -140,6 +140,10 @@ export default function HomePage() {
                 <span className="font-mono text-[11px] uppercase tracking-wider text-text-primary font-semibold">{t.home.badgeDelivery}</span>
               </div>
             </div>
+            <p className="text-[11px] text-text-secondary leading-relaxed">
+              Free shipping on all US orders · Delivered in 3–7 business days · Sales tax calculated from your ZIP code at checkout · We currently deliver within the United States only.{' '}
+              <Link href="/shipping-info" className="text-primary underline">Shipping details</Link>
+            </p>
           </div>
 
           {/* Right Column — Spotlight 3D Showcase */}
@@ -190,6 +194,24 @@ export default function HomePage() {
 
         {/* Bottom Fade */}
         <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-bg-primary to-transparent pointer-events-none" />
+      </section>
+
+      {/* ── Two product lines: Perfumes and Islamic Lifestyle ──────────────── */}
+      <section className="py-14 max-w-container-max mx-auto px-gutter">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Link href="/shop?group=perfumes" className="group relative rounded-2xl border border-primary/25 bg-surface-card/80 p-8 overflow-hidden hover:border-primary/60 transition-colors">
+            <span className="material-symbols-outlined text-primary text-4xl mb-3 block">water_drop</span>
+            <h2 className="font-serif text-2xl font-bold text-text-primary mb-2">Perfumes</h2>
+            <p className="text-sm text-text-secondary leading-relaxed mb-4">Alcohol-free attars and extrait de parfum, including aged agarwood (oud) and musk.</p>
+            <span className="text-primary text-xs font-mono font-bold uppercase tracking-widest group-hover:underline">Shop Perfumes →</span>
+          </Link>
+          <Link href="/shop?group=lifestyle" className="group relative rounded-2xl border border-primary/25 bg-surface-card/80 p-8 overflow-hidden hover:border-primary/60 transition-colors">
+            <span className="material-symbols-outlined text-primary text-4xl mb-3 block">mosque</span>
+            <h2 className="font-serif text-2xl font-bold text-text-primary mb-2">Islamic Lifestyle</h2>
+            <p className="text-sm text-text-secondary leading-relaxed mb-4">Prayer essentials, apparel, Quran and home pieces for everyday Muslim life.</p>
+            <span className="text-primary text-xs font-mono font-bold uppercase tracking-widest group-hover:underline">Shop Islamic Lifestyle →</span>
+          </Link>
+        </div>
       </section>
 
       {/* ── All Categories Grid Section (Directly after Hero) ──────────────── */}

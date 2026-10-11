@@ -19,7 +19,7 @@ export default function ShippingInfoPage() {
           {/* Header */}
           <div className="border-b border-border-subtle pb-8 mb-10">
             <h1 className="font-serif text-3xl md:text-5xl font-bold text-text-primary mb-4">Shipping & Delivery</h1>
-            <p className="text-text-secondary text-sm">Last Updated: August 2, 2026</p>
+            <p className="text-text-secondary text-sm">Last Updated: October 12, 2026</p>
           </div>
 
           {/* Content */}
@@ -31,7 +31,7 @@ export default function ShippingInfoPage() {
             <section className="space-y-4">
               <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">1. Shipping Regions</h2>
               <p>
-                We currently ship to addresses within the <strong>United States of America (USA) only</strong>. We do not support international shipping at this time.
+                We currently ship to addresses within the <strong>United States of America (USA) only</strong>. We do not support international shipping at this time, so orders with a non-US address or phone number cannot be placed. Checkout shows a clear message if an address or phone number is not a valid US one.
               </p>
             </section>
 
@@ -39,6 +39,9 @@ export default function ShippingInfoPage() {
               <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">2. Shipping Fees</h2>
               <p>
                 We are pleased to offer <strong>Free Shipping</strong> on all orders. There are no minimum purchase requirements or hidden handling fees.
+              </p>
+              <p>
+                <strong>Sales tax</strong> is added based on your delivery ZIP code and is shown at checkout before you pay.
               </p>
             </section>
 

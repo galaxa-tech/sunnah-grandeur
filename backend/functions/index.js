@@ -42,9 +42,11 @@ exports.getProducts    = getProducts;
 exports.getProductById = getProductById;
 
 // ── Orders ────────────────────────────────────────────────────────────────────
-const { createOrder, getOrdersByUser, updateOrderStatus } =
+const { createOrder, quoteOrder, cancelOrder, getOrdersByUser, updateOrderStatus } =
   require("./src/domains/orders");
 exports.createOrder       = createOrder;
+exports.quoteOrder        = quoteOrder;
+exports.cancelOrder       = cancelOrder;
 exports.getOrdersByUser   = getOrdersByUser;
 exports.updateOrderStatus = updateOrderStatus;
 
@@ -56,6 +58,9 @@ exports.createPaymentIntent   = createPaymentIntent;
 exports.createCheckoutSession = createCheckoutSession;
 exports.cancelAbandonedOrders = cancelAbandonedOrders;
 exports.verifyPayment       = verifyPayment;
+const { createPaypalOrder, capturePaypalOrder } = require("./src/domains/payments/paypal");
+exports.createPaypalOrder   = createPaypalOrder;
+exports.capturePaypalOrder  = capturePaypalOrder;
 
 // ── Stripe Webhook ────────────────────────────────────────────────────────────
 const { stripeWebhook } = require("./src/domains/payments/webhook");

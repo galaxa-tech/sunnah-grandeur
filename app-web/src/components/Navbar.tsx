@@ -113,7 +113,7 @@ export default function Navbar() {
               <img
                 src="/logo.png"
                 alt="Sunnah Grandeur"
-                className="h-8 sm:h-9 w-auto object-contain drop-shadow-[0_0_12px_rgba(201,168,76,0.3)] transition-transform duration-300 group-hover:scale-105"
+                className="h-11 sm:h-14 w-auto object-contain drop-shadow-[0_0_12px_rgba(201,168,76,0.3)] transition-transform duration-300 group-hover:scale-105"
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
             </div>

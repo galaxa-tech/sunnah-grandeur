@@ -13,19 +13,19 @@ export default function ReturnsAndExchangesPage() {
           <nav className="flex items-center gap-2 text-text-secondary text-xs mb-8 font-label-accent uppercase tracking-wider">
             <Link href="/" className="hover:text-primary-container transition-colors">Home</Link>
             <span className="material-symbols-outlined text-xs">chevron_right</span>
-            <span className="text-primary-container">Exchange Policy</span>
+            <span className="text-primary-container">Returns &amp; Refunds</span>
           </nav>
 
           {/* Header */}
           <div className="border-b border-border-subtle pb-8 mb-10">
-            <h1 className="font-serif text-3xl md:text-5xl font-bold text-text-primary mb-4">Exchange & Damage Policy</h1>
-            <p className="text-text-secondary text-sm">Last Updated: August 2, 2026</p>
+            <h1 className="font-serif text-3xl md:text-5xl font-bold text-text-primary mb-4">Returns, Refunds &amp; Exchanges</h1>
+            <p className="text-text-secondary text-sm">Last Updated: October 12, 2026</p>
           </div>
 
           {/* Content */}
           <div className="prose prose-invert max-w-none space-y-8 font-body-md text-text-secondary text-sm md:text-base leading-relaxed">
             <p>
-              At <strong>Sunnah Grandeur</strong>, we are committed to providing premium quality alcohol-free fragrances and products. Please review our policies regarding exchanges and handling damaged or incorrect orders.
+              At <strong>Sunnah Grandeur</strong>, we are committed to providing premium quality alcohol-free fragrances and products. Please review our policies regarding refunds, returns, exchanges and damaged or incorrect orders.
             </p>
 
             <section className="space-y-4">
@@ -62,10 +62,20 @@ export default function ReturnsAndExchangesPage() {
               </p>
             </section>
 
+            <section className="space-y-4">
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">3. Refunds</h2>
+              <ul className="list-disc pl-6 space-y-2">
+                <li><strong>Cancelled before shipment:</strong> you receive a full refund, including tax, to your original payment method. See our <Link href="/order-cancellation" className="text-primary-container hover:underline">Cancellation Policy</Link>.</li>
+                <li><strong>Damaged or incorrect item:</strong> once we approve your claim we will replace the item or refund you.</li>
+                <li><strong>Failed payments:</strong> if a payment fails you are not charged.</li>
+                <li><strong>Timing:</strong> approved card refunds usually appear within 5-10 business days depending on your bank. PayPal and Venmo refunds are processed by our team.</li>
+              </ul>
+            </section>
+
             <section className="space-y-4 border-t border-border-subtle pt-8">
-              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">3. Returns & Refunds</h2>
+              <h2 className="font-serif text-xl md:text-2xl font-bold text-text-primary">4. Returns</h2>
               <p>
-                For questions regarding returns or refunds, please contact our support team at <a href="mailto:info@sunnahgrandeur.us" className="text-primary-container hover:underline font-semibold">info@sunnahgrandeur.us</a>.
+                For return requests, or questions about returns and refunds, please contact our support team at <a href="mailto:info@sunnahgrandeur.us" className="text-primary-container hover:underline font-semibold">info@sunnahgrandeur.us</a> with your order number. We will confirm the next steps for your order.
               </p>
             </section>
           </div>

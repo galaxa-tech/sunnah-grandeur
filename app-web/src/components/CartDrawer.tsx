@@ -16,11 +16,6 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const subtotal = getSubtotal();
   const totalCount = getTotalItems();
 
-  // Free shipping & gift threshold — mirrors settings/app_config.freeShippingThreshold ($50).
-  const FREE_SHIPPING_THRESHOLD_USD = 50;
-  const subtotalUsd = toDisplayUsd(subtotal, usdRate);
-  const remainingForFreeUsd = Math.max(0, FREE_SHIPPING_THRESHOLD_USD - subtotalUsd);
-  const progressPercent = Math.min(100, (subtotalUsd / FREE_SHIPPING_THRESHOLD_USD) * 100);
 
   // Close on Escape key
   useEffect(() => {
@@ -73,23 +68,10 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
         {/* Free Shipping & Gift Progress */}
         <div className="p-4 bg-surface-card border-b border-border-subtle">
-          <div className="flex justify-between items-center text-xs mb-2">
-            <span className="text-text-secondary flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-primary text-sm">redeem</span>
-              {remainingForFreeUsd === 0 ? (
-                <span className="text-emerald-400 font-semibold">✨ Free Velvet Gift Box & Express Delivery Unlocked!</span>
-              ) : (
-                <span>Add <strong className="text-primary font-bold">${remainingForFreeUsd.toFixed(2)}</strong> for Free Express Delivery</span>
-              )}
-            </span>
-            <span className="text-[10px] text-text-secondary font-mono">{progressPercent.toFixed(0)}%</span>
-          </div>
-          <div className="w-full h-1.5 bg-bg-primary rounded-full overflow-hidden border border-border-subtle">
-            <div 
-              className="h-full bg-gradient-to-r from-[#C9A84C] to-[#FFE8A3] transition-all duration-500 rounded-full"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
+          <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-sm">local_shipping</span>
+            Free shipping on every US order · 3–7 business days
+          </span>
         </div>
 
         {/* Cart Items List */}
@@ -193,11 +175,10 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 <span className="font-mono text-text-primary">{formatUsd(subtotal, usdRate)}</span>
               </div>
               <div className="flex justify-between text-text-secondary">
-                <span>Estimated Shipping</span>
-                <span className="font-mono text-text-primary">
-                  {remainingForFreeUsd === 0 ? <span className="text-emerald-400">FREE</span> : "Calculated at checkout"}
-                </span>
+                <span>Shipping (US)</span>
+                <span className="font-mono text-emerald-400">FREE</span>
               </div>
+              <p className="text-[10px] text-text-secondary/70">Sales tax is calculated from your ZIP code at checkout.</p>
               <div className="flex justify-between text-sm font-bold text-text-primary pt-2 border-t border-border-subtle">
                 <span className="font-cinzel">Subtotal</span>
                 <span className="text-primary font-mono text-base">{formatUsd(subtotal, usdRate)}</span>
@@ -206,7 +187,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
             <div className="space-y-2 pt-1">
               <Link
-                href="/cart"
+                href="/checkout"
                 onClick={onClose}
                 className="w-full block text-center bg-gradient-to-r from-[#E6C364] via-[#C9A84C] to-[#E6C364] text-black font-cinzel font-bold py-3 px-6 rounded text-xs uppercase tracking-widest hover:shadow-[0_0_20px_rgba(201,168,76,0.4)] hover:brightness-110 transition-all duration-300"
               >

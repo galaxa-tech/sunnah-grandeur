@@ -44,7 +44,7 @@ export default function Footer() {
             Sunnah Grandeur
           </Link>
           <p className="text-body-md text-text-secondary text-sm leading-relaxed">
-            Elevating the everyday with premium halal fragrances inspired by timeless elegance and Islamic values.
+            Alcohol-free fragrances and handcrafted Islamic lifestyle artifacts, inspired by timeless elegance and Islamic values.
           </p>
           <div className="text-text-secondary text-xs space-y-1.5 pt-2">
             <p className="font-semibold text-text-primary">Office Address:</p>
@@ -96,7 +96,7 @@ export default function Footer() {
           <Link className="text-text-secondary hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/shipping-info">Shipping &amp; Delivery</Link>
           <Link className="text-text-secondary hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/payment-info">Payment Information</Link>
           <Link className="text-text-secondary hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/order-cancellation">Order Cancellation</Link>
-          <Link className="text-text-secondary hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/returns-and-exchanges">Exchange Policy</Link>
+          <Link className="text-text-secondary hover:text-primary transition-colors text-label-accent font-label-accent uppercase text-xs" href="/returns-and-exchanges">Returns &amp; Refunds</Link>
         </div>
 
         <div className="flex flex-col">

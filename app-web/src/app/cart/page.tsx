@@ -4,21 +4,15 @@ import { useCartStore } from '@/store/useCartStore';
 import { formatUsd, formatUsdRaw, toDisplayUsd } from '@/lib/currency';
 import { useCurrency } from '@/context/CurrencyContext';
 
-// Mirrors backend/functions/src/domains/orders — settings/app_config defaults
-// (freeShippingThreshold: 5000 cents, standardShippingCents: 999) — shown here
-// only as an estimate; the Cloud Function computes the real charge at checkout.
-const FREE_SHIPPING_THRESHOLD_USD = 50;
-const STANDARD_SHIPPING_USD = 9.99;
+// US shipping is free on every order. Sales tax is added at checkout from the
+// delivery ZIP code (server-calculated), so the cart shows a pre-tax subtotal.
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, clearCart, getSubtotal } = useCartStore();
   const { usdRate } = useCurrency();
 
   const subtotal = getSubtotal();
-  const subtotalUsd = toDisplayUsd(subtotal, usdRate);
-  const qualifiesForFreeShipping = subtotalUsd >= FREE_SHIPPING_THRESHOLD_USD;
-  const shippingUsd = qualifiesForFreeShipping ? 0 : STANDARD_SHIPPING_USD;
-  const totalUsd = subtotalUsd + shippingUsd;
+  const totalUsd = toDisplayUsd(subtotal, usdRate);
 
   return (
     <div className="flex-grow pt-32 pb-section-padding px-gutter max-w-container-max mx-auto w-full min-h-[75vh]">
@@ -146,16 +140,12 @@ export default function CartPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-text-secondary">Shipping</span>
-                  {qualifiesForFreeShipping ? (
-                    <span className="text-green-400 font-medium">Free (Standard)</span>
-                  ) : (
-                    <span className="text-text-primary">{formatUsdRaw(shippingUsd)}</span>
-                  )}
+                  <span className="text-green-400 font-medium">Free (US, 3–7 business days)</span>
                 </div>
-                <p className="text-[11px] text-text-secondary/70">Tax is calculated when your order is confirmed.</p>
+                <p className="text-[11px] text-text-secondary/70">Sales tax is calculated from your ZIP code at checkout.</p>
               </div>
               <div className="border-t border-border-subtle mt-6 pt-6 flex justify-between items-end">
-                <span className="text-body-lg font-body-lg text-text-primary">Estimated Total</span>
+                <span className="text-body-lg font-body-lg text-text-primary">Subtotal (before tax)</span>
                 <span className="text-headline-lg font-headline-lg text-primary">
                   {formatUsdRaw(totalUsd)}
                 </span>
