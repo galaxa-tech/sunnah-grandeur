@@ -35,7 +35,7 @@ export default function AppDownloadBanner() {
 
   // Never distract from the purchase flow — the checkout form and its submit
   // button live in this same bottom area on mobile.
-  if (!isVisible || pathname === '/checkout') return null;
+  if (!isVisible || pathname?.startsWith('/checkout')) return null;
 
   // The cart page's sticky order summary (with its Proceed to Checkout CTA)
   // sits in the same bottom-right area, so shift the banner up there to avoid

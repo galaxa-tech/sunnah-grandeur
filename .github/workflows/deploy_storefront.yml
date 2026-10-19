@@ -37,7 +37,11 @@ jobs:
         run: npm ci
         working-directory: ./app-web
 
+      # The Stripe publishable key is public by design (it ships in the
+      # browser). Without it the checkout cannot show the on-page card form.
       - name: Build Storefront (Next.js static export)
+        env:
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
         run: npm run build
         working-directory: ./app-web
 

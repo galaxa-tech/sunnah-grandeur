@@ -204,6 +204,10 @@ export default function CheckoutPage() {
       return;
     }
     if (items.length === 0) return;
+    if (!stripePromise) {
+      setErrorMsg('Card payments are temporarily unavailable. Please try again later.');
+      return;
+    }
 
     setCreating(true);
     try {
@@ -225,18 +229,10 @@ export default function CheckoutPage() {
       });
       const o = created.data as Quote & { orderId: string };
 
-      let clientSecret = '';
-      if (!stripePromise) {
-        // No publishable key configured: use Stripe's hosted payment page.
-        const session: any = await httpsCallable(functions, 'createCheckoutSession')({ orderId: o.orderId, origin: window.location.origin });
-        window.location.href = session.data.url;
-        return;
-      }
-      if (stripePromise) {
-        const intent: any = await httpsCallable(functions, 'createPaymentIntent')({ orderId: o.orderId });
-        clientSecret = intent.data.clientSecret;
-      }
-      setPending({ ...o, clientSecret });
+      // Payment always happens on this page (Stripe Payment Element) — the
+      // customer is never sent to another site.
+      const intent: any = await httpsCallable(functions, 'createPaymentIntent')({ orderId: o.orderId });
+      setPending({ ...o, clientSecret: intent.data.clientSecret });
     } catch (error: any) {
       requestId.current = '';
       setErrorMsg(friendlyError(error, 'Could not place your order — please check your details and try again.'));
