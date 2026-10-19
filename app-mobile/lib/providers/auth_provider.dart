@@ -274,7 +274,7 @@ class AuthProvider extends ChangeNotifier {
     _setLoading(true);
     try {
       if (!kIsWeb && !await SignInWithApple.isAvailable()) {
-        _error = 'Sign in with Apple isn't available on this device. Please use another sign-in option.';
+        _error = 'Sign in with Apple is not available on this device. Please use another sign-in option.';
         _setLoading(false);
         return false;
       }
@@ -335,13 +335,13 @@ class AuthProvider extends ChangeNotifier {
       if (e.code != AuthorizationErrorCode.canceled) {
         _error = e.code == AuthorizationErrorCode.notHandled ||
                 e.code == AuthorizationErrorCode.notInteractive
-            ? 'Apple sign-in isn't available right now. Please try again, or use another sign-in option.'
+            ? 'Apple sign-in is not available right now. Please try again, or use another sign-in option.'
             : 'Apple sign-in failed. Please try again.';
       }
       notifyListeners();
       return false;
     } on SignInWithAppleNotSupportedException {
-      _error = 'Sign in with Apple isn't supported on this device. Please use another sign-in option.';
+      _error = 'Sign in with Apple is not supported on this device. Please use another sign-in option.';
       _setLoading(false);
       return false;
     } catch (e) {
