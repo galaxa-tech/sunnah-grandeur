@@ -65,7 +65,7 @@ function StripePayForm({ orderId, totalInCents, onError }: { orderId: string; to
 
   return (
     <form onSubmit={pay} className="space-y-4">
-      <PaymentElement options={{ layout: 'tabs' }} />
+      <PaymentElement options={{ layout: 'tabs', defaultValues: { billingDetails: { address: { country: 'US' } } } }} />
       <button
         type="submit"
         disabled={!stripe || busy}
