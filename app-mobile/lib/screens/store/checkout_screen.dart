@@ -33,7 +33,7 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 /// Card checkout is on whenever the build was given a Stripe publishable key
-/// (STRIPE_KEY in api_keys.json); builds without one fall back to COD only.
+/// (STRIPE_KEY in api_keys.json). Native only; the card field is a no-op on web.
 /// Native only — Stripe's PaymentSheet is a no-op on web.
 bool get kCardPaymentsEnabled => ApiConfig.isStripeConfigured;
 
@@ -41,9 +41,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _formKey    = GlobalKey<FormState>();
   bool _isProcessing = false;
 
-  // Card payments need flutter_stripe, which is a no-op on web — default to
-  // the payment method that actually works everywhere.
-  String _paymentMethod = 'cod'; // 'cod' | 'card'
+  // True once the inline Stripe card field holds a complete, valid card.
+  // Card data never touches our code: Stripe's native field keeps it.
+  bool _cardComplete = false;
 
   // ── Contact ────────────────────────────────────────────────────────────────
   final _nameCtrl    = TextEditingController();
@@ -152,8 +152,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Future<void> _handleCompleteOrder() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_paymentMethod == 'card' && (kIsWeb || !kCardPaymentsEnabled)) {
-      _showSnack('Card payments are coming soon. Please choose Cash on Delivery.');
+    if (kIsWeb || !kCardPaymentsEnabled) {
+      _showSnack('Card payments are not available in this version of the app.');
+      return;
+    }
+    if (!_cardComplete) {
+      _showSnack('Please enter your complete card details.');
       return;
     }
 
@@ -175,71 +179,31 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       );
 
       // ── Step 2: Create order server-side (does NOT clear cart) ────────────
-      final orderResult = await cart.createOrderOnly(shipping, paymentMethod: _paymentMethod);
+      final orderResult = await cart.createOrderOnly(shipping, paymentMethod: 'card');
       if (orderResult == null) {
         throw Exception('Could not create order. Please check your connection and try again.');
       }
       await _saveAddress();
 
-      if (_paymentMethod == 'cod') {
-        // Cash on Delivery — order is already confirmed server-side, no
-        // payment step needed. Clear the cart and navigate immediately.
-        await cart.clearCart();
-        if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => OrderConfirmedScreen(
-              orderId:      orderResult.orderId,
-              totalDollars: orderResult.totalDollars,
-              createdAt:    DateTime.now().toUtc(),
-            ),
-          ),
-        );
-        return;
-      }
-
       // ── Step 3: Fetch Stripe clientSecret from server ─────────────────────
       final paymentResult = await PaymentService.createPaymentIntent(orderResult.orderId);
 
-      // ── Step 4: Initialise Stripe PaymentSheet ────────────────────────────
-      await Stripe.instance.initPaymentSheet(
-        paymentSheetParameters: SetupPaymentSheetParameters(
-          paymentIntentClientSecret: paymentResult.clientSecret,
-          merchantDisplayName:       'Sunnah Grandeur',
-          style: ThemeMode.dark,
-          appearance: const PaymentSheetAppearance(
-            colors: PaymentSheetAppearanceColors(
-              primary:     Color(0xFFC9A84C),
-              background:  Color(0xFF0A0A0A),
-              componentBackground: Color(0xFF141414),
-              componentBorder: Color(0xFF1F1F1F),
-              primaryText: Color(0xFFFFFFFF),
-              secondaryText: Color(0xFFA0A0A0),
-              placeholderText: Color(0xFF606060),
-              icon: Color(0xFFC9A84C),
-            ),
-            shapes: PaymentSheetShape(
-              borderRadius: 8,
-              borderWidth: 1,
-            ),
-            primaryButton: PaymentSheetPrimaryButtonAppearance(
-              colors: PaymentSheetPrimaryButtonTheme(
-                dark: PaymentSheetPrimaryButtonThemeColors(
-                  background: Color(0xFFC9A84C),
-                  text:       Color(0xFF0A0A0A),
-                  border:     Color(0xFFC9A84C),
-                ),
-              ),
+      // ── Step 4: Confirm the payment with the inline card field ────────────
+      // (handles 3-D Secure automatically when the bank asks for it)
+      await Stripe.instance.confirmPayment(
+        paymentIntentClientSecret: paymentResult.clientSecret,
+        data: PaymentMethodParams.card(
+          paymentMethodData: PaymentMethodData(
+            billingDetails: BillingDetails(
+              name:  _nameCtrl.text.trim(),
+              email: _emailCtrl.text.trim(),
+              phone: _phoneCtrl.text.trim(),
             ),
           ),
         ),
       );
 
-      // ── Step 5: Present PaymentSheet — user enters card details ───────────
-      await Stripe.instance.presentPaymentSheet();
-
-      // ── Step 6: Payment confirmed — clear cart and navigate ───────────────
+      // ── Step 5: Payment confirmed — clear cart and navigate ───────────────
       // The webhook will also clear the Firestore cart, but we clear the
       // local copy immediately for a snappy UX.
       await cart.clearCart();
@@ -265,9 +229,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (mounted) setState(() => _isProcessing = false);
     } catch (e) {
       debugPrint('[CheckoutScreen] error: $e');
-      _showSnack(_paymentMethod == 'cod'
-          ? 'We couldn\'t place your order. Check your connection and try again.'
-          : 'Payment failed. Please try again.');
+      _showSnack('Payment failed. Please try again.');
       if (mounted) setState(() => _isProcessing = false);
     }
     // Note: we only reset _isProcessing on failure paths above.
@@ -542,36 +504,42 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // ── Payment method selector ────────────────────────────────────────────────
+  // ── Payment: inline card form ──────────────────────────────────────────────
   Widget _buildPaymentNote() {
+    final c = AppColors.of(context);
     final lang = context.watch<LanguageProvider>();
+    final cardAvailable = !kIsWeb && kCardPaymentsEnabled;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _sectionHeader(lang.tr('payment_method')),
         const SizedBox(height: 16),
-        _PaymentMethodOption(
-          icon: Icons.local_shipping_outlined,
-          title: lang.tr('cash_on_delivery'),
-          subtitle: 'Pay in cash when your order arrives.',
-          selected: _paymentMethod == 'cod',
-          onTap: () => setState(() => _paymentMethod = 'cod'),
-        ),
-        const SizedBox(height: 10),
-        _PaymentMethodOption(
-          icon: Icons.credit_card_rounded,
-          title: kCardPaymentsEnabled ? 'Card via Stripe' : 'Credit / Debit Card — Coming Soon',
-          subtitle: !kCardPaymentsEnabled
-              ? 'Card payments are coming soon. Cash on Delivery is available now.'
-              : kIsWeb
-                  ? 'Card payments are only available on the mobile app.'
-                  : 'Your card details are encrypted and never stored on our servers.',
-          selected: _paymentMethod == 'card',
-          disabled: kIsWeb || !kCardPaymentsEnabled,
-          onTap: (kIsWeb || !kCardPaymentsEnabled)
-              ? null
-              : () => setState(() => _paymentMethod = 'card'),
-        ),
+        if (cardAvailable)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: c.surf,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: c.bd),
+            ),
+            child: CardField(
+              enablePostalCode: false,
+              style: TextStyle(color: c.t1, fontSize: 16),
+              decoration: const InputDecoration(border: InputBorder.none),
+              onCardChanged: (details) {
+                final complete = details?.complete ?? false;
+                if (complete != _cardComplete) {
+                  setState(() => _cardComplete = complete);
+                }
+              },
+            ),
+          )
+        else
+          Text('Card payments are not available in this version of the app.',
+            style: GoogleFonts.manrope(fontSize: 12, color: c.t2)),
+        const SizedBox(height: 8),
+        Text('Your card details are encrypted and never stored on our servers.',
+          style: GoogleFonts.manrope(fontSize: 11, color: c.t2)),
       ],
     );
   }
@@ -796,7 +764,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   // ── Shared widgets ─────────────────────────────────────────────────────────
   Widget _buildCompleteOrderButton(double total) {
     final c = AppColors.of(context);
-    final lang = context.watch<LanguageProvider>();
     return GestureDetector(
       onTap: _isProcessing ? null : _handleCompleteOrder,
       child: Container(
@@ -814,7 +781,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(_paymentMethod == 'cod' ? lang.tr('place_order_cod') : lang.tr('complete_order'),
+                  Text('PAY \$${total.toStringAsFixed(2)}',
                     style: GoogleFonts.manrope(
                       fontSize: 12, fontWeight: FontWeight.bold,
                       color: c.bg, letterSpacing: 1.5)),
@@ -996,77 +963,6 @@ class _CountryDropdown extends StatelessWidget {
             child: Text(country.$2,
               style: GoogleFonts.manrope(fontSize: 13, color: c.t1)),
           )).toList(),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// _PaymentMethodOption — selectable payment method row
-// ─────────────────────────────────────────────────────────────────────────────
-class _PaymentMethodOption extends StatelessWidget {
-  const _PaymentMethodOption({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.selected,
-    required this.onTap,
-    this.disabled = false,
-  });
-
-  final IconData    icon;
-  final String       title;
-  final String       subtitle;
-  final bool         selected;
-  final bool         disabled;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = AppColors.of(context);
-    return GestureDetector(
-      onTap: onTap,
-      child: Opacity(
-        opacity: disabled ? 0.45 : 1.0,
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: c.surf,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: selected ? c.gold : c.bd, width: selected ? 1.5 : 1),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 40, height: 40,
-                decoration: BoxDecoration(
-                  color: c.gold.withOpacity(0.10),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: c.gold, size: 20),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title,
-                      style: GoogleFonts.manrope(
-                        fontSize: 13, fontWeight: FontWeight.w600, color: c.t1)),
-                    const SizedBox(height: 2),
-                    Text(subtitle,
-                      style: GoogleFonts.manrope(fontSize: 11, color: c.t2)),
-                  ],
-                ),
-              ),
-              Icon(
-                selected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
-                color: selected ? c.gold : c.t2,
-                size: 20,
-              ),
-            ],
-          ),
         ),
       ),
     );

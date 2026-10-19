@@ -19,7 +19,7 @@
 1. **Stripe Payment Gateway API**:
    - `STRIPE_SECRET_KEY` (Production Stripe Secret Key)
    - `STRIPE_WEBHOOK_SECRET` (Stripe Webhook Endpoint Secret)
-   - *Note*: Cash on Delivery (COD) is live. Card checkout functions are built & deployed, awaiting live keys in `backend/functions/.env`.
+   - *Note*: Cash on Delivery has been removed (US store). Card checkout functions are built & deployed, awaiting live keys in `backend/functions/.env`.
 2. **YouTube Data API v3**:
    - `YOUTUBE_API_KEY` (Google Cloud YouTube API Key for auto-syncing Islamic media/lectures)
    - *Note*: Functions `sync.js` and `getMedia` are built & deployed, awaiting live key in `backend/functions/.env`.

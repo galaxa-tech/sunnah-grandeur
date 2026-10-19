@@ -49,7 +49,7 @@ export default function PaymentInfoPage() {
                 ))}
               </div>
               <p className="text-xs">
-                Cash on Delivery is not available for US orders. All payments are made online at checkout.
+                All payments are made online at checkout.
               </p>
             </section>
 

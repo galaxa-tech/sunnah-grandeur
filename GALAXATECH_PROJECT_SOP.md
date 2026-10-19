@@ -42,7 +42,7 @@ This Standard Operating Procedure (SOP) defines GalaxaTech's standard architectu
    - `admin`: Operations, inventory, and order management.
    - `employee` / `user`: End-user access.
 2. Build reactive Auth Providers (`AuthContext` / `AuthModal`) shared across products.
-3. Implement core features (Products, Cart, Cash on Delivery, Profile, Order History).
+3. Implement core features (Products, Cart, Card Checkout, Profile, Order History).
 
 ### Phase 3: Firebase Multi-Site Hosting
 1. Configure Firebase Multi-Site hosting in `firebase.json`:

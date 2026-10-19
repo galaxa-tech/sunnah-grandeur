@@ -14,17 +14,17 @@ const { cancelAndRestock }         = require("../payments/restock");
 // ── Schemas ───────────────────────────────────────────────────────────────────
 
 // Payment methods: "card" (Stripe: card/Apple Pay/Google Pay/Link), "paypal"
-// (PayPal + Venmo). "cod" is NOT offered in the US; it is only accepted when
-// settings/app_config.codEnabled is explicitly true (legacy mobile builds).
+// (PayPal + Venmo). Cash on delivery is not offered; old orders keep their
+// stored paymentMethod and are still read normally.
 const createOrderSchema = {
   items:         { required: true, type: "array", min: 1, max: 50 },
   shipping:      { required: true, type: "object" },
-  paymentMethod: { required: false, type: "string", enum: ["cod", "card", "paypal"] },
+  paymentMethod: { required: false, type: "string", enum: ["card", "paypal"] },
   requestId:     { required: false, type: "string", min: 8, max: 64 },
 };
 
 // Order lifecycle. "pending_payment" is a transient state before payment is
-// confirmed (Stripe webhook / PayPal capture); legacy COD starts "Processing".
+// confirmed (Stripe webhook / PayPal capture).
 const ORDER_STATUSES = ["pending_payment", "Processing", "Shipped", "Delivered", "Cancelled"];
 
 const shippingSchema = {
@@ -50,7 +50,6 @@ async function loadConfig() {
     freeShippingThreshold: c.freeShippingThreshold ?? 0,
     standardShippingCents: c.standardShippingCents ?? 0,
     expressShippingCents:  c.expressShippingCents ?? 0,
-    codEnabled:   c.codEnabled === true,
     usdToLocalRate: (typeof c.usdToLocalRate === "number" && c.usdToLocalRate > 0)
       ? c.usdToLocalRate : DEFAULT_BDT_TO_USD_RATE,
   };
@@ -142,15 +141,10 @@ const createOrder = onCall({ region: "us-central1" }, async (request) => {
   checkItems(items);
 
   const config = await loadConfig();
-  if (paymentMethod === "cod" && !config.codEnabled) {
-    throw new HttpsError("failed-precondition",
-      "Cash on delivery is not available. Please pay by card, PayPal or Venmo.");
-  }
-
   // US-only + format validation (phone, email, ZIP/state, street address).
   const clean = validateUsShipping(request.data.shipping);
   const method = request.data.shipping.method === "express" ? "express" : "standard";
-  const initialStatus = paymentMethod === "cod" ? "Processing" : "pending_payment";
+  const initialStatus = "pending_payment";
 
   const taxPpm = await resolveTaxRatePpm(items, clean, config);
 

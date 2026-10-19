@@ -12,7 +12,7 @@ class OrderService {
   static Future<OrderResult> createOrder({
     required List<OrderItemInput> items,
     required ShippingInput shipping,
-    String paymentMethod = 'card', // 'cod' | 'card'
+    String paymentMethod = 'card', // 'card' | 'paypal'
   }) async {
     final data = await FunctionsClient.call('createOrder', {
       'items':         items.map((i) => i.toMap()).toList(),

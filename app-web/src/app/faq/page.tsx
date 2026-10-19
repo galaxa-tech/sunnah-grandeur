@@ -24,7 +24,7 @@ export default function FAQPage() {
     },
     {
       q: "What payment methods are accepted?",
-      a: "You can pay online by credit or debit card (Visa, Mastercard, American Express, Discover), Apple Pay, Google Pay, PayPal or Venmo. Cash on Delivery is not available. Payments are processed securely by Stripe and PayPal. If a payment fails you are not charged and can simply try again."
+      a: "You can pay online by credit or debit card (Visa, Mastercard, American Express, Discover), Apple Pay, Google Pay, PayPal or Venmo. Payments are processed securely by Stripe and PayPal. If a payment fails you are not charged and can simply try again."
     },
     {
       q: "Can I cancel my order?",

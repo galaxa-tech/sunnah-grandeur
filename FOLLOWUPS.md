@@ -35,10 +35,7 @@ this to a client.
   a no-op until real files are added. You also asked for other small UI
   sounds (tap/success/notification) beyond just the Azan — same blocker,
   not started.
-- **Stripe live keys.** Card checkout is deferred per your decision — COD
-  is the working path for now. The Stripe UI in `app-web`'s checkout is
-  disabled/labeled "Coming soon" rather than removed, so re-enabling it
-  later is just flipping that back on once real keys exist.
+- **Stripe live keys.** Card checkout is the only payment method (Cash on Delivery was removed; US store). Live publishable/secret keys must be in place for real charges.
 
 ## Scoped out of this pass — real, but lower priority
 

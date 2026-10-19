@@ -42,7 +42,7 @@ parallel, unused set of those too; they were deleted).
 
 `website/` used to be a second, earlier, unwired copy of the storefront
 (not referenced by `firebase.json`, missing `output: 'export'`, missing
-the Stripe/COD checkout logic `app-web` has). It's deleted. `app-web/` is
+the Stripe checkout logic `app-web` has). It's deleted. `app-web/` is
 the only storefront.
 
 ## One admin surface: `admin-panel/`

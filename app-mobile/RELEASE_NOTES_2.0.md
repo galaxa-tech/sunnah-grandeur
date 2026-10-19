@@ -9,7 +9,7 @@ Daily Muslim 2.0 — a complete refresh.
 • Quran: read with Bangla/English translation, or listen to full surahs
 • Ruqyah from the Quran, always available
 • Accurate Hijri dates (Umm al-Qura) and live-price Zakat
-• Redesigned Sunnah Grandeur store with cash on delivery
+• Redesigned Sunnah Grandeur store with secure online card checkout
 • Back button, faster launch, and many fixes
 
 **bn-BD**
