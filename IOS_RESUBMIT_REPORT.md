@@ -69,7 +69,7 @@ Sunnah Grandeur Corp.
 - App payment is card only (inline). Apple Pay / Google Pay not added in the app (no entitlement changes, as requested); PayPal not in the app, since it was not there.
 - Old COD orders keep their stored data; admin and order history code was not changed, so they still display.
 - The website needs one shipping-confirm step before showing payment, because the order must exist first. I left that flow as is.
-- Backend change is NOT deployed: there is no Cloud Functions deploy workflow and Firebase CLI login does not work here. COD was already refused unless `codEnabled` was true in settings (never set), so no COD orders can be created. Deploy of the function is a pending human/CLI step.
+- Backend change: deployed (see "Functions deploy" below).
 - Old QA scripts in `qa-tests/` still mention COD; they are test records and were left alone.
 - The "Deploy Frontend Preview to GitHub Pages" workflow fails because GitHub Pages is not enabled for the repo (an old issue, unrelated).
 - The Stripe publishable key must be in the build (it is; CI passed `api_keys.json`). Not test-charged here (no device).
@@ -80,3 +80,11 @@ Sunnah Grandeur Corp.
 3. The order appears in the admin panel.
 4. A non-US address is still rejected.
 5. Apple, Google and email login still work.
+
+---
+# Functions deploy (2026-10-19)
+- **Auth:** Used the gcloud login already on this machine (mail.galaxatech@gmail.com); its short-lived access token was given to the Firebase CLI through `GOOGLE_OAUTH_ACCESS_TOKEN`. No keys saved or committed.
+- **Deployed:** `createOrder`, us-central1, Node.js 22 (2nd gen), state ACTIVE (updated 2026-10-19 21:58 UTC). Only this function changed in cd2eadc (the other order functions only read the same file, which is unchanged for them), so nothing else was redeployed and no function was deleted. Its environment settings (Stripe keys etc.) were already present and unchanged.
+- **Verified:** A test call with paymentMethod "cod" was rejected: "'paymentMethod' must be one of: card, paypal." A call with "card" passed that check and moved on to the next validation. No order or payment was created. The temporary test sign-in user was deleted. No error logs after deploy. No Firestore data was touched, so old COD orders and the admin panel are unchanged.
+- **Still needed:** Nothing. Note: `firebase-functions` in `backend/functions/package.json` is an old version (the CLI warns); upgrading is optional and later.
+- **Rollback:** `git revert cd2eadc` (or check out the commit before it), then run `firebase deploy --project sunnah-grandeur --only functions:createOrder` (log in first, or use the same token method). Note the old app builds that still send "cod" would then work again only if `codEnabled` is set in Firestore `settings/app_config`.
