@@ -232,7 +232,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
     if (_page == 0) {
       label = '${context.watch<LanguageProvider>().tr('continue_with')} ${_langs[_selectedLang]['name']} →';
     } else if (_page == 1) {
-      label = loc.hasLocation ? 'Continue →' : 'Enable Location Access →';
+      label = 'Continue →';
     } else {
       label = 'Get Started →';
     }

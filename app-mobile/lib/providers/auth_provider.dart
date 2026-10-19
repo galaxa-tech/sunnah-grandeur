@@ -273,6 +273,11 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> signInWithApple() async {
     _setLoading(true);
     try {
+      if (!kIsWeb && !await SignInWithApple.isAvailable()) {
+        _error = 'Sign in with Apple isn't available on this device. Please use another sign-in option.';
+        _setLoading(false);
+        return false;
+      }
       final rawNonce = _generateNonce();
       final appleCredential = await SignInWithApple.getAppleIDCredential(
         scopes: [
@@ -328,9 +333,16 @@ class AuthProvider extends ChangeNotifier {
       _isLoading = false;
       // User cancelled the sheet — not an error.
       if (e.code != AuthorizationErrorCode.canceled) {
-        _error = 'Apple sign-in failed. Please try again.';
+        _error = e.code == AuthorizationErrorCode.notHandled ||
+                e.code == AuthorizationErrorCode.notInteractive
+            ? 'Apple sign-in isn't available right now. Please try again, or use another sign-in option.'
+            : 'Apple sign-in failed. Please try again.';
       }
       notifyListeners();
+      return false;
+    } on SignInWithAppleNotSupportedException {
+      _error = 'Sign in with Apple isn't supported on this device. Please use another sign-in option.';
+      _setLoading(false);
       return false;
     } catch (e) {
       _error = _authMessage(e);
@@ -488,7 +500,7 @@ class AuthProvider extends ChangeNotifier {
         case 'admin-restricted-operation':
           return 'This sign-in method is not enabled. Please contact support.';
         case 'account-exists-with-different-credential':
-          return 'An account already exists with this email. Try signing in differently.';
+          return 'An account already exists with this email using a different sign-in method (for example Google). Please sign in with that method.';
         default: return 'Sign-in failed (${e.code}). Please try again.';
       }
     } else if (e is PlatformException) {

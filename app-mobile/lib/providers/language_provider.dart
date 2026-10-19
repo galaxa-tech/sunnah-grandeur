@@ -304,7 +304,7 @@ const _translations = <String, Map<String, String>>{
     // Onboarding
     'enable_notifications':    'Enable Notifications',
     'notifications_desc':      'Get prayer time alerts and Islamic reminders',
-    'enable_btn':              'Enable',
+    'enable_btn':              'Continue',
     'maybe_later':             'Maybe Later',
     'set_location':            'Set Your Location',
     'location_desc':           'For accurate prayer times and Qibla direction',
@@ -877,7 +877,7 @@ const _translations = <String, Map<String, String>>{
     // Onboarding
     'enable_notifications':    'تفعيل الإشعارات',
     'notifications_desc':      'احصل على تنبيهات أوقات الصلاة وتذكيرات إسلامية',
-    'enable_btn':              'تفعيل',
+    'enable_btn':              'متابعة',
     'maybe_later':             'ربما لاحقاً',
     'set_location':            'تحديد موقعك',
     'location_desc':           'لأوقات صلاة دقيقة واتجاه القبلة',
@@ -1446,7 +1446,7 @@ const _translations = <String, Map<String, String>>{
     // Onboarding
     'enable_notifications':    'বিজ্ঞপ্তি চালু করুন',
     'notifications_desc':      'নামাজের সময়ের সতর্কতা ও ইসলামিক রিমাইন্ডার পান',
-    'enable_btn':              'চালু করুন',
+    'enable_btn':              'চালিয়ে যান',
     'maybe_later':             'পরে হয়তো',
     'set_location':            'আপনার অবস্থান নির্ধারণ করুন',
     'location_desc':           'সঠিক নামাজের সময় ও কিবলার দিকের জন্য',

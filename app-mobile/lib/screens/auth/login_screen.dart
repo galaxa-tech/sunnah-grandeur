@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -18,6 +20,8 @@ import 'forgot_password_screen.dart';
 // back to where the user was instead of resetting to /main, so the cart /
 // checkout flow continues seamlessly.
 // ─────────────────────────────────────────────────────────────────────────────
+bool get _appleSignInAvailable => !kIsWeb && Platform.isIOS;
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, this.popOnSuccess = false});
   final bool popOnSuccess;
@@ -34,8 +38,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _emailLoading  = false;
   bool _googleLoading = false;
+  bool _appleLoading  = false;
 
-  bool get _busy => _emailLoading || _googleLoading;
+  bool get _busy => _emailLoading || _googleLoading || _appleLoading;
 
   @override
   void dispose() {
@@ -94,6 +99,24 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _handleApple() async {
+    if (_busy) return;
+    setState(() => _appleLoading = true);
+    final auth = context.read<AuthProvider>();
+    final ok = await auth.signInWithApple();
+    if (!mounted) return;
+    if (ok) {
+      _onSuccess();
+    } else {
+      setState(() => _appleLoading = false);
+      final msg = auth.error ?? '';
+      if (msg.isNotEmpty) {
+        showAppSnackbar(context, msg,
+            type: AppSnackbarType.error, duration: const Duration(seconds: 4));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
@@ -142,6 +165,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         disabled: _busy && !_googleLoading,
                         onTap: _handleGoogle,
                       ),
+                      if (_appleSignInAvailable) ...[
+                        const SizedBox(height: 12),
+                        AuthSocialButton(
+                          kind: AuthProviderKind.apple,
+                          label: lang.tr('continue_with_apple'),
+                          loading: _appleLoading,
+                          disabled: _busy && !_appleLoading,
+                          onTap: _handleApple,
+                        ),
+                      ],
                       const SizedBox(height: 20),
                       AuthOrDivider(label: lang.tr('or_label')),
                       const SizedBox(height: 20),
